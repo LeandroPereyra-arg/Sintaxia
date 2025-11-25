@@ -1,0 +1,30 @@
+*{margin: 0;padding: 0;}
+body{
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+    .caja{
+        width: 100px;
+        height: 100px;
+        background-color: #7434db;
+        animation: girar 2s linear infinite; 
+    }
+
+
+
+ @keyframes girar{
+    from{
+        transform: rotate(0deg);
+    }
+    to{
+        transform: rotate(360deg);
+    }
+ }
+
+
+
+
+
