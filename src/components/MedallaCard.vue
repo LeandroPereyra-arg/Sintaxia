@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
 
 /**
@@ -50,9 +51,12 @@ const fecha = computed(() => {
     <div class="medalla__disco">
       <span class="medalla__cinta medalla__cinta--izq" aria-hidden="true" />
       <span class="medalla__cinta medalla__cinta--der" aria-hidden="true" />
-      <span class="medalla__icono" aria-hidden="true">
-        {{ medalla.obtenida ? medalla.icono : '🔒' }}
-      </span>
+      <Icono
+        class="medalla__icono"
+        :nombre="medalla.obtenida ? medalla.icono : 'candado'"
+        :tamano="28"
+        :trazo="2.2"
+      />
     </div>
 
     <h3 class="medalla__nombre">{{ medalla.nombre }}</h3>
@@ -198,22 +202,31 @@ const fecha = computed(() => {
 
 /* --- recien ganada --- */
 .medalla--nueva {
-  animation: aparecer 0.5s ease;
+  animation: medalla-aparece 0.6s var(--anim-rebote);
   border-color: var(--base);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--base) 35%, transparent);
 }
 
-@keyframes aparecer {
-  0% {
-    transform: scale(0.6) rotate(-12deg);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.08) rotate(4deg);
-  }
-  100% {
-    transform: scale(1) rotate(0);
-    opacity: 1;
+/* Halo que se expande una sola vez, como un destello de premio. */
+.medalla--nueva .medalla__disco::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 3px solid var(--base);
+  animation: onda 1.1s ease-out 0.2s 2;
+}
+
+@keyframes medalla-aparece {
+  0% { transform: scale(0.6) rotate(-12deg); opacity: 0; }
+  60% { transform: scale(1.08) rotate(4deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .medalla--nueva,
+  .medalla--nueva .medalla__disco::after {
+    animation: none;
   }
 }
 </style>

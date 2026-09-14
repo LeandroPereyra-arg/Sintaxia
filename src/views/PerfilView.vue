@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import BaseBoton from '@/components/BaseBoton.vue'
+import Icono from '@/components/Icono.vue'
+import SintaxMascota from '@/components/SintaxMascota.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import MedallaCard from '@/components/MedallaCard.vue'
 import CalendarioActividad from '@/components/CalendarioActividad.vue'
@@ -25,7 +27,7 @@ const {
   reiniciarProgreso
 } = useProgreso()
 
-const AVATARES = ['👩‍💻', '👨‍💻', '🧑‍🚀', '🦊', '🐧', '🤖', '🐙', '🦉']
+const AVATARES = ['buho', 'robot', 'astronauta', 'cohete', 'gema', 'rayo', 'corona', 'diana']
 const METAS = [20, 50, 100]
 
 const editando = ref(false)
@@ -64,13 +66,13 @@ const medallasInvitado = computed(() => {
     curso: totalLeccionesCompletadas.value >= lecciones.length ? 1 : 0
   }
   const definiciones = [
-    { codigo: 'primer_paso', nombre: 'Primer paso', descripcion: 'Completa tu primera leccion.', icono: '🥚', nivel: 'bronce', tipo: 'lecciones', objetivo: 1 },
-    { codigo: 'aprendiz', nombre: 'Aprendiz', descripcion: 'Completa 5 lecciones.', icono: '📘', nivel: 'plata', tipo: 'lecciones', objetivo: 5 },
-    { codigo: 'estudioso', nombre: 'Estudioso', descripcion: 'Completa 10 lecciones.', icono: '🎓', nivel: 'oro', tipo: 'lecciones', objetivo: 10 },
-    { codigo: 'unidad_completa', nombre: 'Unidad completa', descripcion: 'Termina una unidad entera.', icono: '🎖️', nivel: 'plata', tipo: 'unidades', objetivo: 1 },
-    { codigo: 'racha_3', nombre: 'Constante', descripcion: 'Manten una racha de 3 dias.', icono: '🔥', nivel: 'bronce', tipo: 'racha', objetivo: 3 },
-    { codigo: 'xp_100', nombre: 'Cien puntos', descripcion: 'Acumula 100 XP.', icono: '💯', nivel: 'bronce', tipo: 'xp', objetivo: 100 },
-    { codigo: 'javascript_listo', nombre: 'JavaScript listo', descripcion: 'Completa el curso entero.', icono: '👑', nivel: 'diamante', tipo: 'curso', objetivo: 1 }
+    { codigo: 'primer_paso', nombre: 'Primer paso', descripcion: 'Completa tu primera leccion.', icono: 'huevo', nivel: 'bronce', tipo: 'lecciones', objetivo: 1 },
+    { codigo: 'aprendiz', nombre: 'Aprendiz', descripcion: 'Completa 5 lecciones.', icono: 'libro', nivel: 'plata', tipo: 'lecciones', objetivo: 5 },
+    { codigo: 'estudioso', nombre: 'Estudioso', descripcion: 'Completa 10 lecciones.', icono: 'birrete', nivel: 'oro', tipo: 'lecciones', objetivo: 10 },
+    { codigo: 'unidad_completa', nombre: 'Unidad completa', descripcion: 'Termina una unidad entera.', icono: 'medalla', nivel: 'plata', tipo: 'unidades', objetivo: 1 },
+    { codigo: 'racha_3', nombre: 'Constante', descripcion: 'Manten una racha de 3 dias.', icono: 'llama', nivel: 'bronce', tipo: 'racha', objetivo: 3 },
+    { codigo: 'xp_100', nombre: 'Cien puntos', descripcion: 'Acumula 100 XP.', icono: 'gema', nivel: 'bronce', tipo: 'xp', objetivo: 100 },
+    { codigo: 'javascript_listo', nombre: 'JavaScript listo', descripcion: 'Completa el curso entero.', icono: 'corona', nivel: 'diamante', tipo: 'curso', objetivo: 1 }
   ]
   return definiciones.map((d) => {
     const actual = Math.min(stats[d.tipo] ?? 0, d.objetivo)
@@ -188,6 +190,13 @@ const fechaRegistro = computed(() => {
 })
 
 const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
+
+/** Sintax acompania segun como venga el estudiante. */
+const animoSintax = computed(() => {
+  if (totalLeccionesCompletadas.value === 0) return 'dormido'
+  if ((usuario.value?.racha ?? estado.racha) >= 3) return 'celebrando'
+  return 'normal'
+})
 </script>
 
 <template>
@@ -195,8 +204,8 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
     <!-- Cabecera del perfil -->
     <header class="cabecera">
       <div class="cabecera__avatar">
-        <img v-if="usuario?.avatarUrl && !usuario?.avatarEmoji" :src="usuario.avatarUrl" alt="" />
-        <span v-else>{{ usuario?.avatarEmoji ?? estado.avatar }}</span>
+        <img v-if="usuario?.avatarUrl && !usuario?.avatarIcono" :src="usuario.avatarUrl" alt="" />
+        <Icono v-else :nombre="usuario?.avatarIcono ?? estado.avatar" :tamano="52" :trazo="1.8" />
       </div>
 
       <div class="cabecera__datos">
@@ -236,9 +245,11 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
 
           <ul class="cabecera__insignias">
             <li v-if="usuario?.liga" class="insignia" :style="{ '--color-liga': usuario.liga.color }">
-              <span aria-hidden="true">{{ usuario.liga.icono }}</span> Liga {{ usuario.liga.nombre }}
+              <Icono :nombre="usuario.liga.icono" :tamano="14" /> Liga {{ usuario.liga.nombre }}
             </li>
-            <li v-if="usuario?.pais" class="insignia insignia--suave">📍 {{ usuario.pais }}</li>
+            <li v-if="usuario?.pais" class="insignia insignia--suave">
+              <Icono nombre="ubicacion" :tamano="14" /> {{ usuario.pais }}
+            </li>
             <li v-if="fechaRegistro" class="insignia insignia--suave">Desde {{ fechaRegistro }}</li>
             <li
               v-for="proveedor in usuario?.proveedores ?? []"
@@ -264,11 +275,11 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
             <button
               type="button"
               class="avatares__boton"
-              :class="{ 'avatares__boton--activo': (usuario?.avatarEmoji ?? estado.avatar) === opcion }"
+              :class="{ 'avatares__boton--activo': (usuario?.avatarIcono ?? estado.avatar) === opcion }"
               :aria-label="`Usar el avatar ${opcion}`"
               @click="cambiarAvatar(opcion)"
             >
-              {{ opcion }}
+              <Icono :nombre="opcion" :tamano="20" />
             </button>
           </li>
         </ul>
@@ -288,6 +299,7 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
 
     <!-- Invitacion a crear cuenta -->
     <section v-if="!autenticado" class="tarjeta tarjeta--invitacion">
+      <SintaxMascota estado="saludando" :alto="96" alt="" />
       <div>
         <h2>Guarda tu progreso</h2>
         <p class="texto-secundario">
@@ -303,7 +315,9 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
       <h2>Meta diaria</h2>
       <p class="texto-secundario">
         Llevas <strong>{{ estado.xpDeHoy }}</strong> de {{ usuario?.metaDiaria ?? estado.metaDiaria }} XP de hoy.
-        <span v-if="metaCumplida">Meta cumplida! 🎉</span>
+        <span v-if="metaCumplida" class="meta-lista">
+          <Icono nombre="chispas" :tamano="15" /> Meta cumplida!
+        </span>
       </p>
       <BarraProgreso
         :valor="estado.xpDeHoy"
@@ -337,7 +351,7 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
         Como invitado se muestran solo algunas. Inicia sesion para desbloquear las 14 medallas.
       </p>
 
-      <ul class="medallas">
+      <ul class="medallas anim-lista">
         <li v-for="medalla in medallasAMostrar" :key="medalla.codigo">
           <MedallaCard :medalla="medalla" />
         </li>
@@ -360,7 +374,7 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
 
       <ul class="unidades">
         <li v-for="unidad in resumenUnidades" :key="unidad.id" class="unidad">
-          <span class="unidad__icono" aria-hidden="true">{{ unidad.icono }}</span>
+          <Icono class="unidad__icono" :nombre="unidad.icono" :tamano="22" :trazo="2.1" />
           <div class="unidad__texto">
             <p class="unidad__titulo">{{ unidad.numero }}. {{ unidad.titulo }}</p>
             <BarraProgreso
@@ -561,7 +575,7 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
 }
 
 .tarjeta--invitacion {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   border-color: var(--c-verde);
   background: linear-gradient(180deg, var(--c-verde-suave), var(--c-blanco) 70%);
@@ -582,6 +596,12 @@ const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
   font-family: var(--f-titulo);
   font-weight: 900;
   color: var(--c-verde-osc);
+}
+
+.meta-lista {
+  color: var(--c-verde-osc);
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .metas {

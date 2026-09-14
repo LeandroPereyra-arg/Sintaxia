@@ -8,7 +8,7 @@ export const leccionesUnidad3 = [
     numero: 1,
     titulo: 'El bucle for',
     descripcion: 'Repetir una cantidad conocida de veces.',
-    icono: '🔁',
+    icono: 'repetir',
     xp: 20,
     ejercicios: [
       {
@@ -49,7 +49,7 @@ export const leccionesUnidad3 = [
     numero: 2,
     titulo: 'while, break y continue',
     descripcion: 'Repetir mientras se cumpla algo y controlar las vueltas.',
-    icono: '⏭️',
+    icono: 'saltar',
     xp: 20,
     ejercicios: [
       {

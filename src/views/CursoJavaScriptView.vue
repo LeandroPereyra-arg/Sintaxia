@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import UnidadCard from '@/components/UnidadCard.vue'
@@ -80,7 +81,9 @@ function continuar() {
         <BaseBoton v-if="proximaLeccion" ancho-completo @click="continuar">
           {{ totalLeccionesCompletadas > 0 ? 'Continuar' : 'Empezar' }}
         </BaseBoton>
-        <p v-else class="portada__listo">🎉 Curso completado!</p>
+        <p v-else class="portada__listo">
+          <Icono nombre="trofeo" :tamano="18" /> Curso completado!
+        </p>
       </div>
     </header>
 
@@ -91,7 +94,7 @@ function continuar() {
         Completa todas las lecciones de una unidad para desbloquear la siguiente.
       </p>
 
-      <ul class="camino__lista">
+      <ul class="camino__lista anim-lista">
         <li v-for="item in unidades" :key="item.unidad.id">
           <UnidadCard
             :unidad="item.unidad"

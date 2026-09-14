@@ -12,7 +12,7 @@ export function presentarUsuario(fila, identidades = []) {
     nombre: fila.nombre,
     email: fila.email,
     avatarUrl: fila.avatar_url,
-    avatarEmoji: fila.avatar_emoji,
+    avatarIcono: fila.avatar_icono,
     bio: fila.bio,
     pais: fila.pais,
     xp: xpTotal,

@@ -78,6 +78,54 @@ descentrado con otra version del logo:
 }
 ```
 
+## Pensada tambien para el celular
+
+La aplicacion tiene que funcionar igual en la web y en un telefono Android, asi que:
+
+- **Bienvenida tipo app.** La primera vez que se abre, aparece una presentacion de cuatro
+  pasos que se pasan deslizando y termina ofreciendo entrar con Google, con GitHub o seguir
+  como invitado. En el escritorio se muestra encuadrada con el ancho de un celular.
+- **Carruseles con `scroll-snap` del navegador**, no movidos con JavaScript: el gesto lo
+  maneja el sistema, asi que se siente igual que en una app nativa (sigue el dedo y frena
+  con inercia).
+- **Se respetan la muesca y la barra de gestos** con `env(safe-area-inset-*)`.
+- **Areas tocables comodas**: los puntos del carrusel miden 9 px pero se pueden tocar en un
+  area de 31 px.
+- Las flechas de los carruseles **solo aparecen si hay algo que desplazar**, y se esconden
+  en pantallas chicas, donde se navega con el dedo.
+
+## Sintax, la mascota
+
+El buho del logo aparece en toda la aplicacion y **reacciona a lo que pasa**: celebra una
+leccion perfecta, se enoja cuando se pierden las tres vidas, se confunde en el 404 y duerme
+si hace rato que no practicas.
+
+Las imagenes van en **`public/sintax/`**, una por estado de animo:
+
+| Archivo | Cuando aparece |
+|---|---|
+| `normal.png` | Por defecto, y reemplaza a cualquiera que falte |
+| `saludando.png` | Portada, pantalla de ingreso e invitacion a crear cuenta |
+| `pensando.png` | Pantallas vacias |
+| `celebrando.png` | Leccion perfecta y racha de 3 dias o mas |
+| `sorprendido.png` | Al desbloquear algo nuevo |
+| `confundido.png` | Pagina 404 y resultados flojos |
+| `enojado.png` | Cuando se pierden las tres vidas |
+| `dormido.png` | Cuando todavia no empezaste |
+
+Cada estado trae su propia animacion (flota, saluda, festeja, tiembla, duerme). Si falta un
+archivo se usa `normal.png`; si tampoco esta, se cae al logo. Nunca queda una imagen rota.
+
+## Iconos
+
+59 iconos SVG dibujados dentro del proyecto (`src/assets/iconos.js`), sin librerias ni CDN.
+Heredan el color del texto, asi que cambian solos segun el contexto.
+
+```vue
+<Icono nombre="llama" :tamano="16" />
+<Icono nombre="trofeo" :tamano="40" etiqueta="Curso completado" />
+```
+
 ## Documentacion del trabajo practico
 
 | Documento | Contenido |
@@ -115,6 +163,18 @@ Al comprobar, la barra inferior dice si estuvo bien, cual era la respuesta y por
 ### Resultados
 
 ![Resultados](docs/capturas/06-resultados.png)
+
+### Bienvenida
+Lo primero que se ve al abrir la aplicacion: cuatro pasos que se pasan deslizando y terminan
+ofreciendo entrar con una cuenta o seguir como invitado. En el escritorio se muestra
+encuadrada con el ancho de un celular.
+
+<p>
+  <img src="docs/capturas/15-bienvenida-movil.png" width="240" alt="Bienvenida, primer paso">
+  <img src="docs/capturas/16-bienvenida-final.png" width="240" alt="Bienvenida, paso final">
+</p>
+
+![Bienvenida en escritorio](docs/capturas/17-bienvenida-escritorio.png)
 
 ### Iniciar sesion
 Google y GitHub. Los botones aparecen solo si el servidor tiene cargadas esas credenciales.

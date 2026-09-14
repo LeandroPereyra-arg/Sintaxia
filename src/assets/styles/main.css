@@ -1,4 +1,5 @@
 @import './variables.css';
+@import './animaciones.css';
 
 /* ---------- Reset ---------- */
 *,
@@ -142,16 +143,19 @@ pre {
 }
 
 /* ---------- Transicion de rutas ---------- */
-.fade-enter-active,
+.fade-enter-active {
+  transition: opacity var(--anim-media) ease, transform var(--anim-media) var(--anim-suave);
+}
 .fade-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity var(--anim-rapida) ease, transform var(--anim-rapida) ease;
 }
 .fade-enter-from {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(12px);
 }
 .fade-leave-to {
   opacity: 0;
+  transform: translateY(-6px);
 }
 
 @media (prefers-reduced-motion: reduce) {

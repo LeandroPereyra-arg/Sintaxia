@@ -8,7 +8,7 @@ export const leccionesUnidad1 = [
     numero: 1,
     titulo: 'Que es JavaScript',
     descripcion: 'Para que sirve el lenguaje y donde se ejecuta.',
-    icono: '⭐',
+    icono: 'estrella',
     xp: 10,
     ejercicios: [
       {
@@ -63,7 +63,7 @@ export const leccionesUnidad1 = [
     numero: 2,
     titulo: 'Variables y constantes',
     descripcion: 'Guardar datos con let y const.',
-    icono: '📥',
+    icono: 'variable',
     xp: 15,
     ejercicios: [
       {
@@ -118,7 +118,7 @@ export const leccionesUnidad1 = [
     numero: 3,
     titulo: 'Tipos de datos',
     descripcion: 'Numeros, textos, booleanos y el operador typeof.',
-    icono: '🔤',
+    icono: 'texto',
     xp: 15,
     ejercicios: [
       {

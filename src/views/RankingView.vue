@@ -1,6 +1,8 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed, onMounted, ref } from 'vue'
 import BaseBoton from '@/components/BaseBoton.vue'
+import SintaxMascota from '@/components/SintaxMascota.vue'
 import { api } from '@/api/cliente.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -17,7 +19,7 @@ const miId = ref(null)
 const podio = computed(() => tabla.value.slice(0, 3))
 const resto = computed(() => tabla.value.slice(3))
 
-const MEDALLAS_PODIO = ['🥇', '🥈', '🥉']
+const COLORES_PODIO = ['#e8b923', '#9aa7b4', '#c8834a']
 
 onMounted(async () => {
   try {
@@ -65,22 +67,23 @@ function esMio(fila) {
     <p v-else-if="error" class="estado estado--error">{{ error }}</p>
 
     <template v-else>
-      <p v-if="tabla.length === 0" class="estado">
-        Todavia nadie sumo XP esta semana. Resolve una leccion y sé el primero 🚀
-      </p>
+      <div v-if="tabla.length === 0" class="estado estado--vacio">
+        <SintaxMascota estado="pensando" :alto="130" alt="" />
+        <p>Todavia nadie sumo XP esta semana. Resolve una leccion y sé el primero.</p>
+      </div>
 
       <!-- Podio -->
-      <ol v-if="podio.length" class="podio">
+      <ol v-if="podio.length" class="podio anim-lista">
         <li
           v-for="(fila, i) in podio"
           :key="fila.usuarioId"
           class="podio__puesto"
           :class="[`podio__puesto--${i + 1}`, { 'podio__puesto--yo': esMio(fila) }]"
         >
-          <span class="podio__medalla" aria-hidden="true">{{ MEDALLAS_PODIO[i] }}</span>
+          <Icono class="podio__medalla" nombre="medalla" :tamano="30" :trazo="2" :style="{ color: COLORES_PODIO[i] }" />
           <div class="avatar avatar--grande">
             <img v-if="fila.avatarUrl" :src="fila.avatarUrl" :alt="''" />
-            <span v-else-if="fila.avatarEmoji">{{ fila.avatarEmoji }}</span>
+            <Icono v-else-if="fila.avatarIcono" :nombre="fila.avatarIcono" :tamano="20" />
             <span v-else>{{ inicial(fila) }}</span>
           </div>
           <p class="podio__nombre">{{ fila.nombre }}</p>
@@ -90,7 +93,7 @@ function esMio(fila) {
       </ol>
 
       <!-- Resto de la tabla -->
-      <ul v-if="resto.length" class="tabla">
+      <ul v-if="resto.length" class="tabla anim-lista">
         <li
           v-for="fila in resto"
           :key="fila.usuarioId"
@@ -100,12 +103,15 @@ function esMio(fila) {
           <span class="fila__puesto">{{ fila.puesto }}</span>
           <div class="avatar">
             <img v-if="fila.avatarUrl" :src="fila.avatarUrl" :alt="''" />
-            <span v-else-if="fila.avatarEmoji">{{ fila.avatarEmoji }}</span>
+            <Icono v-else-if="fila.avatarIcono" :nombre="fila.avatarIcono" :tamano="20" />
             <span v-else>{{ inicial(fila) }}</span>
           </div>
           <div class="fila__datos">
             <p class="fila__nombre">{{ fila.nombre }}</p>
-            <p class="fila__usuario">@{{ fila.usuario }} · 🔥 {{ fila.racha }}</p>
+            <p class="fila__usuario">
+              @{{ fila.usuario }} ·
+              <Icono nombre="llama" :tamano="12" /> {{ fila.racha }}
+            </p>
           </div>
           <span class="fila__xp">{{ fila.xpSemana }} XP</span>
         </li>
@@ -125,7 +131,7 @@ function esMio(fila) {
             :class="{ 'liga--mia': sesion.usuario?.liga?.codigo === liga.codigo }"
             :style="{ '--color-liga': liga.color }"
           >
-            <span class="liga__icono" aria-hidden="true">{{ liga.icono }}</span>
+            <Icono class="liga__icono" :nombre="liga.icono" :tamano="24" :style="{ color: liga.color }" />
             <div>
               <p class="liga__nombre">{{ liga.nombre }}</p>
               <p class="liga__requisito">desde {{ liga.desde }} XP</p>
@@ -164,6 +170,12 @@ function esMio(fila) {
   text-align: center;
   color: var(--c-gris);
   padding: var(--e-5) 0;
+}
+
+.estado--vacio {
+  display: grid;
+  justify-items: center;
+  gap: var(--e-2);
 }
 
 .estado--error {

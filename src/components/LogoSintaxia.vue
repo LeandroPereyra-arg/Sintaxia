@@ -114,6 +114,13 @@ const hayImagen = ref(true)
   display: block;
 }
 
+/* El respaldo es solo un marcador de posicion mientras falta el PNG:
+   se acota para que no domine la pantalla en los tamanios grandes. */
+.logo__respaldo {
+  max-width: 64px;
+  max-height: 64px;
+}
+
 /* Recorte cuadrado: el PNG trae el buho arriba y la palabra abajo. Como la
    imagen es mas ancha que alta, object-fit no alcanza para recortar en
    vertical, asi que se pinta de fondo y se encuadra con background-position. */

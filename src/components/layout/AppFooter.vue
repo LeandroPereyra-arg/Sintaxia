@@ -12,7 +12,8 @@ const anio = new Date().getFullYear()
         <span><strong>Sintaxia</strong> · Aprende a programar jugando</span>
       </p>
       <p class="texto-secundario">
-        Proyecto academico desarrollado con Vue 3 y Vue Router · {{ anio }}
+        <router-link :to="{ name: 'bienvenida' }" class="pie__enlace">Ver la presentacion</router-link>
+        · Proyecto academico con Vue 3 y Vue Router · {{ anio }}
       </p>
     </div>
   </footer>
@@ -33,6 +34,11 @@ const anio = new Date().getFullYear()
   gap: var(--e-2);
   justify-content: space-between;
   align-items: center;
+}
+
+.pie__enlace:hover {
+  color: var(--c-verde-osc);
+  text-decoration: underline;
 }
 
 .pie__marca {

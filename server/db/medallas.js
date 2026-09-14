@@ -17,26 +17,26 @@
  */
 export const catalogoMedallas = [
   // --- Progreso -------------------------------------------------------
-  { codigo: 'primer_paso',      nombre: 'Primer paso',      descripcion: 'Completa tu primera leccion.',           icono: '🥚',  categoria: 'progreso',   nivel: 'bronce',   requisito_tipo: 'lecciones',           requisito_valor: 1,   orden: 10 },
-  { codigo: 'aprendiz',         nombre: 'Aprendiz',         descripcion: 'Completa 5 lecciones.',                  icono: '📘',  categoria: 'progreso',   nivel: 'plata',    requisito_tipo: 'lecciones',           requisito_valor: 5,   orden: 20 },
-  { codigo: 'estudioso',        nombre: 'Estudioso',        descripcion: 'Completa 10 lecciones.',                 icono: '🎓',  categoria: 'progreso',   nivel: 'oro',      requisito_tipo: 'lecciones',           requisito_valor: 10,  orden: 30 },
-  { codigo: 'unidad_completa',  nombre: 'Unidad completa',  descripcion: 'Termina una unidad entera.',             icono: '🎖️', categoria: 'progreso',   nivel: 'plata',    requisito_tipo: 'unidades',            requisito_valor: 1,   orden: 40 },
-  { codigo: 'medio_camino',     nombre: 'Medio camino',     descripcion: 'Termina 3 unidades del curso.',          icono: '🗺️', categoria: 'progreso',   nivel: 'oro',      requisito_tipo: 'unidades',            requisito_valor: 3,   orden: 50 },
-  { codigo: 'javascript_listo', nombre: 'JavaScript listo', descripcion: 'Completa el curso de JavaScript entero.', icono: '👑', categoria: 'progreso',   nivel: 'diamante', requisito_tipo: 'curso',               requisito_valor: 1,   orden: 60 },
+  { codigo: 'primer_paso',      nombre: 'Primer paso',      descripcion: 'Completa tu primera leccion.',           icono: 'huevo',  categoria: 'progreso',   nivel: 'bronce',   requisito_tipo: 'lecciones',           requisito_valor: 1,   orden: 10 },
+  { codigo: 'aprendiz',         nombre: 'Aprendiz',         descripcion: 'Completa 5 lecciones.',                  icono: 'libro',  categoria: 'progreso',   nivel: 'plata',    requisito_tipo: 'lecciones',           requisito_valor: 5,   orden: 20 },
+  { codigo: 'estudioso',        nombre: 'Estudioso',        descripcion: 'Completa 10 lecciones.',                 icono: 'birrete',  categoria: 'progreso',   nivel: 'oro',      requisito_tipo: 'lecciones',           requisito_valor: 10,  orden: 30 },
+  { codigo: 'unidad_completa',  nombre: 'Unidad completa',  descripcion: 'Termina una unidad entera.',             icono: 'medalla', categoria: 'progreso',   nivel: 'plata',    requisito_tipo: 'unidades',            requisito_valor: 1,   orden: 40 },
+  { codigo: 'medio_camino',     nombre: 'Medio camino',     descripcion: 'Termina 3 unidades del curso.',          icono: 'mapa', categoria: 'progreso',   nivel: 'oro',      requisito_tipo: 'unidades',            requisito_valor: 3,   orden: 50 },
+  { codigo: 'javascript_listo', nombre: 'JavaScript listo', descripcion: 'Completa el curso de JavaScript entero.', icono: 'corona', categoria: 'progreso',   nivel: 'diamante', requisito_tipo: 'curso',               requisito_valor: 1,   orden: 60 },
 
   // --- Constancia -----------------------------------------------------
-  { codigo: 'racha_3',          nombre: 'Constante',        descripcion: 'Manten una racha de 3 dias.',            icono: '🔥',  categoria: 'constancia', nivel: 'bronce',   requisito_tipo: 'racha',               requisito_valor: 3,   orden: 70 },
-  { codigo: 'racha_7',          nombre: 'Semana perfecta',  descripcion: 'Practica 7 dias seguidos.',              icono: '📅',  categoria: 'constancia', nivel: 'plata',    requisito_tipo: 'racha',               requisito_valor: 7,   orden: 80 },
-  { codigo: 'racha_30',         nombre: 'Imparable',        descripcion: 'Practica 30 dias seguidos.',             icono: '⚡',  categoria: 'constancia', nivel: 'diamante', requisito_tipo: 'racha',               requisito_valor: 30,  orden: 90 },
+  { codigo: 'racha_3',          nombre: 'Constante',        descripcion: 'Manten una racha de 3 dias.',            icono: 'llama',  categoria: 'constancia', nivel: 'bronce',   requisito_tipo: 'racha',               requisito_valor: 3,   orden: 70 },
+  { codigo: 'racha_7',          nombre: 'Semana perfecta',  descripcion: 'Practica 7 dias seguidos.',              icono: 'calendario',  categoria: 'constancia', nivel: 'plata',    requisito_tipo: 'racha',               requisito_valor: 7,   orden: 80 },
+  { codigo: 'racha_30',         nombre: 'Imparable',        descripcion: 'Practica 30 dias seguidos.',             icono: 'rayo',  categoria: 'constancia', nivel: 'diamante', requisito_tipo: 'racha',               requisito_valor: 30,  orden: 90 },
 
   // --- Volumen --------------------------------------------------------
-  { codigo: 'xp_100',           nombre: 'Cien puntos',      descripcion: 'Acumula 100 XP.',                        icono: '💯',  categoria: 'volumen',    nivel: 'bronce',   requisito_tipo: 'xp',                  requisito_valor: 100, orden: 100 },
-  { codigo: 'xp_500',           nombre: 'Maratonista',      descripcion: 'Acumula 500 XP.',                        icono: '🚀',  categoria: 'volumen',    nivel: 'oro',      requisito_tipo: 'xp',                  requisito_valor: 500, orden: 110 },
-  { codigo: 'sesion_larga',     nombre: 'Sesion larga',     descripcion: 'Gana 100 XP en un mismo dia.',           icono: '🏃',  categoria: 'volumen',    nivel: 'plata',    requisito_tipo: 'xp_dia',              requisito_valor: 100, orden: 120 },
+  { codigo: 'xp_100',           nombre: 'Cien puntos',      descripcion: 'Acumula 100 XP.',                        icono: 'gema',  categoria: 'volumen',    nivel: 'bronce',   requisito_tipo: 'xp',                  requisito_valor: 100, orden: 100 },
+  { codigo: 'xp_500',           nombre: 'Maratonista',      descripcion: 'Acumula 500 XP.',                        icono: 'cohete',  categoria: 'volumen',    nivel: 'oro',      requisito_tipo: 'xp',                  requisito_valor: 500, orden: 110 },
+  { codigo: 'sesion_larga',     nombre: 'Sesion larga',     descripcion: 'Gana 100 XP en un mismo dia.',           icono: 'corredor',  categoria: 'volumen',    nivel: 'plata',    requisito_tipo: 'xp_dia',              requisito_valor: 100, orden: 120 },
 
   // --- Precision ------------------------------------------------------
-  { codigo: 'sin_errores',      nombre: 'Sin errores',      descripcion: 'Termina una leccion sin equivocarte.',   icono: '🎯',  categoria: 'precision',  nivel: 'plata',    requisito_tipo: 'lecciones_perfectas', requisito_valor: 1,   orden: 130 },
-  { codigo: 'francotirador',    nombre: 'Francotirador',    descripcion: 'Completa 5 lecciones perfectas.',        icono: '🏹',  categoria: 'precision',  nivel: 'oro',      requisito_tipo: 'lecciones_perfectas', requisito_valor: 5,   orden: 140 }
+  { codigo: 'sin_errores',      nombre: 'Sin errores',      descripcion: 'Termina una leccion sin equivocarte.',   icono: 'diana',  categoria: 'precision',  nivel: 'plata',    requisito_tipo: 'lecciones_perfectas', requisito_valor: 1,   orden: 130 },
+  { codigo: 'francotirador',    nombre: 'Francotirador',    descripcion: 'Completa 5 lecciones perfectas.',        icono: 'flechaDiana',  categoria: 'precision',  nivel: 'oro',      requisito_tipo: 'lecciones_perfectas', requisito_valor: 5,   orden: 140 }
 ]
 
 /** Color de cada nivel de medalla. El front lo usa para el anillo y el degrade. */

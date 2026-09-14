@@ -1,0 +1,118 @@
+/* =========================================================
+   Sintaxia · Animaciones compartidas
+   Todo lo que se mueve mas de una vez vive aca, para que el
+   movimiento sea coherente en toda la aplicacion.
+
+   Las duraciones siguen una escala corta a proposito: una
+   interfaz que se siente rapida anima en menos de 300 ms.
+   ========================================================= */
+
+:root {
+  --anim-rapida: 0.18s;
+  --anim-media: 0.32s;
+  --anim-lenta: 0.6s;
+  /* Curva con un pequenio rebote: da la sensacion de "juguete". */
+  --anim-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --anim-suave: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Entradas ---------- */
+@keyframes aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes subir-entrando {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes escalar-entrando {
+  from { opacity: 0; transform: scale(0.88); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes entrar-desde-abajo {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ---------- Reacciones ---------- */
+@keyframes latido {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.18); }
+  60% { transform: scale(0.96); }
+}
+
+@keyframes sacudir {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+
+@keyframes saltito {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-9px); }
+  70% { transform: translateY(0) scaleY(0.94); }
+}
+
+@keyframes titilar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* Halo que se expande, para festejar algo. */
+@keyframes onda {
+  0% { transform: scale(0.7); opacity: 0.55; }
+  100% { transform: scale(2.1); opacity: 0; }
+}
+
+/* Brillo que recorre una barra mientras carga. */
+@keyframes brillo {
+  0% { background-position: -160% 0; }
+  100% { background-position: 260% 0; }
+}
+
+/* ---------- Clases de utilidad ---------- */
+.anim-aparecer { animation: aparecer var(--anim-media) ease both; }
+.anim-subir { animation: subir-entrando var(--anim-media) var(--anim-suave) both; }
+.anim-escalar { animation: escalar-entrando var(--anim-media) var(--anim-rebote) both; }
+.anim-latido { animation: latido var(--anim-lenta) var(--anim-rebote); }
+.anim-sacudir { animation: sacudir 0.45s ease; }
+.anim-saltito { animation: saltito 0.5s var(--anim-rebote); }
+
+/**
+ * Entrada escalonada: cada hijo aparece un poco despues que el anterior.
+ * Se usa en las grillas de cursos, unidades y medallas.
+ */
+.anim-lista > * {
+  animation: subir-entrando var(--anim-media) var(--anim-suave) both;
+}
+.anim-lista > *:nth-child(1) { animation-delay: 0.02s; }
+.anim-lista > *:nth-child(2) { animation-delay: 0.06s; }
+.anim-lista > *:nth-child(3) { animation-delay: 0.1s; }
+.anim-lista > *:nth-child(4) { animation-delay: 0.14s; }
+.anim-lista > *:nth-child(5) { animation-delay: 0.18s; }
+.anim-lista > *:nth-child(6) { animation-delay: 0.22s; }
+.anim-lista > *:nth-child(7) { animation-delay: 0.26s; }
+.anim-lista > *:nth-child(8) { animation-delay: 0.3s; }
+.anim-lista > *:nth-child(n + 9) { animation-delay: 0.34s; }
+
+/* ---------- Respeto por quien prefiere menos movimiento ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .anim-aparecer,
+  .anim-subir,
+  .anim-escalar,
+  .anim-latido,
+  .anim-sacudir,
+  .anim-saltito,
+  .anim-lista > * {
+    animation: none !important;
+  }
+}

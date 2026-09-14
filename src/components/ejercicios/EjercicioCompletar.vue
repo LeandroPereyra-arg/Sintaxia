@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed, ref, watch, nextTick } from 'vue'
 
 /**
@@ -62,7 +63,8 @@ watch(
       class="completar__pista"
       @click="mostrarPista = !mostrarPista"
     >
-      {{ mostrarPista ? 'Ocultar pista' : 'Ver pista' }} 💡
+      <Icono nombre="bombita" :tamano="16" />
+      {{ mostrarPista ? 'Ocultar pista' : 'Ver pista' }}
     </button>
     <p v-if="mostrarPista && !bloqueado" class="completar__pista-texto">{{ ejercicio.pista }}</p>
   </div>

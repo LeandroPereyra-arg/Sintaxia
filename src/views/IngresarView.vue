@@ -1,8 +1,9 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
-import LogoSintaxia from '@/components/LogoSintaxia.vue'
+import SintaxMascota from '@/components/SintaxMascota.vue'
 import { useAuth } from '@/composables/useAuth.js'
 import { urlLogin } from '@/api/cliente.js'
 
@@ -59,7 +60,7 @@ async function usarDemo() {
 <template>
   <div class="ingresar seccion contenedor">
     <div class="tarjeta">
-      <LogoSintaxia variante="completo" :alto="120" alt="Sintaxia" animado />
+      <SintaxMascota estado="saludando" :alto="130" alt="" />
       <h1>Entra a Sintaxia</h1>
       <p class="texto-secundario">
         Tu progreso, tus medallas y tu racha guardados en tu cuenta, en cualquier dispositivo.
@@ -98,7 +99,7 @@ async function usarDemo() {
       <!-- Login de prueba, solo si el servidor lo habilito -->
       <div v-if="hayDemo" class="demo">
         <p class="demo__titulo">
-          <span aria-hidden="true">🧪</span> Entrar sin OAuth (modo de prueba)
+          <Icono nombre="probeta" :tamano="17" /> Entrar sin OAuth (modo de prueba)
         </p>
         <p class="demo__texto">
           El servidor tiene activado el login de prueba. Escribi un nombre y entra directamente,
@@ -129,7 +130,7 @@ async function usarDemo() {
           Tambien podes practicar sin cuenta. Cuando entres, ese progreso se sube solo.
         </p>
         <BaseBoton variante="texto" :to="{ name: 'curso-javascript' }">
-          Seguir como invitado →
+          Seguir como invitado <Icono nombre="flechaDerecha" :tamano="16" />
         </BaseBoton>
       </div>
     </div>
@@ -143,6 +144,7 @@ async function usarDemo() {
 }
 
 .tarjeta {
+  animation: escalar-entrando var(--anim-media) var(--anim-rebote) both;
   width: 100%;
   max-width: 480px;
   background: var(--c-blanco);

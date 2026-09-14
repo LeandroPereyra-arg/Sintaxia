@@ -2,10 +2,11 @@
 
 ## Mapa de vistas
 
-La aplicacion es una SPA (Single Page Application) con **8 vistas**:
+La aplicacion es una SPA (Single Page Application) con **11 vistas**:
 
 | # | Vista | Ruta | Nombre de ruta | Que muestra |
 |---|---|---|---|---|
+| 0 | Bienvenida | `/bienvenida` | `bienvenida` | Presentacion en cuatro pasos deslizables y eleccion de como entrar. Se muestra sola la primera vez. |
 | 1 | Inicio | `/` | `inicio` | Presentacion del proyecto, como funciona y boton para empezar. |
 | 2 | Cursos | `/cursos` | `cursos` | Catalogo de lenguajes con buscador y filtro por estado. |
 | 3 | Curso de JavaScript | `/cursos/javascript` | `curso-javascript` | Datos del curso y el camino de las 6 unidades. |
@@ -19,6 +20,17 @@ Las rutas usan nombres (`:to="{ name: 'leccion' }"`) para no escribir URLs a man
 plantillas: si manana cambia la direccion, se toca un solo archivo.
 
 ## Flujo de navegacion
+
+La primera vez que alguien entra, un guard del router lo manda a la bienvenida:
+
+```
+   Primera visita ──► Bienvenida ──┬── "Empezar con una cuenta" ──► Google / GitHub
+                      (4 pasos)    ├── "Seguir como invitado"  ──► Curso de JavaScript
+                                   └── "Saltar"                ──► Inicio
+```
+
+Una vez vista queda marcada en el navegador y no vuelve a aparecer; se puede
+volver a ver desde el enlace del pie de pagina.
 
 ```
                     Inicio  ─────────────────────────┐

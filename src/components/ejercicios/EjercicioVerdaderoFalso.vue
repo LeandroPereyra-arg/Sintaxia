@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 /** Ejercicio de verdadero o falso. */
 const props = defineProps({
   ejercicio: { type: Object, required: true },
@@ -9,8 +10,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const opciones = [
-  { valor: true, texto: 'Verdadero', icono: '✔️' },
-  { valor: false, texto: 'Falso', icono: '✖️' }
+  { valor: true, texto: 'Verdadero', icono: 'check' },
+  { valor: false, texto: 'Falso', icono: 'equis' }
 ]
 
 function elegir(valor) {
@@ -41,7 +42,7 @@ function clasesDe(valor) {
       :disabled="bloqueado"
       @click="elegir(opcion.valor)"
     >
-      <span class="vf__icono" aria-hidden="true">{{ opcion.icono }}</span>
+      <Icono class="vf__icono" :nombre="opcion.icono" :tamano="34" :trazo="2.6" />
       {{ opcion.texto }}
     </button>
   </div>
@@ -87,6 +88,7 @@ function clasesDe(valor) {
 }
 
 .vf--correcta {
+  animation: saltito 0.45s var(--anim-rebote);
   border-color: var(--c-verde);
   background: var(--c-verde-suave);
   box-shadow: 0 4px 0 var(--c-verde);
@@ -94,6 +96,7 @@ function clasesDe(valor) {
 }
 
 .vf--incorrecta {
+  animation: sacudir 0.45s ease;
   border-color: var(--c-rojo);
   background: var(--c-rojo-suave);
   box-shadow: 0 4px 0 var(--c-rojo);

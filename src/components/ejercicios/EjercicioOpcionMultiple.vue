@@ -91,6 +91,7 @@ function clasesDe(opcion) {
 }
 
 .opcion--correcta {
+  animation: saltito 0.45s var(--anim-rebote);
   border-color: var(--c-verde);
   background: var(--c-verde-suave);
   box-shadow: 0 4px 0 var(--c-verde);
@@ -98,6 +99,7 @@ function clasesDe(opcion) {
 }
 
 .opcion--incorrecta {
+  animation: sacudir 0.45s ease;
   border-color: var(--c-rojo);
   background: var(--c-rojo-suave);
   box-shadow: 0 4px 0 var(--c-rojo);

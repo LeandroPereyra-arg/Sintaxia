@@ -8,7 +8,7 @@ export const leccionesUnidad6 = [
     numero: 1,
     titulo: 'Buscar y cambiar elementos',
     descripcion: 'El DOM: como llegar al HTML desde JavaScript.',
-    icono: '🌐',
+    icono: 'globo',
     xp: 25,
     ejercicios: [
       {
@@ -48,7 +48,7 @@ export const leccionesUnidad6 = [
     numero: 2,
     titulo: 'Eventos',
     descripcion: 'Responder a los clics y a las acciones del usuario.',
-    icono: '🖱️',
+    icono: 'puntero',
     xp: 25,
     ejercicios: [
       {

@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
@@ -47,7 +48,7 @@ function abrirLeccion(leccion) {
       </nav>
 
       <header class="cabecera" :style="{ '--color-unidad': unidad.color }">
-        <span class="cabecera__icono" aria-hidden="true">{{ unidad.icono }}</span>
+        <Icono class="cabecera__icono" :nombre="unidad.icono" :tamano="40" :trazo="1.9" />
         <div>
           <p class="cabecera__numero">Unidad {{ unidad.numero }}</p>
           <h1>{{ unidad.titulo }}</h1>
@@ -64,14 +65,17 @@ function abrirLeccion(leccion) {
       </header>
 
       <p v-if="bloqueada" class="aviso">
-        🔒 Esta unidad todavia esta bloqueada. Termina la unidad anterior para abrirla.
+        <Icono nombre="candado" :tamano="17" /> Esta unidad todavia esta bloqueada. Termina la unidad anterior para abrirla.
       </p>
 
-      <ol class="lecciones">
+      <ol class="lecciones anim-lista">
         <li v-for="leccion in listaLecciones" :key="leccion.id" class="leccion">
-          <span class="leccion__icono" aria-hidden="true">
-            {{ leccion.completada ? '✅' : bloqueada ? '🔒' : leccion.icono }}
-          </span>
+          <Icono
+            class="leccion__icono"
+            :nombre="leccion.completada ? 'checkCirculo' : bloqueada ? 'candado' : leccion.icono"
+            :tamano="26"
+            :trazo="2.1"
+          />
 
           <div class="leccion__texto">
             <h3>{{ leccion.numero }}. {{ leccion.titulo }}</h3>
@@ -96,7 +100,7 @@ function abrirLeccion(leccion) {
       </ol>
 
       <BaseBoton variante="texto" :to="{ name: 'curso-javascript' }">
-        ← Volver al curso
+        <Icono nombre="flechaIzquierda" :tamano="16" /> Volver al curso
       </BaseBoton>
     </template>
 
