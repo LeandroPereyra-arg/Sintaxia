@@ -53,6 +53,31 @@ Requiere **Node 18+** y **MySQL 8** (o MariaDB 10.6+). Con `PERMITIR_LOGIN_DEMO=
 
 ---
 
+## El logo
+
+El logo va en **`public/sintaxia.png`**. Con solo dejar el archivo ahi aparece en la cabecera,
+el pie, la portada, la pantalla de ingreso, el 404 y como favicon: no hay que tocar codigo.
+
+Mientras ese archivo no exista, la app dibuja un logo de respaldo en SVG, asi que nunca se ve
+una imagen rota.
+
+El componente `LogoSintaxia.vue` tiene dos variantes:
+
+| Variante | Que muestra | Donde se usa |
+|---|---|---|
+| `icono` | Recorte cuadrado centrado en el buho | Cabecera, pie, 404 |
+| `completo` | La imagen entera, con la palabra "Sintaxia" | Portada y pantalla de ingreso |
+
+El recorte de la variante `icono` se ajusta con dos variables CSS, por si el buho queda
+descentrado con otra version del logo:
+
+```css
+.logo--icono {
+  --logo-zoom: 263%;    /* cuanto se agranda la imagen */
+  --logo-foco-y: 29%;   /* que franja vertical queda a la vista */
+}
+```
+
 ## Documentacion del trabajo practico
 
 | Documento | Contenido |

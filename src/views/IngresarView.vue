@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
+import LogoSintaxia from '@/components/LogoSintaxia.vue'
 import { useAuth } from '@/composables/useAuth.js'
 import { urlLogin } from '@/api/cliente.js'
 
@@ -58,7 +59,7 @@ async function usarDemo() {
 <template>
   <div class="ingresar seccion contenedor">
     <div class="tarjeta">
-      <span class="tarjeta__logo" aria-hidden="true">&lt;/&gt;</span>
+      <LogoSintaxia variante="completo" :alto="120" alt="Sintaxia" animado />
       <h1>Entra a Sintaxia</h1>
       <p class="texto-secundario">
         Tu progreso, tus medallas y tu racha guardados en tu cuenta, en cualquier dispositivo.
@@ -152,18 +153,6 @@ async function usarDemo() {
   gap: var(--e-2);
   justify-items: center;
   text-align: center;
-}
-
-.tarjeta__logo {
-  display: grid;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  border-radius: var(--r-md);
-  background: var(--c-verde);
-  color: var(--c-blanco);
-  font-family: var(--f-codigo);
-  font-weight: 700;
 }
 
 .tarjeta h1 {

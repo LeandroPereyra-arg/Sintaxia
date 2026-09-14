@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
+import LogoSintaxia from '@/components/LogoSintaxia.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import { cursos, ESTADO_CURSO } from '@/data/cursos.js'
 import { lecciones } from '@/data/lecciones/index.js'
@@ -63,6 +64,7 @@ function comenzar() {
     <section class="portada">
       <div class="contenedor portada__interior">
         <div class="portada__texto">
+          <LogoSintaxia variante="completo" :alto="150" alt="Sintaxia" animado class="portada__logo" />
           <p class="portada__cinta">Aprende a programar jugando</p>
           <h1>
             Un lenguaje nuevo,<br />
@@ -180,6 +182,10 @@ function comenzar() {
   grid-template-columns: 1.1fr 0.9fr;
   gap: var(--e-5);
   align-items: center;
+}
+
+.portada__logo {
+  margin-bottom: var(--e-2);
 }
 
 .portada__cinta {

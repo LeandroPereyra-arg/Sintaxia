@@ -172,9 +172,22 @@ Se usan **emojis del sistema** en vez de una libreria de iconos. Es una decision
 Todos los emojis decorativos llevan `aria-hidden="true"` para que no ensucien la lectura con
 lector de pantalla; la informacion siempre esta tambien en texto.
 
-El logo es el simbolo `</>` en blanco sobre un cuadrado verde de esquinas redondeadas, en
-tipografia monoespaciada: se entiende que es programacion sin decir una palabra y funciona
-como favicon a 16 px.
+### El logo
+
+La marca es un **buho verde con una notebook que muestra `</>`**, acompanado de la palabra
+"Sintaxia".
+
+- **El buho** es el guino directo al genero: es la mascota que uno espera en una app de
+  aprender por lecciones cortas. Da cara y personalidad a algo que, si no, seria una grilla
+  de tarjetas.
+- **La notebook con `</>`** es lo que separa a Sintaxia de una app de idiomas: en un solo
+  vistazo se entiende que lo que se aprende es programacion.
+- **El verde** es el mismo de la paleta, asi que el logo no pelea con el resto de la
+  interfaz: el boton principal, el acierto y la marca son todos el mismo color.
+
+El archivo vive en `public/sintaxia.png` y lo consume el componente `LogoSintaxia.vue`, que
+lo muestra recortado en cuadrado (solo el buho) en la cabecera y entero en la portada. Si el
+archivo falta, el componente dibuja un respaldo en SVG para no mostrar nunca una imagen rota.
 
 ---
 
