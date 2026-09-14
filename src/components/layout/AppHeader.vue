@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import LogoSintaxia from '@/components/LogoSintaxia.vue'
 import { useAuth } from '@/composables/useAuth.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
@@ -55,7 +56,7 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
   <header class="cabecera">
     <div class="cabecera__interior contenedor">
       <router-link :to="{ name: 'inicio' }" class="marca" @click="cerrarTodo">
-        <span class="marca__logo" aria-hidden="true">&lt;/&gt;</span>
+        <LogoSintaxia variante="icono" :alto="36" alt="" class="marca__logo" />
         <span class="marca__nombre">Sintaxia</span>
       </router-link>
 
@@ -164,15 +165,11 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
 }
 
 .marca__logo {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-sm);
-  background: var(--c-verde);
-  color: var(--c-blanco);
-  font-family: var(--f-codigo);
-  font-size: var(--t-sm);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.marca:hover .marca__logo {
+  transform: rotate(-6deg) scale(1.08);
 }
 
 .nav {

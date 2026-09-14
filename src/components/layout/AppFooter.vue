@@ -1,4 +1,6 @@
 <script setup>
+import LogoSintaxia from '@/components/LogoSintaxia.vue'
+
 const anio = new Date().getFullYear()
 </script>
 
@@ -6,7 +8,8 @@ const anio = new Date().getFullYear()
   <footer class="pie">
     <div class="contenedor pie__interior">
       <p class="pie__marca">
-        <strong>Sintaxia</strong> · Aprende a programar jugando
+        <LogoSintaxia variante="icono" :alto="26" alt="" />
+        <span><strong>Sintaxia</strong> · Aprende a programar jugando</span>
       </p>
       <p class="texto-secundario">
         Proyecto academico desarrollado con Vue 3 y Vue Router · {{ anio }}
@@ -34,5 +37,8 @@ const anio = new Date().getFullYear()
 
 .pie__marca {
   font-family: var(--f-titulo);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 </style>
