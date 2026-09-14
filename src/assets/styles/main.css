@@ -1,0 +1,175 @@
+@import './variables.css';
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--f-texto);
+  font-size: var(--t-base);
+  color: var(--c-tinta);
+  background-color: var(--c-fondo);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--f-titulo);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--c-tinta);
+}
+
+h1 {
+  font-size: var(--t-2xl);
+}
+h2 {
+  font-size: var(--t-xl);
+}
+h3 {
+  font-size: var(--t-lg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul {
+  list-style: none;
+}
+
+code,
+pre {
+  font-family: var(--f-codigo);
+}
+
+/* ---------- Utilidades de layout ---------- */
+.contenedor {
+  width: 100%;
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding-inline: var(--e-3);
+}
+
+.seccion {
+  padding-block: var(--e-6);
+}
+
+.texto-secundario {
+  color: var(--c-gris);
+}
+
+.centrado {
+  text-align: center;
+}
+
+/* ---------- Bloques de codigo ---------- */
+.bloque-codigo {
+  background: var(--c-noche);
+  color: #e8eef4;
+  font-family: var(--f-codigo);
+  font-size: var(--t-sm);
+  padding: var(--e-3);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.codigo-inline {
+  background: var(--c-violeta-suave);
+  color: var(--c-violeta-osc);
+  font-family: var(--f-codigo);
+  font-size: 0.92em;
+  padding: 0.1em 0.35em;
+  border-radius: var(--r-sm);
+}
+
+/* ---------- Etiquetas de estado ---------- */
+.etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: var(--t-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.25em 0.7em;
+  border-radius: var(--r-full);
+}
+
+.etiqueta--disponible {
+  background: var(--c-azul-suave);
+  color: var(--c-azul-osc);
+}
+.etiqueta--completada {
+  background: var(--c-verde-suave);
+  color: var(--c-verde-osc);
+}
+.etiqueta--bloqueada {
+  background: var(--c-borde);
+  color: var(--c-gris);
+}
+.etiqueta--proximamente {
+  background: var(--c-amarillo-suave);
+  color: var(--c-amarillo-osc);
+}
+
+/* ---------- Transicion de rutas ---------- */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --t-2xl: 2rem;
+    --t-xl: 1.5rem;
+    --t-lg: 1.25rem;
+  }
+  .seccion {
+    padding-block: var(--e-5);
+  }
+}
