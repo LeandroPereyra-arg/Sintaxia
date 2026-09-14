@@ -78,6 +78,38 @@ descentrado con otra version del logo:
 }
 ```
 
+## Sintax, la mascota
+
+El buho del logo aparece en toda la aplicacion y **reacciona a lo que pasa**: celebra una
+leccion perfecta, se enoja cuando se pierden las tres vidas, se confunde en el 404 y duerme
+si hace rato que no practicas.
+
+Las imagenes van en **`public/sintax/`**, una por estado de animo:
+
+| Archivo | Cuando aparece |
+|---|---|
+| `normal.png` | Por defecto, y reemplaza a cualquiera que falte |
+| `saludando.png` | Portada, pantalla de ingreso e invitacion a crear cuenta |
+| `pensando.png` | Pantallas vacias |
+| `celebrando.png` | Leccion perfecta y racha de 3 dias o mas |
+| `sorprendido.png` | Al desbloquear algo nuevo |
+| `confundido.png` | Pagina 404 y resultados flojos |
+| `enojado.png` | Cuando se pierden las tres vidas |
+| `dormido.png` | Cuando todavia no empezaste |
+
+Cada estado trae su propia animacion (flota, saluda, festeja, tiembla, duerme). Si falta un
+archivo se usa `normal.png`; si tampoco esta, se cae al logo. Nunca queda una imagen rota.
+
+## Iconos
+
+59 iconos SVG dibujados dentro del proyecto (`src/assets/iconos.js`), sin librerias ni CDN.
+Heredan el color del texto, asi que cambian solos segun el contexto.
+
+```vue
+<Icono nombre="llama" :tamano="16" />
+<Icono nombre="trofeo" :tamano="40" etiqueta="Curso completado" />
+```
+
 ## Documentacion del trabajo practico
 
 | Documento | Contenido |

@@ -1,9 +1,12 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import MedallaCard from '@/components/MedallaCard.vue'
+import SintaxMascota from '@/components/SintaxMascota.vue'
+import { useContador } from '@/composables/useContador.js'
 import { obtenerLeccion, leccionesDeUnidad } from '@/data/lecciones/index.js'
 import { obtenerUnidad } from '@/data/unidades.js'
 import { useProgreso } from '@/composables/useProgreso.js'
@@ -31,11 +34,23 @@ const porcentaje = computed(() =>
 
 const sinVidas = computed(() => vidas.value <= 0)
 
+/** Sintax reacciona segun como te fue. */
+const animoSintax = computed(() => {
+  if (sinVidas.value) return 'enojado'
+  if (porcentaje.value === 100) return 'celebrando'
+  if (porcentaje.value >= 60) return 'normal'
+  return 'confundido'
+})
+
+const xpAnimado = useContador(xpGanado)
+const aciertosAnimados = useContador(aciertos, { duracion: 700 })
+const porcentajeAnimado = useContador(porcentaje, { duracion: 700 })
+
 const mensaje = computed(() => {
-  if (sinVidas.value) return { icono: '💔', titulo: 'Te quedaste sin vidas', texto: 'La leccion no quedo completada y no suma XP. Volve a intentarlo: ahora ya sabes las respuestas.' }
-  if (porcentaje.value === 100) return { icono: '🏆', titulo: 'Leccion perfecta!', texto: 'Respondiste todo bien. Asi se aprende a programar.' }
-  if (porcentaje.value >= 60) return { icono: '🎉', titulo: 'Leccion completada!', texto: 'Muy buen trabajo. Repasa lo que fallaste y segui avanzando.' }
-  return { icono: '💪', titulo: 'Leccion terminada', texto: 'Te costo un poco: repetir la leccion es la mejor forma de fijarlo.' }
+  if (sinVidas.value) return { icono: 'corazonRoto', titulo: 'Te quedaste sin vidas', texto: 'La leccion no quedo completada y no suma XP. Volve a intentarlo: ahora ya sabes las respuestas.' }
+  if (porcentaje.value === 100) return { icono: 'trofeo', titulo: 'Leccion perfecta!', texto: 'Respondiste todo bien. Asi se aprende a programar.' }
+  if (porcentaje.value >= 60) return { icono: 'chispas', titulo: 'Leccion completada!', texto: 'Muy buen trabajo. Repasa lo que fallaste y segui avanzando.' }
+  return { icono: 'pesa', titulo: 'Leccion terminada', texto: 'Te costo un poco: repetir la leccion es la mejor forma de fijarlo.' }
 })
 
 /** Siguiente leccion de la misma unidad, si queda alguna. */
@@ -80,22 +95,23 @@ function siguiente() {
 <template>
   <div class="resultados seccion contenedor">
     <div v-if="leccion" class="tarjeta">
-      <span class="tarjeta__icono" aria-hidden="true">{{ mensaje.icono }}</span>
+      <SintaxMascota :estado="animoSintax" :alto="130" alt="" class="tarjeta__sintax" />
+      <Icono class="tarjeta__icono" :nombre="mensaje.icono" :tamano="46" :trazo="1.8" />
       <h1>{{ mensaje.titulo }}</h1>
       <p class="texto-secundario">{{ mensaje.texto }}</p>
       <p class="tarjeta__leccion">{{ leccion.titulo }}</p>
 
       <ul class="marcadores">
         <li class="marcador marcador--xp">
-          <span class="marcador__valor">+{{ xpGanado }}</span>
+          <span class="marcador__valor">+{{ xpAnimado }}</span>
           <span class="marcador__texto">XP ganados</span>
         </li>
         <li class="marcador marcador--acierto">
-          <span class="marcador__valor">{{ aciertos }}/{{ total }}</span>
+          <span class="marcador__valor">{{ aciertosAnimados }}/{{ total }}</span>
           <span class="marcador__texto">Respuestas correctas</span>
         </li>
         <li class="marcador marcador--precision">
-          <span class="marcador__valor">{{ porcentaje }} %</span>
+          <span class="marcador__valor">{{ porcentajeAnimado }} %</span>
           <span class="marcador__texto">Precision</span>
         </li>
         <li class="marcador marcador--racha">
@@ -126,7 +142,7 @@ function siguiente() {
           :etiqueta="`Progreso de la unidad ${unidad.numero}`"
         />
         <p v-if="unidadTerminada" class="unidad__logro">
-          🎖️ Desbloqueaste la unidad siguiente. Segui asi!
+          <Icono nombre="medalla" :tamano="17" /> Desbloqueaste la unidad siguiente. Segui asi!
         </p>
       </div>
 
@@ -141,7 +157,9 @@ function siguiente() {
       </div>
 
       <p class="pie-nota">
-        <router-link :to="{ name: 'perfil' }">Ver mi progreso completo →</router-link>
+        <router-link :to="{ name: 'perfil' }">
+          Ver mi progreso completo <Icono nombre="flechaDerecha" :tamano="15" />
+        </router-link>
       </p>
     </div>
 
@@ -151,6 +169,7 @@ function siguiente() {
 
 <style scoped>
 .tarjeta {
+  animation: escalar-entrando var(--anim-media) var(--anim-rebote) both;
   max-width: 640px;
   margin-inline: auto;
   text-align: center;
@@ -163,8 +182,13 @@ function siguiente() {
   justify-items: center;
 }
 
+.tarjeta__sintax {
+  margin-bottom: calc(var(--e-2) * -1);
+}
+
 .tarjeta__icono {
-  font-size: 3.5rem;
+  animation: latido var(--anim-lenta) var(--anim-rebote);
+  color: var(--c-verde-osc);
 }
 
 .tarjeta__leccion {
@@ -196,6 +220,7 @@ function siguiente() {
   font-family: var(--f-titulo);
   font-weight: 900;
   font-size: var(--t-lg);
+  font-variant-numeric: tabular-nums;
 }
 
 .marcador__texto {

@@ -8,7 +8,7 @@ export const leccionesUnidad2 = [
     numero: 1,
     titulo: 'Operadores basicos',
     descripcion: 'Sumar, restar, concatenar y el resto de la division.',
-    icono: '➗',
+    icono: 'division',
     xp: 15,
     ejercicios: [
       {
@@ -57,7 +57,7 @@ export const leccionesUnidad2 = [
     numero: 2,
     titulo: 'Comparaciones',
     descripcion: 'Diferencias entre == y ===, mayor, menor y distinto.',
-    icono: '⚖️',
+    icono: 'balanza',
     xp: 15,
     ejercicios: [
       {
@@ -98,7 +98,7 @@ export const leccionesUnidad2 = [
     numero: 3,
     titulo: 'Condicionales if / else',
     descripcion: 'Elegir caminos segun una condicion.',
-    icono: '🔀',
+    icono: 'bifurcacion',
     xp: 20,
     ejercicios: [
       {

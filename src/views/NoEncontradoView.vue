@@ -1,11 +1,11 @@
 <script setup>
 import BaseBoton from '@/components/BaseBoton.vue'
-import LogoSintaxia from '@/components/LogoSintaxia.vue'
+import SintaxMascota from '@/components/SintaxMascota.vue'
 </script>
 
 <template>
   <div class="error seccion contenedor centrado">
-    <LogoSintaxia variante="icono" :alto="88" alt="" animado />
+    <SintaxMascota estado="confundido" :alto="150" alt="" />
     <pre class="bloque-codigo error__codigo">throw new Error("404: pagina no encontrada")</pre>
     <h1>Esta ruta no existe</h1>
     <p class="texto-secundario">

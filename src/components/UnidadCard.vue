@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
 import { ESTADO_UNIDAD, ETIQUETA_ESTADO_UNIDAD } from '@/data/unidades.js'
 import BaseBoton from '@/components/BaseBoton.vue'
@@ -42,9 +43,9 @@ function seleccionar() {
       :style="{ background: bloqueada ? 'var(--c-gris-claro)' : unidad.color }"
       aria-hidden="true"
     >
-      <span v-if="bloqueada">🔒</span>
-      <span v-else-if="completada">✓</span>
-      <span v-else>{{ unidad.icono }}</span>
+      <Icono v-if="bloqueada" nombre="candado" :tamano="26" :trazo="2.4" />
+      <Icono v-else-if="completada" nombre="check" :tamano="28" :trazo="3" />
+      <Icono v-else :nombre="unidad.icono" :tamano="28" :trazo="2.2" />
     </div>
 
     <div class="unidad__cuerpo">

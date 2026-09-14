@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import LogoSintaxia from '@/components/LogoSintaxia.vue'
@@ -85,10 +86,10 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
 
       <ul class="indicadores">
         <li class="indicador indicador--racha" :title="`Racha de ${racha} dias`">
-          <span aria-hidden="true">🔥</span>{{ racha }}
+          <Icono nombre="llama" :tamano="16" />{{ racha }}
         </li>
         <li class="indicador indicador--xp" :title="`${xp} puntos de experiencia`">
-          <span aria-hidden="true">⚡</span>{{ xp }}
+          <Icono nombre="rayo" :tamano="16" />{{ xp }}
         </li>
       </ul>
 
@@ -100,8 +101,8 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
           aria-label="Abrir menu de la cuenta"
           @click="menuUsuario = !menuUsuario"
         >
-          <img v-if="usuario.avatarUrl && !usuario.avatarEmoji" :src="usuario.avatarUrl" alt="" />
-          <span v-else-if="usuario.avatarEmoji">{{ usuario.avatarEmoji }}</span>
+          <img v-if="usuario.avatarUrl && !usuario.avatarIcono" :src="usuario.avatarUrl" alt="" />
+          <Icono v-else-if="usuario.avatarIcono" :nombre="usuario.avatarIcono" :tamano="21" />
           <span v-else>{{ inicial }}</span>
         </button>
 
@@ -109,7 +110,7 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
           <p class="menu__nombre">{{ usuario.nombre }}</p>
           <p class="menu__usuario">@{{ usuario.usuario }}</p>
           <p v-if="usuario.liga" class="menu__liga" :style="{ '--color-liga': usuario.liga.color }">
-            <span aria-hidden="true">{{ usuario.liga.icono }}</span> Liga {{ usuario.liga.nombre }}
+            <Icono :nombre="usuario.liga.icono" :tamano="14" /> Liga {{ usuario.liga.nombre }}
           </p>
           <hr />
           <router-link :to="{ name: 'perfil' }" class="menu__opcion" @click="cerrarTodo">
@@ -214,6 +215,17 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
 .indicador--racha {
   background: var(--c-rojo-suave);
   color: var(--c-rojo-osc);
+}
+
+/* La llama de la racha late despacio: recuerda que hay algo que mantener. */
+.indicador--racha :deep(.icono) {
+  animation: latido 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicador--racha :deep(.icono) {
+    animation: none;
+  }
 }
 .indicador--xp {
   background: var(--c-amarillo-suave);

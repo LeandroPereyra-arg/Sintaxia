@@ -8,7 +8,7 @@ export const leccionesUnidad5 = [
     numero: 1,
     titulo: 'Arrays',
     descripcion: 'Listas ordenadas de valores y sus metodos basicos.',
-    icono: '📦',
+    icono: 'caja',
     xp: 20,
     ejercicios: [
       {
@@ -49,7 +49,7 @@ export const leccionesUnidad5 = [
     numero: 2,
     titulo: 'Objetos',
     descripcion: 'Agrupar datos relacionados con propiedades con nombre.',
-    icono: '🗂️',
+    icono: 'carpetas',
     xp: 25,
     ejercicios: [
       {

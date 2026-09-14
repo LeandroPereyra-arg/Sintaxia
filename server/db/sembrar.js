@@ -39,11 +39,11 @@ async function sembrar() {
   }
 
   const [[fila]] = await pool.query('SELECT COUNT(*) AS total FROM medallas')
-  console.log(`✔ ${fila.total} medallas en el catalogo`)
+  console.log(`[OK] ${fila.total} medallas en el catalogo`)
   await pool.end()
 }
 
 sembrar().catch((error) => {
-  console.error('✖ No se pudo sembrar el catalogo:', error.message)
+  console.error('[ERROR] No se pudo sembrar el catalogo:', error.message)
   process.exit(1)
 })

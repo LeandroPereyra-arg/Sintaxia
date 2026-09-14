@@ -1,8 +1,10 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
 import LogoSintaxia from '@/components/LogoSintaxia.vue'
+import SintaxMascota from '@/components/SintaxMascota.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import { cursos, ESTADO_CURSO } from '@/data/cursos.js'
 import { lecciones } from '@/data/lecciones/index.js'
@@ -17,25 +19,25 @@ const cursosDisponibles = computed(
 
 const beneficios = [
   {
-    icono: '🧠',
+    icono: 'cerebro',
     titulo: 'Lecciones de 5 minutos',
     texto:
       'Micro-lecciones con teoria minima y practica inmediata. Aprendes haciendo, no leyendo manuales.'
   },
   {
-    icono: '🎮',
+    icono: 'joystick',
     titulo: 'Ejercicios interactivos',
     texto:
       'Opcion multiple, verdadero o falso, completar codigo y ordenar bloques: cuatro formas de fijar lo aprendido.'
   },
   {
-    icono: '🔥',
+    icono: 'llama',
     titulo: 'Rachas y XP',
     texto:
       'Cada leccion suma experiencia y mantiene viva tu racha diaria. Volver todos los dias se vuelve un habito.'
   },
   {
-    icono: '🗺️',
+    icono: 'mapa',
     titulo: 'Un camino claro',
     texto:
       'Las unidades se desbloquean de a una: siempre sabes cual es tu proximo paso y cuanto te falta.'
@@ -64,7 +66,7 @@ function comenzar() {
     <section class="portada">
       <div class="contenedor portada__interior">
         <div class="portada__texto">
-          <LogoSintaxia variante="completo" :alto="150" alt="Sintaxia" animado class="portada__logo" />
+          <LogoSintaxia variante="completo" :alto="120" alt="Sintaxia" animado class="portada__logo" />
           <p class="portada__cinta">Aprende a programar jugando</p>
           <h1>
             Un lenguaje nuevo,<br />
@@ -91,12 +93,13 @@ function comenzar() {
           </ul>
         </div>
 
-        <!-- Mock de la pantalla de ejercicio -->
+        <!-- Sintax saluda al lado del ejemplo de ejercicio -->
         <aside class="demo" aria-label="Ejemplo de ejercicio">
+          <SintaxMascota estado="saludando" :alto="110" alt="" class="demo__sintax" />
           <div class="demo__barra">
-            <span class="demo__cerrar" aria-hidden="true">✕</span>
+            <Icono class="demo__cerrar" nombre="cerrar" :tamano="15" />
             <BarraProgreso :valor="60" alto="10px" etiqueta="Progreso de ejemplo" />
-            <span class="demo__vidas" aria-hidden="true">❤️ 3</span>
+            <span class="demo__vidas"><Icono nombre="corazon" :tamano="15" /> 3</span>
           </div>
           <p class="demo__consigna">Que palabra clave declara una constante?</p>
           <pre class="bloque-codigo">___ PI = 3.14</pre>
@@ -105,7 +108,7 @@ function comenzar() {
             <li>let</li>
             <li class="demo__opciones--ok">const</li>
           </ul>
-          <p class="demo__pie">✅ Muy bien! +10 XP</p>
+          <p class="demo__pie"><Icono nombre="checkCirculo" :tamano="17" /> Muy bien! +10 XP</p>
         </aside>
       </div>
     </section>
@@ -114,7 +117,7 @@ function comenzar() {
     <section v-if="totalLeccionesCompletadas > 0" class="seccion contenedor">
       <div class="progreso">
         <div>
-          <h2>Hola de nuevo, {{ estado.nombre }} 👋</h2>
+          <h2>Hola de nuevo, {{ estado.nombre }}</h2>
           <p class="texto-secundario">
             Llevas {{ totalLeccionesCompletadas }} de {{ lecciones.length }} lecciones del curso de
             JavaScript.
@@ -135,9 +138,9 @@ function comenzar() {
         La misma mecanica que funciona para los idiomas, aplicada a los lenguajes de programacion.
       </p>
 
-      <ul class="beneficios">
+      <ul class="beneficios anim-lista">
         <li v-for="beneficio in beneficios" :key="beneficio.titulo" class="beneficio">
-          <span class="beneficio__icono" aria-hidden="true">{{ beneficio.icono }}</span>
+          <Icono class="beneficio__icono" :nombre="beneficio.icono" :tamano="30" :trazo="2.1" />
           <h3>{{ beneficio.titulo }}</h3>
           <p class="texto-secundario">{{ beneficio.texto }}</p>
         </li>
@@ -148,7 +151,7 @@ function comenzar() {
     <section class="seccion pasos-seccion">
       <div class="contenedor">
         <h2 class="centrado">Como funciona</h2>
-        <ol class="pasos">
+        <ol class="pasos anim-lista">
           <li v-for="paso in pasos" :key="paso.numero" class="paso">
             <span class="paso__numero">{{ paso.numero }}</span>
             <h3>{{ paso.titulo }}</h3>
@@ -161,6 +164,7 @@ function comenzar() {
     <!-- Llamada final -->
     <section class="seccion contenedor">
       <div class="cta">
+        <SintaxMascota estado="celebrando" :alto="120" alt="" />
         <h2>Tu primera leccion te espera</h2>
         <p>Empeza por las variables de JavaScript. Son cuatro ejercicios y no lleva ni 5 minutos.</p>
         <BaseBoton variante="secundario" tamano="grande" @click="comenzar">
@@ -236,6 +240,7 @@ function comenzar() {
 
 /* Mock de ejercicio */
 .demo {
+  position: relative;
   background: var(--c-blanco);
   border: 2px solid var(--c-borde);
   border-radius: var(--r-xl);
@@ -244,6 +249,13 @@ function comenzar() {
   display: flex;
   flex-direction: column;
   gap: var(--e-2);
+}
+
+.demo__sintax {
+  position: absolute;
+  right: -18px;
+  top: -86px;
+  pointer-events: none;
 }
 
 .demo__barra {

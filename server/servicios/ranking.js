@@ -10,10 +10,10 @@ import { consultar } from '../db/pool.js'
  */
 
 export const LIGAS = [
-  { codigo: 'bronce',   nombre: 'Bronce',   icono: '🥉', color: '#c8834a', desde: 0 },
-  { codigo: 'plata',    nombre: 'Plata',    icono: '🥈', color: '#9aa7b4', desde: 250 },
-  { codigo: 'oro',      nombre: 'Oro',      icono: '🥇', color: '#e8b923', desde: 750 },
-  { codigo: 'diamante', nombre: 'Diamante', icono: '💎', color: '#4fc3e8', desde: 1500 }
+  { codigo: 'bronce',   nombre: 'Bronce',   icono: 'medalla', color: '#c8834a', desde: 0 },
+  { codigo: 'plata',    nombre: 'Plata',    icono: 'medalla', color: '#9aa7b4', desde: 250 },
+  { codigo: 'oro',      nombre: 'Oro',      icono: 'medalla', color: '#e8b923', desde: 750 },
+  { codigo: 'diamante', nombre: 'Diamante', icono: 'gema', color: '#4fc3e8', desde: 1500 }
 ]
 
 /** Liga que le corresponde a un XP total. */
@@ -41,14 +41,14 @@ export async function rankingSemanal(limite = 50) {
 
   // WEEKDAY() devuelve 0 para lunes, asi que esto ubica el lunes de esta semana.
   const filas = await consultar(
-    `SELECT u.id, u.usuario, u.nombre, u.avatar_url, u.avatar_emoji, u.pais,
+    `SELECT u.id, u.usuario, u.nombre, u.avatar_url, u.avatar_icono, u.pais,
             u.xp_total, u.racha_actual,
             COALESCE(SUM(a.xp), 0) AS xp_semana
        FROM usuarios u
        LEFT JOIN actividad_diaria a
               ON a.usuario_id = u.id
              AND a.fecha >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
-      GROUP BY u.id, u.usuario, u.nombre, u.avatar_url, u.avatar_emoji, u.pais,
+      GROUP BY u.id, u.usuario, u.nombre, u.avatar_url, u.avatar_icono, u.pais,
                u.xp_total, u.racha_actual
       HAVING xp_semana > 0
       ORDER BY xp_semana DESC, u.xp_total DESC, u.usuario ASC
@@ -61,7 +61,7 @@ export async function rankingSemanal(limite = 50) {
     usuario: fila.usuario,
     nombre: fila.nombre,
     avatarUrl: fila.avatar_url,
-    avatarEmoji: fila.avatar_emoji,
+    avatarIcono: fila.avatar_icono,
     pais: fila.pais,
     xpSemana: Number(fila.xp_semana),
     xpTotal: Number(fila.xp_total),

@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   nombre          VARCHAR(80)     NOT NULL,
   email           VARCHAR(190)    NOT NULL,
   avatar_url      VARCHAR(500)        NULL,               -- foto que devuelve Google/GitHub
-  avatar_emoji    VARCHAR(16)         NULL,               -- alternativa elegida en la app
+  avatar_icono    VARCHAR(40)         NULL,               -- icono elegido dentro de la app
   bio             VARCHAR(160)        NULL,
   pais            CHAR(2)             NULL,               -- codigo ISO, ej: AR
   xp_total        INT UNSIGNED    NOT NULL DEFAULT 0,

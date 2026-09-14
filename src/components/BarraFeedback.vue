@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 
 /**
@@ -19,7 +20,7 @@ defineEmits(['continuar'])
   <div class="feedback" :class="correcta ? 'feedback--ok' : 'feedback--mal'" role="status">
     <div class="feedback__interior contenedor">
       <div class="feedback__mensaje">
-        <span class="feedback__icono" aria-hidden="true">{{ correcta ? '✅' : '❌' }}</span>
+        <Icono class="feedback__icono" :nombre="correcta ? 'checkCirculo' : 'equisCirculo'" :tamano="30" :trazo="2.4" />
         <div>
           <p class="feedback__titulo">
             {{ correcta ? 'Muy bien!' : 'Respuesta incorrecta' }}
@@ -48,7 +49,7 @@ defineEmits(['continuar'])
   bottom: 0;
   border-top: 2px solid transparent;
   padding-block: var(--e-3);
-  animation: subir 0.2s ease;
+  animation: entrar-desde-abajo var(--anim-media) var(--anim-suave);
 }
 
 .feedback--ok {
@@ -78,7 +79,7 @@ defineEmits(['continuar'])
 }
 
 .feedback__icono {
-  font-size: 1.6rem;
+  animation: latido var(--anim-lenta) var(--anim-rebote);
 }
 
 .feedback__titulo {
@@ -98,15 +99,6 @@ defineEmits(['continuar'])
   color: var(--c-tinta);
   max-width: 60ch;
   margin-top: 0.2rem;
-}
-
-@keyframes subir {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
 }
 
 @media (max-width: 640px) {

@@ -41,6 +41,29 @@ const porcentaje = computed(() => {
 .barra__relleno {
   height: 100%;
   border-radius: var(--r-full);
-  transition: width 0.35s ease;
+  transition: width var(--anim-lenta) var(--anim-suave);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Reflejo que recorre la barra: refuerza la idea de avance. */
+.barra__relleno::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 80%
+  );
+  background-size: 220% 100%;
+  animation: brillo 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barra__relleno::after {
+    animation: none;
+  }
 }
 </style>

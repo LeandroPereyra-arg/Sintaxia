@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CursoCard from '@/components/CursoCard.vue'
@@ -49,7 +50,7 @@ function abrirCurso(curso) {
       </div>
 
       <label class="buscador">
-        <span class="buscador__icono" aria-hidden="true">🔍</span>
+        <Icono class="buscador__icono" nombre="lupa" :tamano="17" />
         <input
           v-model="busqueda"
           type="search"
@@ -72,14 +73,14 @@ function abrirCurso(curso) {
       </button>
     </div>
 
-    <ul v-if="cursosFiltrados.length" class="grilla">
+    <ul v-if="cursosFiltrados.length" class="grilla anim-lista">
       <li v-for="curso in cursosFiltrados" :key="curso.id">
         <CursoCard :curso="curso" @seleccionar="abrirCurso" />
       </li>
     </ul>
 
     <p v-else class="vacio">
-      No encontramos cursos con ese filtro. Proba con otra busqueda 🔎
+      No encontramos cursos con ese filtro. Proba con otra busqueda.
     </p>
   </div>
 </template>

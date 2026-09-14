@@ -27,7 +27,7 @@ export const unidadesJavaScript = [
     titulo: 'Primeros pasos',
     descripcion:
       'Que es JavaScript, como se guardan datos en variables y cuales son los tipos basicos del lenguaje.',
-    icono: '🚀',
+    icono: 'cohete',
     color: 'var(--c-verde)',
     estadoInicial: ESTADO_UNIDAD.DISPONIBLE,
     temas: ['Variables', 'let y const', 'Tipos de datos', 'console.log']
@@ -39,7 +39,7 @@ export const unidadesJavaScript = [
     titulo: 'Operadores y decisiones',
     descripcion:
       'Operaciones matematicas, comparaciones y la forma de hacer que el programa tome caminos distintos.',
-    icono: '🔀',
+    icono: 'bifurcacion',
     color: 'var(--c-azul)',
     estadoInicial: ESTADO_UNIDAD.BLOQUEADA,
     temas: ['Operadores', 'Comparaciones', 'if / else', 'Operadores logicos']
@@ -51,7 +51,7 @@ export const unidadesJavaScript = [
     titulo: 'Bucles y repeticion',
     descripcion:
       'Repetir instrucciones sin escribirlas mil veces usando for, while y los cortes de un bucle.',
-    icono: '🔁',
+    icono: 'repetir',
     color: 'var(--c-violeta)',
     estadoInicial: ESTADO_UNIDAD.BLOQUEADA,
     temas: ['for', 'while', 'break y continue']
@@ -63,7 +63,7 @@ export const unidadesJavaScript = [
     titulo: 'Funciones',
     descripcion:
       'Agrupar codigo reutilizable, pasarle parametros, devolver resultados y entender el alcance de las variables.',
-    icono: '🧩',
+    icono: 'pieza',
     color: '#ff8a3d',
     estadoInicial: ESTADO_UNIDAD.BLOQUEADA,
     temas: ['Declaracion', 'Parametros', 'return', 'Funciones flecha']
@@ -75,7 +75,7 @@ export const unidadesJavaScript = [
     titulo: 'Arrays y objetos',
     descripcion:
       'Guardar muchos datos juntos: listas ordenadas, propiedades con nombre y los metodos mas usados.',
-    icono: '📦',
+    icono: 'caja',
     color: '#e94f8a',
     estadoInicial: ESTADO_UNIDAD.BLOQUEADA,
     temas: ['Arrays', 'push y length', 'Objetos', 'map y filter']
@@ -87,7 +87,7 @@ export const unidadesJavaScript = [
     titulo: 'JavaScript en la pagina',
     descripcion:
       'Conectar el codigo con el HTML: buscar elementos, cambiar su contenido y responder a los clics del usuario.',
-    icono: '🌐',
+    icono: 'globo',
     color: '#12b0a0',
     estadoInicial: ESTADO_UNIDAD.BLOQUEADA,
     temas: ['DOM', 'querySelector', 'Eventos', 'textContent']

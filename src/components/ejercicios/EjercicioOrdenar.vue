@@ -173,6 +173,7 @@ function claseDe(indice, id) {
 }
 
 .ficha--incorrecta {
+  animation: sacudir 0.4s ease;
   border-color: var(--c-rojo);
   background: var(--c-rojo-suave);
 }

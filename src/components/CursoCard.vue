@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
 import { ESTADO_CURSO, ETIQUETA_ESTADO_CURSO } from '@/data/cursos.js'
 import BaseBoton from '@/components/BaseBoton.vue'
@@ -51,16 +52,18 @@ function seleccionar() {
     <p class="curso__descripcion">{{ curso.descripcion }}</p>
 
     <ul class="curso__datos">
-      <li><span aria-hidden="true">📚</span> {{ curso.totalUnidades }} unidades</li>
-      <li><span aria-hidden="true">🎯</span> {{ curso.totalLecciones }} lecciones</li>
-      <li><span aria-hidden="true">⏱️</span> {{ curso.horasEstimadas }} h aprox.</li>
+      <li><Icono nombre="libros" :tamano="15" /> {{ curso.totalUnidades }} unidades</li>
+      <li><Icono nombre="diana" :tamano="15" /> {{ curso.totalLecciones }} lecciones</li>
+      <li><Icono nombre="reloj" :tamano="15" /> {{ curso.horasEstimadas }} h aprox.</li>
     </ul>
 
     <ul class="curso__etiquetas">
       <li v-for="tag in curso.etiquetas" :key="tag">#{{ tag }}</li>
     </ul>
 
-    <p v-if="curso.requisito" class="curso__requisito">🔒 {{ curso.requisito }}</p>
+    <p v-if="curso.requisito" class="curso__requisito">
+      <Icono nombre="candado" :tamano="15" /> {{ curso.requisito }}
+    </p>
 
     <BaseBoton
       class="curso__accion"

@@ -57,7 +57,7 @@ app.use((error, req, res, siguiente) => {
 async function arrancar() {
   const errores = validarConfig()
   if (errores.length > 0) {
-    console.error('\n✖ No se puede arrancar la API:\n')
+    console.error('\n[ERROR] No se puede arrancar la API:\n')
     errores.forEach((e) => console.error('  · ' + e))
     console.error('\n  Copia .env.example como .env y completa los valores.\n')
     process.exit(1)
@@ -65,15 +65,15 @@ async function arrancar() {
 
   try {
     await verificarConexion()
-    console.log(`✔ Conectado a MySQL (${config.db.host}:${config.db.port}/${config.db.database})`)
+    console.log(`[OK] Conectado a MySQL (${config.db.host}:${config.db.port}/${config.db.database})`)
   } catch (error) {
-    console.error(`✖ No hay conexion con MySQL: ${error.message}`)
+    console.error(`[ERROR] No hay conexion con MySQL: ${error.message}`)
     console.error('  Levanta el servidor de base de datos y corre: npm run db:migrar')
     process.exit(1)
   }
 
   app.listen(config.puerto, () => {
-    console.log(`✔ API de Sintaxia en http://localhost:${config.puerto}`)
+    console.log(`[OK] API de Sintaxia en http://localhost:${config.puerto}`)
     console.log(`  Login disponible con: ${proveedoresActivos().join(', ') || 'ninguno'}`)
   })
 }

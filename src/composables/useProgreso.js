@@ -22,7 +22,7 @@ function estadoInicial() {
   return {
     modo: 'invitado',
     nombre: 'Estudiante',
-    avatar: '👩‍💻',
+    avatar: 'buho',
     xp: 0,
     racha: 0,
     metaDiaria: 50,
@@ -142,7 +142,7 @@ export function useProgreso() {
   function aplicarUsuario(usuario) {
     if (!usuario) return
     estado.nombre = usuario.nombre
-    estado.avatar = usuario.avatarEmoji ?? estado.avatar
+    estado.avatar = usuario.avatarIcono ?? estado.avatar
     estado.xp = usuario.xp
     estado.racha = usuario.racha
     estado.metaDiaria = usuario.metaDiaria
@@ -283,7 +283,7 @@ export function useProgreso() {
       if (cambios.usuario !== undefined) mapeado.usuario = cambios.usuario
       if (cambios.bio !== undefined) mapeado.bio = cambios.bio
       if (cambios.pais !== undefined) mapeado.pais = cambios.pais
-      if (cambios.avatar !== undefined) mapeado.avatarEmoji = cambios.avatar
+      if (cambios.avatar !== undefined) mapeado.avatarIcono = cambios.avatar
       if (cambios.metaDiaria !== undefined) mapeado.metaDiaria = cambios.metaDiaria
 
       const { usuario } = await api.guardarPerfil(mapeado)

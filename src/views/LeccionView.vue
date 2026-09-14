@@ -1,4 +1,5 @@
 <script setup>
+import Icono from '@/components/Icono.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BarraProgreso from '@/components/BarraProgreso.vue'
@@ -145,7 +146,9 @@ function salir() {
     <!-- Barra superior -->
     <header class="leccion__barra">
       <div class="contenedor leccion__barra-interior">
-        <button type="button" class="salir" aria-label="Salir de la leccion" @click="salir">✕</button>
+        <button type="button" class="salir" aria-label="Salir de la leccion" @click="salir">
+          <Icono nombre="cerrar" :tamano="18" :trazo="2.4" />
+        </button>
 
         <BarraProgreso
           :valor="progreso"
@@ -154,7 +157,7 @@ function salir() {
         />
 
         <p class="vidas" :aria-label="`Te quedan ${vidas} vidas`">
-          <span aria-hidden="true">❤️</span>{{ vidas }}
+          <Icono nombre="corazon" :tamano="17" :trazo="2.3" />{{ vidas }}
         </p>
       </div>
     </header>

@@ -161,16 +161,39 @@ Pildoras en mayusculas, chiquitas, con fondo suave y texto del mismo tono en osc
 
 ## 4.6 Iconografia
 
-Se usan **emojis del sistema** en vez de una libreria de iconos. Es una decision consciente:
+Se usa un **set de iconos SVG propio** (`src/assets/iconos.js`, 59 iconos), dibujado dentro
+del proyecto. No se usa ninguna libreria ni CDN.
 
-- No suman ni un kilobyte de descarga ni una dependencia mas.
-- Se ven a color y con un estilo amigable, acorde al tono del producto.
-- Se leen igual en cualquier sistema operativo y los lee el lector de pantalla.
-- Cada unidad tiene el suyo (🚀 primeros pasos, 🔀 decisiones, 🔁 bucles, 🧩 funciones,
-  📦 arrays, 🌐 DOM), lo que ayuda a reconocerla de un vistazo en el camino.
+Por que un set propio y no emojis:
 
-Todos los emojis decorativos llevan `aria-hidden="true"` para que no ensucien la lectura con
-lector de pantalla; la informacion siempre esta tambien en texto.
+- **Los emojis no son consistentes.** Cada sistema operativo los dibuja distinto: el mismo
+  🎯 se ve de una forma en Windows, de otra en Android y de otra en iPhone. La interfaz
+  terminaba cambiando de aspecto segun quien la abriera.
+- **No se les puede cambiar el color.** Un emoji viene con sus colores puestos, asi que no
+  podia acompaniar al color del estado (verde cuando esta completo, gris cuando esta
+  bloqueado).
+- **No combinan con el trazo del resto.** Los emojis son ilustraciones a color; el resto de
+  la interfaz es de lineas limpias.
+
+El set propio resuelve las tres cosas: lienzo de 24x24, trazo de 2, puntas redondeadas, y
+todos heredan el color del texto con `currentColor`, asi que cambian solos segun el contexto.
+
+Cada unidad tiene el suyo (cohete en primeros pasos, bifurcacion en decisiones, repetir en
+bucles, pieza en funciones, caja en arrays, globo en el DOM), lo que ayuda a reconocerla de
+un vistazo.
+
+Los iconos decorativos salen con `aria-hidden="true"`; los que aportan informacion reciben
+una `etiqueta` que el lector de pantalla si anuncia.
+
+### La mascota
+
+**Sintax** es el buho del logo, y aparece en toda la aplicacion con **ocho estados de animo**
+(`public/sintax/`): normal, saludando, sorprendido, pensando, celebrando, confundido, enojado
+y dormido.
+
+No es decoracion: **reacciona a lo que pasa**. Celebra una leccion perfecta, se enoja cuando
+se pierden las tres vidas, se confunde en el 404 y duerme cuando hace rato que no practicas.
+Es lo que convierte una pantalla de resultados en algo que da ganas de volver a ver.
 
 ### El logo
 
@@ -193,16 +216,33 @@ archivo falta, el componente dibuja un respaldo en SVG para no mostrar nunca una
 
 ## 4.7 Movimiento
 
-Las animaciones son cortas y funcionales, nunca decorativas:
+Las animaciones compartidas viven en `src/assets/styles/animaciones.css`, con una escala de
+duraciones fija para que todo se mueva al mismo ritmo:
 
-- Botones: 60 ms al presionar (tiene que sentirse instantaneo).
-- Tarjetas: 150 ms al pasar el mouse.
-- Barras de progreso: 350 ms, para que se vea el avance.
-- Barra de correccion: entra deslizandose desde abajo en 200 ms.
-- Cambio de vista: fundido de 180 ms.
+```css
+--anim-rapida: 0.18s;   --anim-media: 0.32s;   --anim-lenta: 0.6s;
+--anim-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);   /* con un pequenio rebote */
+--anim-suave:  cubic-bezier(0.22, 1, 0.36, 1);      /* desacelera al final */
+```
 
-Todo esta dentro de un `@media (prefers-reduced-motion: reduce)` que cancela las animaciones
-para quien lo tenga configurado en su sistema.
+| Que se mueve | Como | Para que |
+|---|---|---|
+| Botones | Bajan 4 px al presionar, 60 ms | Devolucion tactil inmediata |
+| Tarjetas | Suben 4 px al pasar el mouse | Dejan claro que se pueden tocar |
+| Grillas (cursos, unidades, medallas) | Entran escalonadas, una detras de otra | La pantalla se arma, no aparece de golpe |
+| Barras de progreso | Se llenan en 600 ms, con un reflejo que las recorre | Refuerza la idea de avance |
+| Opcion correcta | Pega un saltito | Premia el acierto |
+| Opcion incorrecta | Se sacude | Se entiende sin leer |
+| Barra de correccion | Entra deslizandose desde abajo | Es la reaccion al comprobar |
+| Medalla nueva | Aparece con rebote y un halo que se expande dos veces | Un logro tiene que sentirse como un logro |
+| Contadores de XP | El numero trepa hasta su valor | Ver subir el numero da mas sensacion de premio que verlo aparecer |
+| La llama de la racha | Late despacio, siempre | Recuerda que hay algo que mantener |
+| Sintax | Una animacion por estado: flota, saluda, festeja, tiembla, duerme | Le da vida al personaje |
+| Cambio de vista | Fundido con desplazamiento, 320 ms al entrar y 180 ms al salir | Sale rapido, entra tranquilo |
+
+Todo respeta `@media (prefers-reduced-motion: reduce)`: quien tenga configurado en su sistema
+que prefiere menos movimiento ve la aplicacion completamente quieta, incluidos los contadores,
+que saltan directo al valor final.
 
 ---
 

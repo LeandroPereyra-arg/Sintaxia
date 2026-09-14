@@ -23,7 +23,7 @@ async function usuarioDisponible(base) {
 
 export async function obtenerUsuarioPorId(id) {
   return consultarUna(
-    `SELECT id, usuario, nombre, email, avatar_url, avatar_emoji, bio, pais,
+    `SELECT id, usuario, nombre, email, avatar_url, avatar_icono, bio, pais,
             xp_total, racha_actual, racha_maxima, meta_diaria, ultima_actividad, creado_en
        FROM usuarios WHERE id = ?`,
     [id]
@@ -102,6 +102,9 @@ export async function identidadesDe(usuarioId) {
 
 const PAISES_VALIDOS = /^[A-Z]{2}$/
 
+/** Avatares que se pueden elegir (tienen que existir en el set de iconos del front). */
+const AVATARES_VALIDOS = ['buho', 'robot', 'astronauta', 'cohete', 'gema', 'rayo', 'corona', 'diana']
+
 /** Actualiza los campos editables del perfil. Devuelve el usuario ya actualizado. */
 export async function actualizarPerfil(usuarioId, cambios) {
   const campos = []
@@ -142,9 +145,13 @@ export async function actualizarPerfil(usuarioId, cambios) {
     valores.push(pais || null)
   }
 
-  if (cambios.avatarEmoji !== undefined) {
-    campos.push('avatar_emoji = ?')
-    valores.push(String(cambios.avatarEmoji).slice(0, 16) || null)
+  if (cambios.avatarIcono !== undefined) {
+    const icono = String(cambios.avatarIcono).trim()
+    if (icono && !AVATARES_VALIDOS.includes(icono)) {
+      throw Object.assign(new Error('Ese avatar no existe.'), { estado: 400 })
+    }
+    campos.push('avatar_icono = ?')
+    valores.push(icono || null)
   }
 
   if (cambios.metaDiaria !== undefined) {

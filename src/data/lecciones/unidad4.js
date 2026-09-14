@@ -8,7 +8,7 @@ export const leccionesUnidad4 = [
     numero: 1,
     titulo: 'Declarar y llamar funciones',
     descripcion: 'Agrupar codigo con nombre para reutilizarlo.',
-    icono: '🧩',
+    icono: 'pieza',
     xp: 20,
     ejercicios: [
       {
@@ -49,7 +49,7 @@ export const leccionesUnidad4 = [
     numero: 2,
     titulo: 'Funciones flecha y alcance',
     descripcion: 'Sintaxis corta y donde vive cada variable.',
-    icono: '🏹',
+    icono: 'flechaDiana',
     xp: 20,
     ejercicios: [
       {
