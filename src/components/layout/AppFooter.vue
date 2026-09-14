@@ -1,0 +1,38 @@
+<script setup>
+const anio = new Date().getFullYear()
+</script>
+
+<template>
+  <footer class="pie">
+    <div class="contenedor pie__interior">
+      <p class="pie__marca">
+        <strong>Sintaxia</strong> · Aprende a programar jugando
+      </p>
+      <p class="texto-secundario">
+        Proyecto academico desarrollado con Vue 3 y Vue Router · {{ anio }}
+      </p>
+    </div>
+  </footer>
+</template>
+
+<style scoped>
+.pie {
+  margin-top: auto;
+  border-top: 2px solid var(--c-borde);
+  background: var(--c-blanco);
+  padding-block: var(--e-4);
+  font-size: var(--t-sm);
+}
+
+.pie__interior {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pie__marca {
+  font-family: var(--f-titulo);
+}
+</style>

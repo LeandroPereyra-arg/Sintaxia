@@ -1,0 +1,69 @@
+/* =========================================================
+   Sintaxia · Tokens de identidad visual
+   Toda la paleta, tipografia y medidas del proyecto viven
+   aca para poder cambiar el aspecto desde un unico archivo.
+   ========================================================= */
+:root {
+  /* ---- Colores de marca ---- */
+  --c-verde: #2fbf56;        /* accion principal, acierto, progreso */
+  --c-verde-osc: #24a045;    /* sombra inferior de los botones verdes */
+  --c-verde-suave: #e6f8ec;  /* fondos de estados correctos */
+
+  --c-violeta: #7434db;      /* color secundario / identidad de marca */
+  --c-violeta-osc: #5a26ae;
+  --c-violeta-suave: #f1e9fd;
+
+  --c-azul: #1cb0f6;         /* informacion, enlaces, cursos en curso */
+  --c-azul-osc: #1487bd;
+  --c-azul-suave: #e4f5fe;
+
+  --c-amarillo: #ffc800;     /* XP, rachas, logros */
+  --c-amarillo-osc: #e0a800;
+  --c-amarillo-suave: #fff6d9;
+
+  --c-rojo: #ff4b4b;         /* error, vidas perdidas */
+  --c-rojo-osc: #d63b3b;
+  --c-rojo-suave: #ffeaea;
+
+  /* ---- Neutros ---- */
+  --c-tinta: #1f2933;        /* texto principal */
+  --c-gris: #6b7684;         /* texto secundario */
+  --c-gris-claro: #afb8c1;   /* iconos apagados, estados bloqueados */
+  --c-borde: #e5e7eb;        /* bordes de tarjetas */
+  --c-fondo: #f7f8fa;        /* fondo general de la app */
+  --c-blanco: #ffffff;
+  --c-noche: #16212b;        /* fondo del editor / bloques de codigo */
+
+  /* ---- Tipografia ---- */
+  --f-titulo: 'Nunito', 'Trebuchet MS', system-ui, sans-serif;
+  --f-texto: 'Nunito', system-ui, -apple-system, sans-serif;
+  --f-codigo: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+
+  --t-xs: 0.75rem;
+  --t-sm: 0.875rem;
+  --t-base: 1rem;
+  --t-md: 1.125rem;
+  --t-lg: 1.5rem;
+  --t-xl: 2rem;
+  --t-2xl: 2.75rem;
+
+  /* ---- Formas y espacios ---- */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-full: 999px;
+
+  --e-1: 0.25rem;
+  --e-2: 0.5rem;
+  --e-3: 1rem;
+  --e-4: 1.5rem;
+  --e-5: 2rem;
+  --e-6: 3rem;
+
+  --sombra-card: 0 2px 0 var(--c-borde);
+  --sombra-flotante: 0 8px 24px rgba(31, 41, 51, 0.12);
+
+  --ancho-max: 1080px;
+  --alto-header: 68px;
+}
