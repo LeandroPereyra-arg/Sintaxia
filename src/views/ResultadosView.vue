@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
+import MedallaCard from '@/components/MedallaCard.vue'
 import { obtenerLeccion, leccionesDeUnidad } from '@/data/lecciones/index.js'
 import { obtenerUnidad } from '@/data/unidades.js'
 import { useProgreso } from '@/composables/useProgreso.js'
@@ -14,7 +15,7 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
-const { estado, progresoUnidad, unidadCompletada } = useProgreso()
+const { estado, progresoUnidad, unidadCompletada, ultimoResultado } = useProgreso()
 
 const leccion = computed(() => obtenerLeccion(props.leccionId))
 const unidad = computed(() => (leccion.value ? obtenerUnidad(leccion.value.unidadId) : null))
@@ -46,6 +47,22 @@ const siguienteLeccion = computed(() => {
 })
 
 const unidadTerminada = computed(() => (unidad.value ? unidadCompletada(unidad.value.id) : false))
+
+/** Medallas desbloqueadas justo en esta leccion (las otorga el servidor). */
+const medallasNuevas = computed(() => {
+  const ultimo = ultimoResultado.value
+  if (!ultimo || ultimo.leccionId !== props.leccionId) return []
+  return (ultimo.medallasNuevas ?? []).map((m) => ({
+    codigo: m.codigo,
+    nombre: m.nombre,
+    descripcion: m.descripcion,
+    icono: m.icono,
+    nivel: m.nivel,
+    obtenida: true,
+    obtenidaEn: null,
+    progreso: { actual: 1, objetivo: 1 }
+  }))
+})
 
 function repetir() {
   router.push({ name: 'leccion', params: { leccionId: props.leccionId } })
@@ -86,6 +103,17 @@ function siguiente() {
           <span class="marcador__texto">Dias de racha</span>
         </li>
       </ul>
+
+      <section v-if="medallasNuevas.length" class="medallas-nuevas">
+        <p class="medallas-nuevas__titulo">
+          {{ medallasNuevas.length === 1 ? 'Desbloqueaste una medalla!' : 'Desbloqueaste medallas!' }}
+        </p>
+        <ul class="medallas-nuevas__lista">
+          <li v-for="medalla in medallasNuevas" :key="medalla.codigo">
+            <MedallaCard :medalla="medalla" nueva />
+          </li>
+        </ul>
+      </section>
 
       <div v-if="unidad" class="unidad">
         <p class="unidad__titulo">
@@ -191,6 +219,29 @@ function siguiente() {
 .marcador--racha {
   border-color: var(--c-rojo);
   background: var(--c-rojo-suave);
+}
+
+.medallas-nuevas {
+  width: 100%;
+  background: var(--c-amarillo-suave);
+  border: 2px solid var(--c-amarillo);
+  border-radius: var(--r-lg);
+  padding: var(--e-3);
+  display: grid;
+  gap: var(--e-2);
+}
+
+.medallas-nuevas__titulo {
+  font-family: var(--f-titulo);
+  font-weight: 900;
+  color: var(--c-amarillo-osc);
+}
+
+.medallas-nuevas__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 170px);
+  justify-content: center;
+  gap: var(--e-2);
 }
 
 .unidad {

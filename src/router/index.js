@@ -53,6 +53,18 @@ const routes = [
     meta: { titulo: 'Mi perfil' }
   },
   {
+    path: '/ranking',
+    name: 'ranking',
+    component: () => import('@/views/RankingView.vue'),
+    meta: { titulo: 'Ranking semanal' }
+  },
+  {
+    path: '/ingresar',
+    name: 'ingresar',
+    component: () => import('@/views/IngresarView.vue'),
+    meta: { titulo: 'Iniciar sesion' }
+  },
+  {
     path: '/:rutaInexistente(.*)*',
     name: 'no-encontrado',
     component: () => import('@/views/NoEncontradoView.vue'),

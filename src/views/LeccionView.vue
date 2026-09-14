@@ -94,13 +94,25 @@ function comprobar() {
   }
 }
 
-function terminar() {
+const guardando = ref(false)
+
+async function terminar() {
+  if (guardando.value) return
   const total = ejercicios.value.length
   // Si se quedo sin vidas la leccion no se aprueba: no suma XP ni queda completada.
   const aprobada = vidas.value > 0
-  const xpGanado = aprobada
-    ? completarLeccion(props.leccionId, { aciertos: aciertos.value, total })
-    : 0
+
+  let xpGanado = 0
+  if (aprobada) {
+    guardando.value = true
+    try {
+      const resultado = await completarLeccion(props.leccionId, { aciertos: aciertos.value, total })
+      xpGanado = resultado.xpGanado
+    } finally {
+      guardando.value = false
+    }
+  }
+
   router.replace({
     name: 'resultados',
     params: { leccionId: props.leccionId },
@@ -113,9 +125,9 @@ function terminar() {
   })
 }
 
-function continuar() {
+async function continuar() {
   if (vidas.value <= 0 || esUltimo.value) {
-    terminar()
+    await terminar()
     return
   }
   indice.value++

@@ -6,15 +6,28 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "nodemon --watch server --watch src/data server/index.js",
+    "dev:todo": "concurrently -n front,api -c green,magenta \"npm:dev\" \"npm:dev:api\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "api": "node server/index.js",
+    "db:migrar": "node server/db/migrar.js",
+    "db:sembrar": "node server/db/sembrar.js",
+    "db:reiniciar": "npm run db:migrar && npm run db:sembrar"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.24.4",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
+    "concurrently": "^10.0.5",
+    "nodemon": "^3.1.14",
     "vite": "^6.0.7"
   }
 }

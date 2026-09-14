@@ -1,11 +1,14 @@
 # Sintaxia · Aprende a programar jugando
 
 Aplicacion web estilo **Duolingo pero para lenguajes de programacion**, desarrollada con
-**Vue 3 + Vite + Vue Router**.
+**Vue 3 + Vite + Vue Router** y un backend propio de **Node.js + Express + MySQL**.
 
 Lecciones de cinco minutos, ejercicios interactivos con correccion inmediata, vidas, XP,
-rachas, logros y un camino de unidades que se va desbloqueando. El curso implementado es el
-de **JavaScript**: 6 unidades, 14 lecciones y 44 ejercicios de 4 tipos distintos.
+rachas, medallas y un camino de unidades que se va desbloqueando. Se puede practicar sin
+cuenta o **iniciar sesion con Google o GitHub** para guardar el progreso en la base de datos.
+
+El curso implementado es el de **JavaScript**: 6 unidades, 14 lecciones y 44 ejercicios de
+4 tipos distintos.
 
 ![Pagina de inicio](docs/capturas/01-inicio.png)
 
@@ -13,15 +16,40 @@ de **JavaScript**: 6 unidades, 14 lecciones y 44 ejercicios de 4 tipos distintos
 
 ## Como ejecutarlo
 
+### Solo el front (sin backend)
+
 ```bash
 npm install
-npm run dev        # servidor de desarrollo en http://localhost:5173
-npm run build      # compila a /dist
-npm run preview    # sirve la version compilada
+npm run dev        # http://localhost:5173
 ```
 
-Requiere Node 18 o superior. No hace falta ninguna base de datos ni backend: el progreso se
-guarda en el `localStorage` del navegador.
+Funciona igual: sin servidor, la app entra en **modo invitado** y guarda el progreso en el
+navegador.
+
+### Completo, con cuentas y base de datos
+
+```bash
+npm install
+cp .env.example .env
+#   Genera el secreto de sesion:
+#   node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+
+npm run db:migrar     # crea la base y las 6 tablas
+npm run db:sembrar    # carga el catalogo de 14 medallas
+npm run dev:todo      # front en :5173 y API en :3000
+```
+
+Requiere **Node 18+** y **MySQL 8** (o MariaDB 10.6+). Con `PERMITIR_LOGIN_DEMO=true` en el
+`.env` se puede entrar sin configurar credenciales de Google ni de GitHub.
+
+| Script | Que hace |
+|---|---|
+| `npm run dev` | Solo el front |
+| `npm run dev:api` | Solo la API, recargando al guardar |
+| `npm run dev:todo` | Los dos a la vez |
+| `npm run build` | Compila el front a `/dist` |
+| `npm run db:migrar` | Crea la base y las tablas |
+| `npm run db:sembrar` | Carga o actualiza las medallas |
 
 ---
 
@@ -33,6 +61,7 @@ guarda en el `localStorage` del navegador.
 | [2. Estructura y arquitectura](docs/02-estructura-y-arquitectura.md) | Vistas, rutas, carpetas, modelo de datos y comunicacion entre componentes |
 | [3. Wireframes](docs/03-wireframes.md) | Bocetos de todas las pantallas principales, incluida la version movil |
 | [4. Identidad visual](docs/04-identidad-visual.md) | Paleta, tipografias, botones, tarjetas, iconos y su justificacion |
+| [5. Backend, autenticacion y base de datos](docs/05-backend-autenticacion-y-base-de-datos.md) | Modelo de datos, flujo OAuth, endpoints, medallas, ranking y seguridad |
 
 ---
 
@@ -62,9 +91,24 @@ Al comprobar, la barra inferior dice si estuvo bien, cual era la respuesta y por
 
 ![Resultados](docs/capturas/06-resultados.png)
 
-### Perfil
+### Iniciar sesion
+Google y GitHub. Los botones aparecen solo si el servidor tiene cargadas esas credenciales.
 
-![Perfil](docs/capturas/07-perfil.png)
+![Iniciar sesion](docs/capturas/09-ingresar.png)
+
+### Perfil con cuenta
+Medallas, calendario de actividad, liga, racha maxima y puesto en el ranking.
+
+![Perfil](docs/capturas/11-perfil-cuenta.png)
+
+### Medalla desbloqueada
+Al terminar una leccion, las medallas que otorga el servidor se festejan en los resultados.
+
+![Medalla nueva](docs/capturas/12-resultados-medalla.png)
+
+### Ranking semanal
+
+![Ranking](docs/capturas/13-ranking.png)
 
 ### En telefono
 
@@ -76,14 +120,25 @@ Al comprobar, la barra inferior dice si estuvo bien, cual era la respuesta y por
 
 ```
 src/
+├── api/               cliente.js — todas las llamadas a la API
 ├── assets/styles/     variables.css (identidad visual) + main.css
-├── router/            8 rutas con nombre
+├── router/            10 rutas con nombre
 ├── data/              cursos, unidades, lecciones y ejercicios (nada en el HTML)
-├── composables/       useProgreso.js  (estado del estudiante + localStorage)
+├── composables/       useAuth.js (sesion) · useProgreso.js (invitado o cuenta)
 ├── utils/             verificarRespuesta.js
-├── components/        BaseBoton, BarraProgreso, BarraFeedback,
-│                      CursoCard, UnidadCard, layout/ y ejercicios/
+├── components/        BaseBoton, BarraProgreso, BarraFeedback, MedallaCard,
+│                      CalendarioActividad, CursoCard, UnidadCard,
+│                      layout/ y ejercicios/
 └── views/             una por ruta
+
+server/
+├── index.js           Express: middlewares, rutas y manejo de errores
+├── config.js          Variables de entorno y validacion al arrancar
+├── auth/              sesion.js (cookie JWT) · oauth.js (Google y GitHub)
+├── db/                pool.js · migrar.js · sembrar.js · medallas.js · sql/
+├── servicios/         usuarios · progreso · medallas · ranking
+├── middleware/        autenticar.js
+└── rutas/             auth · perfil · progreso · ranking
 ```
 
 Detalle completo en [docs/02-estructura-y-arquitectura.md](docs/02-estructura-y-arquitectura.md).
@@ -121,6 +176,24 @@ Detalle completo en [docs/02-estructura-y-arquitectura.md](docs/02-estructura-y-
   anterior.
 - **Racha diaria**: sube si se practico ayer, vuelve a 1 si se corto.
 - **Meta diaria** configurable en el perfil (20, 50 o 100 XP).
+- **14 medallas** en cuatro niveles (bronce, plata, oro y diamante). Las otorga el servidor,
+  nunca el navegador.
+- **Ranking semanal** por XP, que arranca de cero todos los lunes, y **ligas** segun el XP
+  total acumulado.
+
+## Cuentas y progreso
+
+| | Invitado | Con cuenta |
+|---|---|---|
+| Practicar y ver resultados | si | si |
+| Donde se guarda | navegador | MySQL |
+| Se pierde al limpiar el navegador | si | no |
+| Medallas | 7, calculadas localmente | 14, otorgadas por el servidor |
+| Calendario de actividad | — | si |
+| Ranking y ligas | solo mirar | competir |
+
+Al iniciar sesion, lo que hiciste como invitado **se sube solo** y se fusiona con la cuenta
+sin pagar XP dos veces por la misma leccion.
 
 ---
 
