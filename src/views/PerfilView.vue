@@ -1,13 +1,19 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
+import MedallaCard from '@/components/MedallaCard.vue'
+import CalendarioActividad from '@/components/CalendarioActividad.vue'
 import { unidadesJavaScript, ESTADO_UNIDAD } from '@/data/unidades.js'
 import { lecciones, leccionesDeUnidad } from '@/data/lecciones/index.js'
+import { api } from '@/api/cliente.js'
+import { useAuth } from '@/composables/useAuth.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
+const { estado: sesion, autenticado, salir, iniciar } = useAuth()
 const {
   estado,
+  enCuenta,
   progresoCurso,
   totalLeccionesCompletadas,
   precisionGeneral,
@@ -19,23 +25,23 @@ const {
   reiniciarProgreso
 } = useProgreso()
 
-const avatares = ['👩‍💻', '👨‍💻', '🧑‍🚀', '🦊', '🐧', '🤖']
-const metas = [20, 50, 100]
+const AVATARES = ['👩‍💻', '👨‍💻', '🧑‍🚀', '🦊', '🐧', '🤖', '🐙', '🦉']
+const METAS = [20, 50, 100]
 
 const editando = ref(false)
-const nombreBorrador = ref(estado.nombre)
+const guardando = ref(false)
+const errorEdicion = ref('')
+const borrador = ref({ nombre: '', usuario: '', bio: '', pais: '' })
 
-function guardar() {
-  actualizarPerfil({ nombre: nombreBorrador.value.trim() || 'Estudiante' })
-  editando.value = false
-}
+const medallas = ref([])
+const actividad = ref([])
+const rankingPropio = ref(null)
+const cargandoDatos = ref(false)
 
-function confirmarReinicio() {
-  const seguro = window.confirm(
-    'Se van a borrar tus XP, tu racha y todas las lecciones completadas. Continuar?'
-  )
-  if (seguro) reiniciarProgreso()
-}
+/** En modo cuenta los datos salen de la API; como invitado, del estado local. */
+const usuario = computed(() => sesion.usuario)
+
+const medallasObtenidas = computed(() => medallas.value.filter((m) => m.obtenida).length)
 
 const resumenUnidades = computed(() =>
   unidadesJavaScript.map((unidad) => ({
@@ -47,86 +53,220 @@ const resumenUnidades = computed(() =>
   }))
 )
 
-const logros = computed(() => [
-  {
-    id: 'primer-paso',
-    icono: '🥚',
-    titulo: 'Primer paso',
-    texto: 'Resolve tu primera leccion',
-    conseguido: totalLeccionesCompletadas.value >= 1
-  },
-  {
-    id: 'constante',
-    icono: '🔥',
-    titulo: 'Constante',
-    texto: 'Manten una racha de 3 dias',
-    conseguido: estado.racha >= 3
-  },
-  {
-    id: 'unidad-lista',
-    icono: '🎖️',
-    titulo: 'Unidad completa',
-    texto: 'Termina una unidad entera',
-    conseguido: resumenUnidades.value.some((u) => u.estado === ESTADO_UNIDAD.COMPLETADA)
-  },
-  {
-    id: 'preciso',
-    icono: '🎯',
-    titulo: 'Punteria fina',
-    texto: 'Llega al 80 % de precision',
-    conseguido: precisionGeneral.value >= 80
-  },
-  {
-    id: 'maraton',
-    icono: '🚀',
-    titulo: 'Maratonista',
-    texto: 'Suma 200 XP',
-    conseguido: estado.xp >= 200
-  },
-  {
-    id: 'experto',
-    icono: '👑',
-    titulo: 'JavaScript listo',
-    texto: 'Completa las 14 lecciones',
-    conseguido: totalLeccionesCompletadas.value >= lecciones.length
+/** Medallas calculadas localmente para el modo invitado (sin backend). */
+const medallasInvitado = computed(() => {
+  const unidadesListas = resumenUnidades.value.filter((u) => u.estado === ESTADO_UNIDAD.COMPLETADA).length
+  const stats = {
+    lecciones: totalLeccionesCompletadas.value,
+    racha: estado.racha,
+    xp: estado.xp,
+    unidades: unidadesListas,
+    curso: totalLeccionesCompletadas.value >= lecciones.length ? 1 : 0
   }
-])
+  const definiciones = [
+    { codigo: 'primer_paso', nombre: 'Primer paso', descripcion: 'Completa tu primera leccion.', icono: '🥚', nivel: 'bronce', tipo: 'lecciones', objetivo: 1 },
+    { codigo: 'aprendiz', nombre: 'Aprendiz', descripcion: 'Completa 5 lecciones.', icono: '📘', nivel: 'plata', tipo: 'lecciones', objetivo: 5 },
+    { codigo: 'estudioso', nombre: 'Estudioso', descripcion: 'Completa 10 lecciones.', icono: '🎓', nivel: 'oro', tipo: 'lecciones', objetivo: 10 },
+    { codigo: 'unidad_completa', nombre: 'Unidad completa', descripcion: 'Termina una unidad entera.', icono: '🎖️', nivel: 'plata', tipo: 'unidades', objetivo: 1 },
+    { codigo: 'racha_3', nombre: 'Constante', descripcion: 'Manten una racha de 3 dias.', icono: '🔥', nivel: 'bronce', tipo: 'racha', objetivo: 3 },
+    { codigo: 'xp_100', nombre: 'Cien puntos', descripcion: 'Acumula 100 XP.', icono: '💯', nivel: 'bronce', tipo: 'xp', objetivo: 100 },
+    { codigo: 'javascript_listo', nombre: 'JavaScript listo', descripcion: 'Completa el curso entero.', icono: '👑', nivel: 'diamante', tipo: 'curso', objetivo: 1 }
+  ]
+  return definiciones.map((d) => {
+    const actual = Math.min(stats[d.tipo] ?? 0, d.objetivo)
+    return {
+      codigo: d.codigo,
+      nombre: d.nombre,
+      descripcion: d.descripcion,
+      icono: d.icono,
+      nivel: d.nivel,
+      obtenida: actual >= d.objetivo,
+      obtenidaEn: null,
+      progreso: { actual, objetivo: d.objetivo }
+    }
+  })
+})
+
+const medallasAMostrar = computed(() => (enCuenta.value ? medallas.value : medallasInvitado.value))
+
+async function cargarDatosDeCuenta() {
+  if (!autenticado.value) return
+  cargandoDatos.value = true
+  try {
+    const datos = await api.perfil()
+    // El perfil trae el usuario al dia: lo aplicamos para que la cabecera y el
+    // menu de la cuenta no muestren un XP viejo.
+    sesion.usuario = datos.usuario
+    medallas.value = datos.medallas
+    actividad.value = datos.actividad
+    rankingPropio.value = datos.ranking
+    estado.xpDeHoy = datos.xpDeHoy
+  } catch {
+    /* si falla seguimos mostrando lo que haya */
+  } finally {
+    cargandoDatos.value = false
+  }
+}
+
+onMounted(async () => {
+  await iniciar()
+  await cargarDatosDeCuenta()
+})
+
+watch(autenticado, (hay) => {
+  if (hay) cargarDatosDeCuenta()
+  else {
+    medallas.value = []
+    actividad.value = []
+    rankingPropio.value = null
+  }
+})
+
+function abrirEdicion() {
+  borrador.value = {
+    nombre: usuario.value?.nombre ?? estado.nombre,
+    usuario: usuario.value?.usuario ?? '',
+    bio: usuario.value?.bio ?? '',
+    pais: usuario.value?.pais ?? ''
+  }
+  errorEdicion.value = ''
+  editando.value = true
+}
+
+async function guardar() {
+  guardando.value = true
+  errorEdicion.value = ''
+  try {
+    const cambios = { nombre: borrador.value.nombre.trim() || 'Estudiante' }
+    if (enCuenta.value) {
+      cambios.usuario = borrador.value.usuario
+      cambios.bio = borrador.value.bio
+      cambios.pais = borrador.value.pais
+    }
+    await actualizarPerfil(cambios)
+    editando.value = false
+  } catch (error) {
+    errorEdicion.value = error.message
+  } finally {
+    guardando.value = false
+  }
+}
+
+async function cambiarAvatar(emoji) {
+  try {
+    await actualizarPerfil({ avatar: emoji })
+  } catch (error) {
+    errorEdicion.value = error.message
+  }
+}
+
+async function cambiarMeta(meta) {
+  try {
+    await actualizarPerfil({ metaDiaria: meta })
+  } catch (error) {
+    errorEdicion.value = error.message
+  }
+}
+
+function confirmarReinicio() {
+  const seguro = window.confirm(
+    'Se van a borrar tus XP, tu racha y las lecciones completadas en este navegador. Continuar?'
+  )
+  if (seguro) reiniciarProgreso()
+}
+
+async function cerrarSesion() {
+  await salir()
+}
+
+const fechaRegistro = computed(() => {
+  if (!usuario.value?.creadoEn) return ''
+  return new Date(usuario.value.creadoEn).toLocaleDateString('es-AR', {
+    month: 'long',
+    year: 'numeric'
+  })
+})
+
+const NOMBRE_PROVEEDOR = { google: 'Google', github: 'GitHub', demo: 'Prueba' }
 </script>
 
 <template>
   <div class="perfil seccion contenedor">
-    <!-- Datos del estudiante -->
+    <!-- Cabecera del perfil -->
     <header class="cabecera">
-      <div class="cabecera__avatar" aria-hidden="true">{{ estado.avatar }}</div>
+      <div class="cabecera__avatar">
+        <img v-if="usuario?.avatarUrl && !usuario?.avatarEmoji" :src="usuario.avatarUrl" alt="" />
+        <span v-else>{{ usuario?.avatarEmoji ?? estado.avatar }}</span>
+      </div>
 
       <div class="cabecera__datos">
         <template v-if="editando">
-          <label class="campo">
-            <span>Nombre</span>
-            <input v-model="nombreBorrador" type="text" maxlength="24" @keyup.enter="guardar" />
-          </label>
+          <div class="campos">
+            <label class="campo">
+              <span>Nombre</span>
+              <input v-model="borrador.nombre" type="text" maxlength="40" />
+            </label>
+            <label v-if="enCuenta" class="campo">
+              <span>Nombre de usuario</span>
+              <input v-model="borrador.usuario" type="text" maxlength="24" />
+            </label>
+            <label v-if="enCuenta" class="campo campo--ancho">
+              <span>Bio</span>
+              <input v-model="borrador.bio" type="text" maxlength="160" placeholder="Conta algo tuyo" />
+            </label>
+            <label v-if="enCuenta" class="campo">
+              <span>Pais (2 letras)</span>
+              <input v-model="borrador.pais" type="text" maxlength="2" placeholder="AR" />
+            </label>
+          </div>
+          <p v-if="errorEdicion" class="error">{{ errorEdicion }}</p>
           <div class="cabecera__acciones">
-            <BaseBoton tamano="chico" @click="guardar">Guardar</BaseBoton>
+            <BaseBoton tamano="chico" :deshabilitado="guardando" @click="guardar">
+              {{ guardando ? 'Guardando...' : 'Guardar' }}
+            </BaseBoton>
             <BaseBoton tamano="chico" variante="texto" @click="editando = false">Cancelar</BaseBoton>
           </div>
         </template>
 
         <template v-else>
-          <h1>{{ estado.nombre }}</h1>
-          <p class="texto-secundario">Estudiante de JavaScript en Sintaxia</p>
-          <BaseBoton tamano="chico" variante="contorno" @click="editando = true">
-            Editar perfil
-          </BaseBoton>
+          <h1>{{ usuario?.nombre ?? estado.nombre }}</h1>
+          <p v-if="usuario" class="cabecera__usuario">@{{ usuario.usuario }}</p>
+          <p v-if="usuario?.bio" class="cabecera__bio">{{ usuario.bio }}</p>
+          <p v-else class="texto-secundario">Estudiante de JavaScript en Sintaxia</p>
+
+          <ul class="cabecera__insignias">
+            <li v-if="usuario?.liga" class="insignia" :style="{ '--color-liga': usuario.liga.color }">
+              <span aria-hidden="true">{{ usuario.liga.icono }}</span> Liga {{ usuario.liga.nombre }}
+            </li>
+            <li v-if="usuario?.pais" class="insignia insignia--suave">📍 {{ usuario.pais }}</li>
+            <li v-if="fechaRegistro" class="insignia insignia--suave">Desde {{ fechaRegistro }}</li>
+            <li
+              v-for="proveedor in usuario?.proveedores ?? []"
+              :key="proveedor"
+              class="insignia insignia--suave"
+            >
+              {{ NOMBRE_PROVEEDOR[proveedor] ?? proveedor }}
+            </li>
+          </ul>
+
+          <div class="cabecera__acciones">
+            <BaseBoton tamano="chico" variante="contorno" @click="abrirEdicion">
+              Editar perfil
+            </BaseBoton>
+            <BaseBoton v-if="autenticado" tamano="chico" variante="texto" @click="cerrarSesion">
+              Cerrar sesion
+            </BaseBoton>
+          </div>
         </template>
 
         <ul class="avatares" aria-label="Elegir avatar">
-          <li v-for="opcion in avatares" :key="opcion">
+          <li v-for="opcion in AVATARES" :key="opcion">
             <button
               type="button"
               class="avatares__boton"
-              :class="{ 'avatares__boton--activo': estado.avatar === opcion }"
+              :class="{ 'avatares__boton--activo': (usuario?.avatarEmoji ?? estado.avatar) === opcion }"
               :aria-label="`Usar el avatar ${opcion}`"
-              @click="actualizarPerfil({ avatar: opcion })"
+              @click="cambiarAvatar(opcion)"
             >
               {{ opcion }}
             </button>
@@ -135,38 +275,79 @@ const logros = computed(() => [
       </div>
 
       <ul class="estadisticas">
-        <li><strong>{{ estado.xp }}</strong> XP totales</li>
-        <li><strong>{{ estado.racha }}</strong> dias de racha</li>
+        <li><strong>{{ usuario?.xp ?? estado.xp }}</strong> XP totales</li>
+        <li><strong>{{ usuario?.racha ?? estado.racha }}</strong> dias de racha</li>
+        <li v-if="usuario"><strong>{{ usuario.rachaMaxima }}</strong> racha maxima</li>
         <li><strong>{{ totalLeccionesCompletadas }}</strong> lecciones</li>
         <li><strong>{{ precisionGeneral }} %</strong> precision</li>
+        <li v-if="rankingPropio?.puesto">
+          <strong>{{ rankingPropio.puesto }}º</strong> esta semana
+        </li>
       </ul>
     </header>
+
+    <!-- Invitacion a crear cuenta -->
+    <section v-if="!autenticado" class="tarjeta tarjeta--invitacion">
+      <div>
+        <h2>Guarda tu progreso</h2>
+        <p class="texto-secundario">
+          Estas practicando como invitado: si borras los datos del navegador, perdes todo. Al
+          iniciar sesion se sube automaticamente lo que ya hiciste.
+        </p>
+      </div>
+      <BaseBoton :to="{ name: 'ingresar' }">Iniciar sesion</BaseBoton>
+    </section>
 
     <!-- Meta diaria -->
     <section class="tarjeta">
       <h2>Meta diaria</h2>
       <p class="texto-secundario">
-        Llevas <strong>{{ estado.xpDeHoy }}</strong> de {{ estado.metaDiaria }} XP de hoy.
+        Llevas <strong>{{ estado.xpDeHoy }}</strong> de {{ usuario?.metaDiaria ?? estado.metaDiaria }} XP de hoy.
         <span v-if="metaCumplida">Meta cumplida! 🎉</span>
       </p>
       <BarraProgreso
         :valor="estado.xpDeHoy"
-        :maximo="estado.metaDiaria"
+        :maximo="usuario?.metaDiaria ?? estado.metaDiaria"
         color="var(--c-amarillo)"
         etiqueta="Meta diaria de XP"
       />
       <div class="metas">
         <button
-          v-for="meta in metas"
+          v-for="meta in METAS"
           :key="meta"
           type="button"
           class="meta"
-          :class="{ 'meta--activa': estado.metaDiaria === meta }"
-          @click="actualizarPerfil({ metaDiaria: meta })"
+          :class="{ 'meta--activa': (usuario?.metaDiaria ?? estado.metaDiaria) === meta }"
+          @click="cambiarMeta(meta)"
         >
           {{ meta }} XP / dia
         </button>
       </div>
+    </section>
+
+    <!-- Medallas -->
+    <section class="tarjeta">
+      <div class="tarjeta__cabecera">
+        <h2>Medallas</h2>
+        <span class="tarjeta__dato">
+          {{ medallasAMostrar.filter((m) => m.obtenida).length }} / {{ medallasAMostrar.length }}
+        </span>
+      </div>
+      <p v-if="!enCuenta" class="texto-secundario">
+        Como invitado se muestran solo algunas. Inicia sesion para desbloquear las 14 medallas.
+      </p>
+
+      <ul class="medallas">
+        <li v-for="medalla in medallasAMostrar" :key="medalla.codigo">
+          <MedallaCard :medalla="medalla" />
+        </li>
+      </ul>
+    </section>
+
+    <!-- Calendario de actividad (solo con cuenta: necesita el historial del servidor) -->
+    <section v-if="enCuenta" class="tarjeta">
+      <h2>Tu actividad</h2>
+      <CalendarioActividad :actividad="actividad" />
     </section>
 
     <!-- Progreso por unidad -->
@@ -196,24 +377,8 @@ const logros = computed(() => [
       </ul>
     </section>
 
-    <!-- Logros -->
-    <section class="tarjeta">
-      <h2>Logros</h2>
-      <ul class="logros">
-        <li
-          v-for="logro in logros"
-          :key="logro.id"
-          class="logro"
-          :class="{ 'logro--off': !logro.conseguido }"
-        >
-          <span class="logro__icono" aria-hidden="true">{{ logro.conseguido ? logro.icono : '🔒' }}</span>
-          <p class="logro__titulo">{{ logro.titulo }}</p>
-          <p class="logro__texto">{{ logro.texto }}</p>
-        </li>
-      </ul>
-    </section>
-
-    <section class="tarjeta tarjeta--peligro">
+    <!-- Borrar progreso: solo tiene sentido como invitado -->
+    <section v-if="!enCuenta" class="tarjeta tarjeta--peligro">
       <h2>Reiniciar progreso</h2>
       <p class="texto-secundario">
         Borra el progreso guardado en este navegador para empezar el curso desde cero.
@@ -233,7 +398,7 @@ const logros = computed(() => [
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: var(--e-3);
-  align-items: center;
+  align-items: start;
   background: var(--c-blanco);
   border: 2px solid var(--c-borde);
   border-radius: var(--r-xl);
@@ -243,22 +408,76 @@ const logros = computed(() => [
 .cabecera__avatar {
   display: grid;
   place-items: center;
-  width: 90px;
-  height: 90px;
+  width: 92px;
+  height: 92px;
   font-size: 2.6rem;
   border-radius: var(--r-full);
   background: var(--c-violeta-suave);
   border: 3px solid var(--c-violeta);
+  overflow: hidden;
+}
+
+.cabecera__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .cabecera__datos h1 {
   font-size: var(--t-xl);
 }
 
+.cabecera__usuario {
+  font-family: var(--f-codigo);
+  font-size: var(--t-sm);
+  color: var(--c-gris);
+}
+
+.cabecera__bio {
+  margin-top: 0.3rem;
+  font-size: var(--t-sm);
+}
+
+.cabecera__insignias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: var(--e-2);
+}
+
+.insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  border-radius: var(--r-full);
+  padding: 0.2rem 0.7rem;
+  border: 2px solid var(--color-liga, var(--c-borde));
+  color: var(--color-liga, var(--c-gris));
+}
+
+.insignia--suave {
+  border-color: var(--c-borde);
+  color: var(--c-gris);
+  background: var(--c-fondo);
+}
+
 .cabecera__acciones {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--e-1);
-  margin-top: var(--e-1);
+  margin-top: var(--e-2);
+}
+
+.campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--e-2);
+}
+
+.campo--ancho {
+  grid-column: 1 / -1;
 }
 
 .campo {
@@ -271,19 +490,26 @@ const logros = computed(() => [
 }
 
 .campo input {
-  font-family: var(--f-titulo);
-  font-size: var(--t-md);
-  font-weight: 800;
+  font-family: var(--f-texto);
+  font-size: var(--t-sm);
+  font-weight: 700;
   color: var(--c-tinta);
   border: 2px solid var(--c-borde);
   border-radius: var(--r-sm);
-  padding: 0.35rem 0.6rem;
+  padding: 0.4rem 0.6rem;
   text-transform: none;
 }
 
 .campo input:focus {
   outline: 3px solid var(--c-verde);
   outline-offset: 1px;
+}
+
+.error {
+  color: var(--c-rojo-osc);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  margin-top: var(--e-1);
 }
 
 .avatares {
@@ -294,9 +520,9 @@ const logros = computed(() => [
 }
 
 .avatares__boton {
-  font-size: 1.2rem;
-  width: 40px;
-  height: 40px;
+  font-size: 1.1rem;
+  width: 38px;
+  height: 38px;
   border-radius: var(--r-full);
   border: 2px solid var(--c-borde);
   background: var(--c-blanco);
@@ -332,6 +558,13 @@ const logros = computed(() => [
 
 .tarjeta h2 {
   font-size: var(--t-lg);
+}
+
+.tarjeta--invitacion {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border-color: var(--c-verde);
+  background: linear-gradient(180deg, var(--c-verde-suave), var(--c-blanco) 70%);
 }
 
 .tarjeta--peligro {
@@ -373,6 +606,12 @@ const logros = computed(() => [
   color: var(--c-amarillo-osc);
 }
 
+.medallas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--e-2);
+}
+
 .unidades {
   display: grid;
   gap: var(--e-2);
@@ -396,43 +635,7 @@ const logros = computed(() => [
   margin-bottom: 0.25rem;
 }
 
-.logros {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--e-2);
-}
-
-.logro {
-  text-align: center;
-  border: 2px solid var(--c-amarillo);
-  background: var(--c-amarillo-suave);
-  border-radius: var(--r-md);
-  padding: var(--e-2);
-}
-
-.logro--off {
-  border-color: var(--c-borde);
-  background: var(--c-fondo);
-  opacity: 0.7;
-}
-
-.logro__icono {
-  font-size: 1.8rem;
-  display: block;
-}
-
-.logro__titulo {
-  font-family: var(--f-titulo);
-  font-weight: 800;
-  font-size: var(--t-sm);
-}
-
-.logro__texto {
-  font-size: var(--t-xs);
-  color: var(--c-gris);
-}
-
-@media (max-width: 820px) {
+@media (max-width: 860px) {
   .cabecera {
     grid-template-columns: auto 1fr;
   }
@@ -441,6 +644,9 @@ const logros = computed(() => [
     grid-template-columns: repeat(2, 1fr);
     display: grid;
     text-align: left;
+  }
+  .tarjeta--invitacion {
+    grid-template-columns: 1fr;
   }
 }
 </style>
