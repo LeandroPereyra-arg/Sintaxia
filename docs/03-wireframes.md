@@ -26,7 +26,43 @@ y XP quedan visibles.
 
 ---
 
-## 3.2 Inicio (`/`)
+## 3.2 Bienvenida (`/bienvenida`)
+
+Es lo primero que ve alguien que abre Sintaxia. Esta pensada con forma de app de
+celular: pantalla completa, se pasa deslizando y el boton queda abajo, donde llega
+el pulgar.
+
+```
+┌───────────────────────────────┐   ┌───────────────────────────────┐
+│ ▄▄▄▄ ──── ──── ────   Saltar  │   │ ▄▄▄▄ ▄▄▄▄ ▄▄▄▄ ▄▄▄▄ ▄▄▄▄      │
+│  progreso tipo historias      │   │                               │
+│                               │   │                               │
+│          ╭─────────╮          │   │          ╭─────────╮          │
+│          │  halo   │          │   │          │  halo   │          │
+│          │ ▭SINTAX │          │   │          │ ▭SINTAX │          │
+│          ╰─────────╯          │   │          ╰─────────╯          │
+│             ▭ icono           │   │                               │
+│                               │   │                               │
+│       Hola, soy Sintax        │   │          Empecemos            │
+│  Te voy a acompaniar a        │   │  Con una cuenta guardas tu    │
+│  aprender a programar...      │   │  progreso y competis...       │
+│                               │   │                               │
+│                               │   │  [ G  Continuar con Google  ] │
+│                               │   │  [ ⌥  Continuar con GitHub  ] │
+│                               │   │     Seguir como invitado      │
+│                               │   │                               │
+│  [       SIGUIENTE        ]   │   │                               │
+└───────────────────────────────┘   └───────────────────────────────┘
+        pasos 1 a 4                        paso final
+```
+
+Se desliza con el dedo (o con las flechas del teclado). En el escritorio la misma
+pantalla se muestra encuadrada, con el ancho de un celular, para que la
+presentacion se vea igual en los dos lados.
+
+---
+
+## 3.3 Inicio (`/`)
 
 ```
 ┌───────────────────────── CABECERA ────────────────────────────────────────┐
@@ -72,7 +108,7 @@ su nombre, la barra de avance del curso y un boton **IR AL CURSO**.
 
 ---
 
-## 3.3 Cursos (`/cursos`)
+## 3.4 Cursos (`/cursos`)
 
 ```
 ┌───────────────────────── CABECERA ────────────────────────────────────────┐
@@ -107,7 +143,7 @@ La grilla se acomoda sola: 3 columnas en escritorio, 2 en tablet, 1 en telefono.
 
 ---
 
-## 3.4 Curso de JavaScript (`/cursos/javascript`)
+## 3.5 Curso de JavaScript (`/cursos/javascript`)
 
 ```
 ┌───────────────────────── CABECERA ────────────────────────────────────────┐
@@ -147,7 +183,7 @@ progreso) para que se entienda de un vistazo y no dependa solo del color.
 
 ---
 
-## 3.5 Unidad (`/cursos/javascript/unidades/js-u1`)
+## 3.6 Unidad (`/cursos/javascript/unidades/js-u1`)
 
 ```
 ┌───────────────────────── CABECERA ────────────────────────────────────────┐
@@ -176,7 +212,7 @@ progreso) para que se entienda de un vistazo y no dependa solo del color.
 
 ---
 
-## 3.6 Leccion / ejercicio (`/cursos/javascript/lecciones/js-u1-l1`)
+## 3.7 Leccion / ejercicio (`/cursos/javascript/lecciones/js-u1-l1`)
 
 Pantalla completa, **sin cabecera ni pie**: nada que distraiga.
 
@@ -232,7 +268,7 @@ VERDADERO O FALSO            COMPLETAR EL CODIGO         ORDENAR LOS BLOQUES
 
 ---
 
-## 3.7 Resultados
+## 3.8 Resultados
 
 ```
 ┌───────────────────────── CABECERA ────────────────────────────────────────┐
@@ -259,7 +295,7 @@ VERDADERO O FALSO            COMPLETAR EL CODIGO         ORDENAR LOS BLOQUES
 
 ---
 
-## 3.8 Perfil (`/perfil`)
+## 3.9 Perfil (`/perfil`)
 
 ```
 ┌───────────────────────── CABECERA ────────────────────────────────────────┐
@@ -297,7 +333,7 @@ VERDADERO O FALSO            COMPLETAR EL CODIGO         ORDENAR LOS BLOQUES
 
 ---
 
-## 3.9 Adaptacion a telefono
+## 3.10 Adaptacion a telefono
 
 ```
 ┌─────────────────────┐   Reglas aplicadas en todas las vistas:

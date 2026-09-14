@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import { bienvenidaVista } from '@/composables/useBienvenida.js'
 
 /**
  * Rutas de Sintaxia.
@@ -59,6 +60,12 @@ const routes = [
     meta: { titulo: 'Ranking semanal' }
   },
   {
+    path: '/bienvenida',
+    name: 'bienvenida',
+    component: () => import('@/views/BienvenidaView.vue'),
+    meta: { titulo: 'Bienvenida', ocultarNavegacion: true }
+  },
+  {
     path: '/ingresar',
     name: 'ingresar',
     component: () => import('@/views/IngresarView.vue'),
@@ -78,6 +85,18 @@ const router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     return savedPosition ?? { top: 0 }
   }
+})
+
+/**
+ * La primera vez que alguien abre la aplicacion ve la pantalla de bienvenida,
+ * igual que al instalar una app del celular. Despues no vuelve a aparecer,
+ * salvo que se entre a /bienvenida a proposito.
+ */
+router.beforeEach((to) => {
+  if (to.name === 'inicio' && !bienvenidaVista()) {
+    return { name: 'bienvenida' }
+  }
+  return true
 })
 
 router.afterEach((to) => {

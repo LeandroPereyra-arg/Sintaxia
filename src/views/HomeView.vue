@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
 import LogoSintaxia from '@/components/LogoSintaxia.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
+import Carrusel from '@/components/Carrusel.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import { cursos, ESTADO_CURSO } from '@/data/cursos.js'
 import { lecciones } from '@/data/lecciones/index.js'
@@ -138,13 +139,18 @@ function comenzar() {
         La misma mecanica que funciona para los idiomas, aplicada a los lenguajes de programacion.
       </p>
 
-      <ul class="beneficios anim-lista">
-        <li v-for="beneficio in beneficios" :key="beneficio.titulo" class="beneficio">
+      <Carrusel
+        class="beneficios"
+        :cantidad="beneficios.length"
+        etiqueta="Por que vas a volver todos los dias"
+        ancho-diapositiva="var(--ancho-beneficio)"
+      >
+        <article v-for="beneficio in beneficios" :key="beneficio.titulo" class="beneficio">
           <Icono class="beneficio__icono" :nombre="beneficio.icono" :tamano="30" :trazo="2.1" />
           <h3>{{ beneficio.titulo }}</h3>
           <p class="texto-secundario">{{ beneficio.texto }}</p>
-        </li>
-      </ul>
+        </article>
+      </Carrusel>
     </section>
 
     <!-- Como funciona -->
@@ -325,14 +331,14 @@ function comenzar() {
   margin: var(--e-2) auto var(--e-4);
 }
 
-/* Beneficios */
+/* Beneficios: carrusel deslizable.
+   Cuantas tarjetas entran a la vez lo decide el ancho de la pantalla. */
 .beneficios {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: var(--e-3);
+  --ancho-beneficio: calc((100% - var(--e-3) * 3) / 4);
 }
 
 .beneficio {
+  height: 100%;
   background: var(--c-blanco);
   border: 2px solid var(--c-borde);
   border-radius: var(--r-lg);
@@ -352,6 +358,19 @@ function comenzar() {
 
 .beneficio p {
   font-size: var(--t-sm);
+}
+
+@media (max-width: 1000px) {
+  .beneficios {
+    --ancho-beneficio: calc((100% - var(--e-3)) / 2);
+  }
+}
+
+@media (max-width: 640px) {
+  .beneficios {
+    /* Se asoma un poco la siguiente: invita a deslizar. */
+    --ancho-beneficio: 84%;
+  }
 }
 
 /* Pasos */
