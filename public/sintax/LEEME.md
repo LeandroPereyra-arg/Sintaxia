@@ -1,6 +1,18 @@
-# Imagenes de Sintax
+# Imagenes de la marca
 
-Aca van las imagenes de la mascota, en PNG con fondo transparente.
+## El logo
+
+`sintaxia.png` es el logo completo: el buho con la notebook y la palabra "Sintaxia".
+Lo usa `src/components/LogoSintaxia.vue` en la cabecera, el pie, la portada y el 404,
+y tambien es el favicon.
+
+En la cabecera se muestra recortado, solo el buho. El recorte esta calculado midiendo
+el PNG (el buho va de y=167 a y=673 y la palabra arranca en y=674) y se ajusta con dos
+variables CSS dentro del componente: `--logo-zoom: 275%` y `--logo-foco-y: 30%`.
+
+## Los estados de Sintax
+
+Las imagenes de la mascota van en esta misma carpeta, en PNG con fondo transparente.
 El componente `src/components/SintaxMascota.vue` las toma por el nombre del archivo.
 
 | Archivo | Cuando se usa |

@@ -55,7 +55,7 @@ Requiere **Node 18+** y **MySQL 8** (o MariaDB 10.6+). Con `PERMITIR_LOGIN_DEMO=
 
 ## El logo
 
-El logo va en **`public/sintaxia.png`**. Con solo dejar el archivo ahi aparece en la cabecera,
+El logo vive en **`public/sintax/sintaxia.png`**. Con solo dejar el archivo ahi aparece en la cabecera,
 el pie, la portada, la pantalla de ingreso, el 404 y como favicon: no hay que tocar codigo.
 
 Mientras ese archivo no exista, la app dibuja un logo de respaldo en SVG, asi que nunca se ve
@@ -73,10 +73,13 @@ descentrado con otra version del logo:
 
 ```css
 .logo--icono {
-  --logo-zoom: 263%;    /* cuanto se agranda la imagen */
-  --logo-foco-y: 29%;   /* que franja vertical queda a la vista */
+  --logo-zoom: 275%;    /* cuanto se agranda la imagen */
+  --logo-foco-y: 30%;   /* que franja vertical queda a la vista */
 }
 ```
+
+Los valores salen de medir el PNG: el buho ocupa de `y=167` a `y=673` y la palabra arranca
+justo debajo.
 
 ## Pensada tambien para el celular
 
