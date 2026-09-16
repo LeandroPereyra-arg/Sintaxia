@@ -4,7 +4,7 @@ import { ref } from 'vue'
 /**
  * Logo de Sintaxia.
  *
- * Usa la imagen `public/sintaxia.png`. Si ese archivo todavia no existe, cae
+ * Usa la imagen `public/sintax/sintaxia.png`. Si ese archivo todavia no existe, cae
  * automaticamente en un dibujo SVG de respaldo para que nunca se vea una
  * imagen rota; en cuanto se agrega el PNG, aparece solo sin tocar codigo.
  *
@@ -14,9 +14,12 @@ import { ref } from 'vue'
  *
  * El recorte de la variante "icono" se controla con dos variables CSS, porque
  * depende de donde este el buho dentro del PNG:
- *   --logo-zoom   cuanto se agranda la imagen (263% = el buho llena el cuadrado)
- *   --logo-foco-y que parte de la imagen queda a la vista (29% = la franja del buho)
- * Si el logo cambia de composicion, se ajustan esos dos numeros y listo.
+ *   --logo-zoom   cuanto se agranda la imagen
+ *   --logo-foco-y que franja vertical queda a la vista
+ *
+ * Los valores actuales salen de medir el PNG: el buho ocupa de y=167 a y=673 y
+ * la palabra arranca justo debajo, en y=674. Si el logo cambia de composicion,
+ * se ajustan esos dos numeros y listo.
  */
 const props = defineProps({
   variante: {
@@ -32,7 +35,7 @@ const props = defineProps({
   animado: { type: Boolean, default: false }
 })
 
-const RUTA = `${import.meta.env.BASE_URL}sintaxia.png`
+const RUTA = `${import.meta.env.BASE_URL}sintax/sintaxia.png`
 
 // Si el PNG no esta, se muestra el respaldo.
 const hayImagen = ref(true)
@@ -126,8 +129,8 @@ const hayImagen = ref(true)
    vertical, asi que se pinta de fondo y se encuadra con background-position. */
 .logo--icono {
   width: var(--alto);
-  --logo-zoom: 263%;
-  --logo-foco-y: 29%;
+  --logo-zoom: 275%;
+  --logo-foco-y: 30%;
 }
 
 .logo__sonda {

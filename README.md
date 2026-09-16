@@ -55,7 +55,7 @@ Requiere **Node 18+** y **MySQL 8** (o MariaDB 10.6+). Con `PERMITIR_LOGIN_DEMO=
 
 ## El logo
 
-El logo va en **`public/sintaxia.png`**. Con solo dejar el archivo ahi aparece en la cabecera,
+El logo vive en **`public/sintax/sintaxia.png`**. Con solo dejar el archivo ahi aparece en la cabecera,
 el pie, la portada, la pantalla de ingreso, el 404 y como favicon: no hay que tocar codigo.
 
 Mientras ese archivo no exista, la app dibuja un logo de respaldo en SVG, asi que nunca se ve
@@ -73,10 +73,13 @@ descentrado con otra version del logo:
 
 ```css
 .logo--icono {
-  --logo-zoom: 263%;    /* cuanto se agranda la imagen */
-  --logo-foco-y: 29%;   /* que franja vertical queda a la vista */
+  --logo-zoom: 275%;    /* cuanto se agranda la imagen */
+  --logo-foco-y: 30%;   /* que franja vertical queda a la vista */
 }
 ```
+
+Los valores salen de medir el PNG: el buho ocupa de `y=167` a `y=673` y la palabra arranca
+justo debajo.
 
 ## Pensada tambien para el celular
 
@@ -100,21 +103,26 @@ El buho del logo aparece en toda la aplicacion y **reacciona a lo que pasa**: ce
 leccion perfecta, se enoja cuando se pierden las tres vidas, se confunde en el 404 y duerme
 si hace rato que no practicas.
 
-Las imagenes van en **`public/sintax/`**, una por estado de animo:
+Las imagenes viven en **`public/sintax/`**, una por estado de animo:
 
-| Archivo | Cuando aparece |
-|---|---|
-| `normal.png` | Por defecto, y reemplaza a cualquiera que falte |
-| `saludando.png` | Portada, pantalla de ingreso e invitacion a crear cuenta |
-| `pensando.png` | Pantallas vacias |
-| `celebrando.png` | Leccion perfecta y racha de 3 dias o mas |
-| `sorprendido.png` | Al desbloquear algo nuevo |
-| `confundido.png` | Pagina 404 y resultados flojos |
-| `enojado.png` | Cuando se pierden las tres vidas |
-| `dormido.png` | Cuando todavia no empezaste |
+| Archivo | Que muestra | Cuando aparece |
+|---|---|---|
+| `normal.webp` | Con la notebook, contento | Por defecto, y reemplaza a cualquiera que falte |
+| `saludando.webp` | Alas arriba, ojos cerrados | Portada, ingreso y bienvenida |
+| `confundido.webp` | Ala en el pico y un "?" | Pagina 404 y resultados flojos |
+| `pensando.webp` | La lamparita de la idea | Pantallas vacias |
+| `enojado.webp` | Notebook con la X roja | Cuando se pierden las tres vidas |
+| `dormido.webp` | Acostado, con Zzz | Cuando todavia no empezaste |
+| `celebrando.webp` | Anteojos de sol y destello | Leccion perfecta y racha de 3 dias o mas |
+| `sorprendido.webp` | Ojos grandes, ala levantada | Al desbloquear algo nuevo |
+
+Estan en **WebP**: pesan unas cinco veces menos que el PNG con la misma calidad (44 KB
+contra 218 KB), que en el celular con datos moviles se nota. El componente igual acepta los
+dos formatos.
 
 Cada estado trae su propia animacion (flota, saluda, festeja, tiembla, duerme). Si falta un
-archivo se usa `normal.png`; si tampoco esta, se cae al logo. Nunca queda una imagen rota.
+archivo se prueba el PNG, despues `normal`, y por ultimo el logo: nunca queda una imagen
+rota.
 
 ## Iconos
 

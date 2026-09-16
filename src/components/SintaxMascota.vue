@@ -6,20 +6,18 @@ import { ESTADOS_SINTAX } from '@/assets/estadosSintax.js'
 /**
  * Sintax, la mascota de Sintaxia.
  *
- * Cada estado de animo es una imagen en `public/sintax/<estado>.png`:
+ * Cada estado de animo es una imagen en `public/sintax/<estado>.webp`
+ * (ver los nombres en `src/assets/estadosSintax.js`).
  *
- *   normal.png       normal o feliz (es el que se usa por defecto)
- *   sorprendido.png
- *   pensando.png
- *   celebrando.png
- *   confundido.png
- *   enojado.png
- *   dormido.png
- *   saludando.png
+ * Se usa WebP porque pesa unas cinco veces menos que el PNG con la misma
+ * calidad, y eso se nota en el celular con datos moviles.
  *
- * Con solo dejar los archivos ahi aparecen solos. Si falta el estado pedido se
- * usa "normal"; si tampoco esta, se cae al logo, que a su vez tiene su propio
- * respaldo en SVG. Asi nunca se ve una imagen rota.
+ * Si algo falta, se va probando en orden hasta encontrar algo que mostrar:
+ *
+ *   <estado>.webp  ->  <estado>.png  ->  normal.webp  ->  normal.png  ->  logo
+ *
+ * Asi que alcanza con dejar el archivo en la carpeta, en cualquiera de los dos
+ * formatos, y nunca se ve una imagen rota.
  *
  * Cada estado trae ademas su propia animacion (flotar, asentir, dormir...),
  * que se apaga sola si el sistema pide menos movimiento.
@@ -40,18 +38,22 @@ const props = defineProps({
 
 const base = import.meta.env.BASE_URL
 
-/** 0 = el estado pedido · 1 = normal · 2 = el logo. */
+/** Orden en el que se busca la imagen, del ideal al ultimo recurso. */
+const intentos = computed(() => [
+  `${base}sintax/${props.estado}.webp`,
+  `${base}sintax/${props.estado}.png`,
+  `${base}sintax/normal.webp`,
+  `${base}sintax/normal.png`
+])
+
 const intento = ref(0)
 
 watch(() => props.estado, () => {
   intento.value = 0
 })
 
-const ruta = computed(() =>
-  intento.value === 0 ? `${base}sintax/${props.estado}.png` : `${base}sintax/normal.png`
-)
-
-const hayImagen = computed(() => intento.value < 2)
+const ruta = computed(() => intentos.value[intento.value])
+const hayImagen = computed(() => intento.value < intentos.value.length)
 
 function alFallar() {
   intento.value++

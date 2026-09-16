@@ -187,9 +187,17 @@ una `etiqueta` que el lector de pantalla si anuncia.
 
 ### La mascota
 
-**Sintax** es el buho del logo, y aparece en toda la aplicacion con **ocho estados de animo**
-(`public/sintax/`): normal, saludando, sorprendido, pensando, celebrando, confundido, enojado
-y dormido.
+**Sintax** es el personaje del logo, y aparece en toda la aplicacion con **ocho estados de
+animo** (`public/sintax/`): normal, saludando, sorprendido, pensando, celebrando, confundido,
+enojado y dormido.
+
+Las ocho comparten **el mismo encuadre**: igual tamanio de lienzo y el personaje apoyado
+sobre la misma linea de piso. Eso es lo que hace que al cambiar de estado no salte de lugar
+ni cambie de tamanio, que es lo que arruina este tipo de mascotas.
+
+Van en WebP, que pesa unas cinco veces menos que el PNG con la misma calidad: 44 KB contra
+218 KB por imagen. Con el celular en datos moviles, esa diferencia es la que decide si el
+personaje llega a tiempo a la pantalla o aparece tarde.
 
 No es decoracion: **reacciona a lo que pasa**. Celebra una leccion perfecta, se enoja cuando
 se pierden las tres vidas, se confunde en el 404 y duerme cuando hace rato que no practicas.
