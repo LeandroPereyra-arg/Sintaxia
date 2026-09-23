@@ -146,7 +146,7 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [6. Reglas de avance y finalizacion](docs/06-reglas-de-avance.md) | Completada contra aprobada, umbral, desbloqueo de lecciones y unidades |
 | [7. Registro de pruebas](docs/07-registro-de-pruebas.md) | Los 11 casos probados, con problemas encontrados y correcciones |
 | [8. Modelo de datos (DER)](docs/08-modelo-de-datos.md) | Tablas, tipos, claves y restricciones · diagrama en draw.io |
-| [9. Aporte de cada integrante](docs/09-aporte-integrantes.md) | Reparto del trabajo y guion de la demostracion |
+| [9. Demostracion](docs/09-demostracion.md) | Guion para mostrar el recorrido completo |
 
 ---
 
