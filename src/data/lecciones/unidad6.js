@@ -10,6 +10,15 @@ export const leccionesUnidad6 = [
     descripcion: 'El DOM: como llegar al HTML desde JavaScript.',
     icono: 'globo',
     xp: 25,
+    teoria: {
+      explicacion:
+        'El DOM es la representacion del HTML que JavaScript puede leer y modificar. querySelector() busca el primer elemento que coincide con un selector de CSS, y textContent permite leer o cambiar su texto.',
+      ejemplo: {
+        titulo: 'Buscar y cambiar un elemento',
+        codigo:
+          'const titulo = document.querySelector("h1")\ntitulo.textContent = "Hola mundo"\n\n// querySelectorAll devuelve todos los que coinciden\nconst items = document.querySelectorAll(".item")'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u6-l1-e1',
@@ -50,6 +59,15 @@ export const leccionesUnidad6 = [
     descripcion: 'Responder a los clics y a las acciones del usuario.',
     icono: 'puntero',
     xp: 25,
+    teoria: {
+      explicacion:
+        'Un evento es algo que ocurre en la pagina: un clic, una tecla, el envio de un formulario. Con addEventListener() se indica que funcion ejecutar cada vez que ese evento sucede sobre un elemento.',
+      ejemplo: {
+        titulo: 'Responder a un clic',
+        codigo:
+          'const boton = document.querySelector("#accion")\nconst parrafo = document.querySelector("#mensaje")\n\nboton.addEventListener("click", () => {\n  parrafo.textContent = "Listo!"\n})'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u6-l2-e1',

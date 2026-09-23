@@ -7,6 +7,16 @@ import { useAuth } from '@/composables/useAuth.js'
 const CLAVE_ALMACENAMIENTO = 'sintaxia:progreso:v1'
 
 /**
+ * Porcentaje de aciertos necesario para APROBAR una leccion.
+ *
+ * Las reglas completas estan en docs/06-reglas-de-avance.md. En resumen:
+ *   - completada: el estudiante termino todas las actividades de la leccion.
+ *   - aprobada:   ademas acerto al menos este porcentaje.
+ * Solo aprobar habilita la leccion siguiente.
+ */
+export const UMBRAL_APROBACION = 0.6
+
+/**
  * Progreso del estudiante.
  *
  * Funciona en dos modos:
@@ -75,23 +85,47 @@ export function useProgreso() {
   // Consultas (identicas en los dos modos)
   // ---------------------------------------------------------------
 
+  /** Termino todas las actividades, sin importar cuantas acerto. */
   function leccionCompletada(leccionId) {
     return Boolean(estado.lecciones[leccionId])
+  }
+
+  /** Ademas de terminarla, llego al umbral de aciertos. */
+  function leccionAprobada(leccionId) {
+    const registro = estado.lecciones[leccionId]
+    if (!registro || !registro.total) return false
+    return registro.aciertos / registro.total >= UMBRAL_APROBACION
+  }
+
+  /** Porcentaje de aciertos del mejor intento, para mostrarlo en pantalla. */
+  function precisionLeccion(leccionId) {
+    const registro = estado.lecciones[leccionId]
+    if (!registro || !registro.total) return 0
+    return Math.round((registro.aciertos / registro.total) * 100)
   }
 
   function leccionesCompletadasDeUnidad(unidadId) {
     return leccionesDeUnidad(unidadId).filter((leccion) => leccionCompletada(leccion.id)).length
   }
 
+  function leccionesAprobadasDeUnidad(unidadId) {
+    return leccionesDeUnidad(unidadId).filter((leccion) => leccionAprobada(leccion.id)).length
+  }
+
   function progresoUnidad(unidadId) {
     const total = leccionesDeUnidad(unidadId).length
     if (total === 0) return 0
-    return Math.round((leccionesCompletadasDeUnidad(unidadId) / total) * 100)
+    return Math.round((leccionesAprobadasDeUnidad(unidadId) / total) * 100)
   }
 
+  /**
+   * Una unidad esta completa cuando todas sus lecciones estan APROBADAS.
+   * Terminarlas sin llegar al umbral no alcanza: eso es lo que separa
+   * "completada" de "aprobada".
+   */
   function unidadCompletada(unidadId) {
     const total = leccionesDeUnidad(unidadId).length
-    return total > 0 && leccionesCompletadasDeUnidad(unidadId) === total
+    return total > 0 && leccionesAprobadasDeUnidad(unidadId) === total
   }
 
   /** La unidad 1 siempre esta abierta; cada una se desbloquea al terminar la anterior. */
@@ -105,14 +139,42 @@ export function useProgreso() {
       : ESTADO_UNIDAD.BLOQUEADA
   }
 
+  /**
+   * Una leccion se puede abrir si su unidad no esta bloqueada y ademas:
+   *   - es la primera de la unidad, o
+   *   - la leccion anterior ya esta APROBADA, o
+   *   - ya la habia completado antes (para poder repasarla cuando quiera).
+   */
   function leccionDisponible(leccionId) {
     const leccion = obtenerLeccion(leccionId)
     if (!leccion) return false
-    return estadoUnidad(leccion.unidadId) !== ESTADO_UNIDAD.BLOQUEADA
+    if (estadoUnidad(leccion.unidadId) === ESTADO_UNIDAD.BLOQUEADA) return false
+    if (leccionCompletada(leccionId)) return true
+
+    const hermanas = leccionesDeUnidad(leccion.unidadId)
+    const indice = hermanas.findIndex((l) => l.id === leccionId)
+    if (indice <= 0) return true
+    return leccionAprobada(hermanas[indice - 1].id)
   }
 
+  /** Motivo por el que una leccion esta bloqueada, para poder explicarlo. */
+  function motivoBloqueo(leccionId) {
+    const leccion = obtenerLeccion(leccionId)
+    if (!leccion) return 'Esa leccion no existe.'
+    if (estadoUnidad(leccion.unidadId) === ESTADO_UNIDAD.BLOQUEADA) {
+      return 'Primero tenes que completar la unidad anterior.'
+    }
+    const hermanas = leccionesDeUnidad(leccion.unidadId)
+    const indice = hermanas.findIndex((l) => l.id === leccionId)
+    if (indice > 0 && !leccionAprobada(hermanas[indice - 1].id)) {
+      return `Primero tenes que aprobar la leccion "${hermanas[indice - 1].titulo}".`
+    }
+    return ''
+  }
+
+  /** Primera leccion sin aprobar que ademas se pueda abrir. */
   const proximaLeccion = computed(
-    () => lecciones.find((leccion) => !leccionCompletada(leccion.id)) ?? null
+    () => lecciones.find((leccion) => !leccionAprobada(leccion.id) && leccionDisponible(leccion.id)) ?? null
   )
 
   const totalLeccionesCompletadas = computed(() => Object.keys(estado.lecciones).length)
@@ -309,7 +371,11 @@ export function useProgreso() {
     enCuenta,
     // consultas
     leccionCompletada,
+    leccionAprobada,
+    precisionLeccion,
+    motivoBloqueo,
     leccionesCompletadasDeUnidad,
+    leccionesAprobadasDeUnidad,
     progresoUnidad,
     unidadCompletada,
     estadoUnidad,

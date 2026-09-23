@@ -34,11 +34,20 @@ const routes = [
     meta: { titulo: 'Unidad' }
   },
   {
+    // Pantalla de teoria: titulo, explicacion y ejemplo de codigo.
     path: '/cursos/javascript/lecciones/:leccionId',
     name: 'leccion',
+    component: () => import('@/views/LeccionIntroView.vue'),
+    props: true,
+    meta: { titulo: 'Leccion' }
+  },
+  {
+    // Las actividades, a pantalla completa y sin distracciones.
+    path: '/cursos/javascript/lecciones/:leccionId/actividades',
+    name: 'actividades',
     component: () => import('@/views/LeccionView.vue'),
     props: true,
-    meta: { titulo: 'Leccion', ocultarNavegacion: true }
+    meta: { titulo: 'Actividades', ocultarNavegacion: true }
   },
   {
     path: '/cursos/javascript/lecciones/:leccionId/resultados',

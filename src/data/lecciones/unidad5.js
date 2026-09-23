@@ -10,6 +10,15 @@ export const leccionesUnidad5 = [
     descripcion: 'Listas ordenadas de valores y sus metodos basicos.',
     icono: 'caja',
     xp: 20,
+    teoria: {
+      explicacion:
+        'Un array es una lista ordenada de valores. Se accede a cada uno por su posicion, que empieza en 0, y length dice cuantos elementos tiene. push() agrega al final y pop() saca el ultimo.',
+      ejemplo: {
+        titulo: 'Listas ordenadas',
+        codigo:
+          'const colores = ["rojo", "verde", "azul"]\n\nconsole.log(colores[0])      // "rojo"\nconsole.log(colores[1])      // "verde"\nconsole.log(colores.length)  // 3\n\ncolores.push("negro")        // lo agrega al final'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u5-l1-e1',
@@ -51,6 +60,15 @@ export const leccionesUnidad5 = [
     descripcion: 'Agrupar datos relacionados con propiedades con nombre.',
     icono: 'carpetas',
     xp: 25,
+    teoria: {
+      explicacion:
+        'Un objeto agrupa datos relacionados con un nombre cada uno, en vez de por posicion. Se accede a cada propiedad con un punto. Sobre los arrays, map() transforma cada elemento y filter() se queda solo con los que cumplen una condicion.',
+      ejemplo: {
+        titulo: 'Objetos, map y filter',
+        codigo:
+          'const usuario = { nombre: "Ada", edad: 36 }\nconsole.log(usuario.nombre)   // "Ada"\n\nconst numeros = [4, 15, 8, 23]\nconst grandes = numeros.filter((n) => n > 10)\nconsole.log(grandes)          // [15, 23]'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u5-l2-e1',
