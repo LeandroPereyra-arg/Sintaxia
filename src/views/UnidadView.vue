@@ -1,44 +1,97 @@
 <script setup>
-import Icono from '@/components/Icono.vue'
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import Icono from '@/components/Icono.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
-import { obtenerUnidad, ESTADO_UNIDAD } from '@/data/unidades.js'
-import { leccionesDeUnidad } from '@/data/lecciones/index.js'
+import SintaxMascota from '@/components/SintaxMascota.vue'
+import {
+  obtenerUnidad,
+  listarLecciones,
+  ESTADO_UNIDAD,
+  ContenidoNoEncontrado
+} from '@/servicios/contenido.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
-/** Detalle de una unidad: la lista de lecciones que la componen. */
+/**
+ * Detalle de una unidad: las lecciones que la componen.
+ * Todo el contenido se le pide al modulo de acceso a datos.
+ */
 const props = defineProps({
   unidadId: { type: String, required: true }
 })
 
 const router = useRouter()
-const { estadoUnidad, progresoUnidad, leccionCompletada, estado } = useProgreso()
+const {
+  estadoUnidad,
+  progresoUnidad,
+  leccionCompletada,
+  leccionAprobada,
+  leccionDisponible,
+  precisionLeccion,
+  motivoBloqueo
+} = useProgreso()
 
-const unidad = computed(() => obtenerUnidad(props.unidadId))
+const unidad = ref(null)
+const lecciones = ref([])
+const cargando = ref(true)
+const error = ref('')
+
+async function cargar() {
+  cargando.value = true
+  error.value = ''
+  unidad.value = null
+  lecciones.value = []
+  try {
+    unidad.value = await obtenerUnidad(props.unidadId)
+    lecciones.value = await listarLecciones(props.unidadId)
+  } catch (e) {
+    error.value =
+      e instanceof ContenidoNoEncontrado
+        ? 'No encontramos esa unidad.'
+        : 'Hubo un problema al cargar la unidad.'
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(cargar)
+watch(() => props.unidadId, cargar)
+
 const bloqueada = computed(
   () => unidad.value && estadoUnidad(unidad.value.id) === ESTADO_UNIDAD.BLOQUEADA
 )
 
-const listaLecciones = computed(() => {
-  if (!unidad.value) return []
-  return leccionesDeUnidad(unidad.value.id).map((leccion) => ({
+/** Cada leccion con su estado ya resuelto, para no calcularlo en la plantilla. */
+const listaLecciones = computed(() =>
+  lecciones.value.map((leccion) => ({
     ...leccion,
     completada: leccionCompletada(leccion.id),
-    resultado: estado.lecciones[leccion.id] ?? null
+    aprobada: leccionAprobada(leccion.id),
+    disponible: leccionDisponible(leccion.id),
+    precision: precisionLeccion(leccion.id),
+    motivo: motivoBloqueo(leccion.id)
   }))
-})
+)
 
 function abrirLeccion(leccion) {
-  if (bloqueada.value) return
+  if (!leccion.disponible) return
   router.push({ name: 'leccion', params: { leccionId: leccion.id } })
 }
 </script>
 
 <template>
   <div class="unidad-vista seccion contenedor">
-    <template v-if="unidad">
+    <p v-if="cargando" class="estado">Cargando la unidad...</p>
+
+    <div v-else-if="error" class="vacio">
+      <SintaxMascota estado="confundido" :alto="130" alt="" />
+      <h1>No encontramos esa unidad</h1>
+      <p class="texto-secundario">{{ error }}</p>
+      <BaseBoton :to="{ name: 'curso-javascript' }">Volver al curso</BaseBoton>
+    </div>
+
+    <template v-else-if="unidad">
       <nav class="miga" aria-label="Ruta de navegacion">
         <router-link :to="{ name: 'cursos' }">Cursos</router-link>
         <span aria-hidden="true">›</span>
@@ -72,7 +125,8 @@ function abrirLeccion(leccion) {
         <li v-for="leccion in listaLecciones" :key="leccion.id" class="leccion">
           <Icono
             class="leccion__icono"
-            :nombre="leccion.completada ? 'checkCirculo' : bloqueada ? 'candado' : leccion.icono"
+            :class="{ 'leccion__icono--ok': leccion.aprobada }"
+            :nombre="leccion.aprobada ? 'checkCirculo' : !leccion.disponible ? 'candado' : leccion.icono"
             :tamano="26"
             :trazo="2.1"
           />
@@ -81,20 +135,30 @@ function abrirLeccion(leccion) {
             <h3>{{ leccion.numero }}. {{ leccion.titulo }}</h3>
             <p class="texto-secundario">{{ leccion.descripcion }}</p>
             <p class="leccion__meta">
-              {{ leccion.ejercicios.length }} ejercicios · {{ leccion.xp }} XP
-              <template v-if="leccion.resultado">
-                · mejor resultado: {{ leccion.resultado.aciertos }}/{{ leccion.resultado.total }}
+              {{ leccion.ejercicios.length }} actividades · {{ leccion.xp }} XP
+              <template v-if="leccion.completada">
+                · mejor intento: {{ leccion.precision }} %
               </template>
+            </p>
+
+            <p v-if="leccion.aprobada" class="leccion__estado leccion__estado--ok">
+              <Icono nombre="check" :tamano="14" /> Aprobada
+            </p>
+            <p v-else-if="leccion.completada" class="leccion__estado leccion__estado--media">
+              <Icono nombre="equis" :tamano="14" /> Completada, pero todavia no aprobada
+            </p>
+            <p v-else-if="!leccion.disponible" class="leccion__estado leccion__estado--off">
+              <Icono nombre="candado" :tamano="14" /> {{ leccion.motivo }}
             </p>
           </div>
 
           <BaseBoton
-            :variante="leccion.completada ? 'contorno' : 'primario'"
-            :deshabilitado="bloqueada"
+            :variante="leccion.aprobada ? 'contorno' : 'primario'"
+            :deshabilitado="!leccion.disponible"
             tamano="chico"
             @click="abrirLeccion(leccion)"
           >
-            {{ leccion.completada ? 'Repasar' : 'Practicar' }}
+            {{ leccion.aprobada ? 'Repasar' : leccion.completada ? 'Reintentar' : 'Empezar' }}
           </BaseBoton>
         </li>
       </ol>
@@ -104,7 +168,6 @@ function abrirLeccion(leccion) {
       </BaseBoton>
     </template>
 
-    <p v-else class="aviso">No encontramos esa unidad.</p>
   </div>
 </template>
 
@@ -167,6 +230,45 @@ function abrirLeccion(leccion) {
   font-weight: 700;
   color: var(--c-amarillo-osc);
   margin-bottom: var(--e-3);
+}
+
+.estado {
+  text-align: center;
+  color: var(--c-gris);
+  padding: var(--e-6) 0;
+}
+
+.vacio {
+  display: grid;
+  justify-items: center;
+  gap: var(--e-2);
+  text-align: center;
+  padding-block: var(--e-5);
+}
+
+.leccion__icono--ok {
+  color: var(--c-verde);
+}
+
+.leccion__estado {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  margin-top: 0.3rem;
+}
+
+.leccion__estado--ok {
+  color: var(--c-verde-osc);
+}
+
+.leccion__estado--media {
+  color: var(--c-amarillo-osc);
+}
+
+.leccion__estado--off {
+  color: var(--c-gris);
 }
 
 .lecciones {

@@ -13,7 +13,8 @@
     "api": "node server/index.js",
     "db:migrar": "node server/db/migrar.js",
     "db:sembrar": "node server/db/sembrar.js",
-    "db:reiniciar": "npm run db:migrar && npm run db:sembrar"
+    "db:reiniciar": "npm run db:migrar && npm run db:sembrar",
+    "pruebas": "node pruebas/etapa2.mjs"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",
@@ -28,6 +29,7 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "concurrently": "^10.0.5",
     "nodemon": "^3.1.14",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "playwright": "1.56.1"
   }
 }

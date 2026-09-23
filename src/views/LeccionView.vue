@@ -9,8 +9,7 @@ import EjercicioOpcionMultiple from '@/components/ejercicios/EjercicioOpcionMult
 import EjercicioVerdaderoFalso from '@/components/ejercicios/EjercicioVerdaderoFalso.vue'
 import EjercicioCompletar from '@/components/ejercicios/EjercicioCompletar.vue'
 import EjercicioOrdenar from '@/components/ejercicios/EjercicioOrdenar.vue'
-import { obtenerLeccion } from '@/data/lecciones/index.js'
-import { obtenerUnidad } from '@/data/unidades.js'
+import { obtenerLeccion, obtenerUnidad } from '@/servicios/contenido.js'
 import { TIPO_EJERCICIO, ETIQUETA_TIPO_EJERCICIO } from '@/data/tiposEjercicio.js'
 import { esRespuestaCorrecta, respuestaVacia, textoRespuestaCorrecta } from '@/utils/verificarRespuesta.js'
 import { useProgreso } from '@/composables/useProgreso.js'
@@ -25,8 +24,10 @@ const { completarLeccion } = useProgreso()
 
 const VIDAS_INICIALES = 3
 
-const leccion = computed(() => obtenerLeccion(props.leccionId))
-const unidad = computed(() => (leccion.value ? obtenerUnidad(leccion.value.unidadId) : null))
+// El contenido se le pide al modulo de acceso a datos.
+const leccion = ref(null)
+const unidad = ref(null)
+const cargando = ref(true)
 const ejercicios = computed(() => leccion.value?.ejercicios ?? [])
 
 const indice = ref(0)
@@ -75,6 +76,10 @@ function respuestaVaciaDe(tipo) {
   return null
 }
 
+/**
+ * Arranca un intento limpio: las respuestas y el puntaje del intento anterior
+ * no se arrastran. Se llama al entrar y cada vez que cambia la leccion.
+ */
 function reiniciar() {
   indice.value = 0
   respuesta.value = respuestaVaciaDe(ejercicios.value[0]?.tipo)
@@ -83,7 +88,24 @@ function reiniciar() {
   vidas.value = VIDAS_INICIALES
 }
 
-watch(() => props.leccionId, reiniciar, { immediate: true })
+async function cargar() {
+  cargando.value = true
+  leccion.value = null
+  unidad.value = null
+  try {
+    const datos = await obtenerLeccion(props.leccionId)
+    leccion.value = datos
+    unidad.value = await obtenerUnidad(datos.unidadId)
+  } catch {
+    // Leccion inexistente: la plantilla muestra el aviso y una salida.
+    leccion.value = null
+  } finally {
+    cargando.value = false
+    reiniciar()
+  }
+}
+
+watch(() => props.leccionId, cargar, { immediate: true })
 
 function comprobar() {
   if (!puedeComprobar.value || comprobado.value) return
@@ -137,7 +159,7 @@ async function continuar() {
 }
 
 function salir() {
-  router.push({ name: 'unidad', params: { unidadId: leccion.value?.unidadId ?? 'js-u1' } })
+  router.push({ name: 'leccion', params: { leccionId: props.leccionId } })
 }
 </script>
 
@@ -203,6 +225,10 @@ function salir() {
         </BaseBoton>
       </div>
     </footer>
+  </div>
+
+  <div v-else-if="cargando" class="seccion contenedor centrado">
+    <p class="texto-secundario">Cargando las actividades...</p>
   </div>
 
   <div v-else class="seccion contenedor centrado">

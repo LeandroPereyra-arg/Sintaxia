@@ -1,9 +1,9 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CursoCard from '@/components/CursoCard.vue'
-import { cursos, ESTADO_CURSO } from '@/data/cursos.js'
+import { listarCursos, ESTADO_CURSO } from '@/servicios/contenido.js'
 
 const router = useRouter()
 
@@ -17,9 +17,17 @@ const filtros = [
 const filtroActivo = ref('todos')
 const busqueda = ref('')
 
+const cursos = ref([])
+const cargando = ref(true)
+
+onMounted(async () => {
+  cursos.value = await listarCursos()
+  cargando.value = false
+})
+
 const cursosFiltrados = computed(() => {
   const texto = busqueda.value.trim().toLowerCase()
-  return cursos.filter((curso) => {
+  return cursos.value.filter((curso) => {
     const coincideEstado = filtroActivo.value === 'todos' || curso.estado === filtroActivo.value
     const coincideTexto =
       texto === '' ||
@@ -73,7 +81,9 @@ function abrirCurso(curso) {
       </button>
     </div>
 
-    <ul v-if="cursosFiltrados.length" class="grilla anim-lista">
+    <p v-if="cargando" class="vacio">Cargando los cursos...</p>
+
+    <ul v-else-if="cursosFiltrados.length" class="grilla anim-lista">
       <li v-for="curso in cursosFiltrados" :key="curso.id">
         <CursoCard :curso="curso" @seleccionar="abrirCurso" />
       </li>

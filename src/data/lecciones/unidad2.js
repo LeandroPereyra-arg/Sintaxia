@@ -10,6 +10,15 @@ export const leccionesUnidad2 = [
     descripcion: 'Sumar, restar, concatenar y el resto de la division.',
     icono: 'division',
     xp: 15,
+    teoria: {
+      explicacion:
+        'Los operadores hacen cuentas y combinan valores. Ademas de + - * /, esta % que devuelve el resto de una division, muy usado para saber si un numero es par. Ojo con el +: si alguno de los dos lados es texto, en vez de sumar concatena.',
+      ejemplo: {
+        titulo: 'Operadores y el resto de la division',
+        codigo:
+          'console.log(7 + 3)   // 10\nconsole.log(7 % 3)   // 1  (el resto)\nconsole.log("5" + 3) // "53" concatena, no suma\n\nlet vidas = 3\nvidas++              // ahora vale 4'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u2-l1-e1',
@@ -59,6 +68,15 @@ export const leccionesUnidad2 = [
     descripcion: 'Diferencias entre == y ===, mayor, menor y distinto.',
     icono: 'balanza',
     xp: 15,
+    teoria: {
+      explicacion:
+        'Comparar dos valores devuelve siempre true o false. Conviene usar === y !== (comparacion estricta) porque tienen en cuenta el tipo: == convierte los tipos antes de comparar y produce resultados inesperados.',
+      ejemplo: {
+        titulo: 'Estricto contra flexible',
+        codigo:
+          'console.log(0 === "0")  // false: number no es string\nconsole.log(0 == "0")   // true: convierte antes de comparar\nconsole.log(5 !== 3)    // true'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u2-l2-e1',
@@ -100,6 +118,15 @@ export const leccionesUnidad2 = [
     descripcion: 'Elegir caminos segun una condicion.',
     icono: 'bifurcacion',
     xp: 20,
+    teoria: {
+      explicacion:
+        'Un condicional deja que el programa tome caminos distintos. if evalua una condicion y, si da true, ejecuta su bloque; si da false, se ejecuta el else. Los operadores logicos && (y) y || (o) permiten combinar varias condiciones.',
+      ejemplo: {
+        titulo: 'Elegir un camino',
+        codigo:
+          'const nota = 7\n\nif (nota >= 6) {\n  console.log("Aprobado")\n} else {\n  console.log("Desaprobado")\n}\n\nif (nota >= 6 && nota <= 10) {\n  console.log("Nota valida")\n}'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u2-l3-e1',

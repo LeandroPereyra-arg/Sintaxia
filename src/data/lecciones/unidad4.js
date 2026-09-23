@@ -10,6 +10,15 @@ export const leccionesUnidad4 = [
     descripcion: 'Agrupar codigo con nombre para reutilizarlo.',
     icono: 'pieza',
     xp: 20,
+    teoria: {
+      explicacion:
+        'Una funcion agrupa codigo con un nombre para poder reutilizarlo. Recibe datos por sus parametros y devuelve un resultado con return. Si no se escribe return, la funcion devuelve undefined.',
+      ejemplo: {
+        titulo: 'Declarar, llamar y devolver',
+        codigo:
+          'function doble(n) {\n  return n * 2\n}\n\nconsole.log(doble(4))   // 8\n\nfunction saludar(nombre) {\n  console.log("Hola " + nombre)\n}                        // sin return: devuelve undefined'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u4-l1-e1',
@@ -51,6 +60,15 @@ export const leccionesUnidad4 = [
     descripcion: 'Sintaxis corta y donde vive cada variable.',
     icono: 'flechaDiana',
     xp: 20,
+    teoria: {
+      explicacion:
+        'Las funciones flecha son una forma mas corta de escribir funciones. Si el cuerpo es una sola expresion, se puede omitir el return. Las variables declaradas con let o const dentro de una funcion solo existen ahi adentro: eso es el alcance.',
+      ejemplo: {
+        titulo: 'Funcion flecha y alcance',
+        codigo:
+          'const cuadrado = (n) => n * n   // return implicito\nconsole.log(cuadrado(3))        // 9\n\nfunction prueba() {\n  const secreto = 42\n}\n// console.log(secreto)  // Error: no existe fuera'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u4-l2-e1',

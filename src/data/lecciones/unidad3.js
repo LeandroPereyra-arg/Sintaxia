@@ -10,6 +10,15 @@ export const leccionesUnidad3 = [
     descripcion: 'Repetir una cantidad conocida de veces.',
     icono: 'repetir',
     xp: 20,
+    teoria: {
+      explicacion:
+        'Un bucle for repite un bloque una cantidad conocida de veces. Tiene tres partes: donde arranca el contador, hasta cuando sigue y como avanza. Es la forma clasica de recorrer un array usando su propiedad length.',
+      ejemplo: {
+        titulo: 'Repetir cinco veces y recorrer un array',
+        codigo:
+          'for (let i = 0; i < 5; i++) {\n  console.log(i)   // 0, 1, 2, 3, 4\n}\n\nconst frutas = ["pera", "uva"]\nfor (let i = 0; i < frutas.length; i++) {\n  console.log(frutas[i])\n}'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u3-l1-e1',
@@ -51,6 +60,15 @@ export const leccionesUnidad3 = [
     descripcion: 'Repetir mientras se cumpla algo y controlar las vueltas.',
     icono: 'saltar',
     xp: 20,
+    teoria: {
+      explicacion:
+        'while repite mientras una condicion siga siendo verdadera, y sirve cuando no se sabe de antemano cuantas vueltas haran falta. Dentro de cualquier bucle, break lo corta por completo y continue saltea solo la vuelta actual.',
+      ejemplo: {
+        titulo: 'while, break y continue',
+        codigo:
+          'let intentos = 0\nwhile (intentos < 3) {\n  intentos++\n}\n\nfor (let i = 1; i <= 4; i++) {\n  if (i === 2) continue  // saltea el 2\n  if (i === 4) break     // corta el bucle\n  console.log(i)         // 1, 3\n}'
+      }
+    },
     ejercicios: [
       {
         id: 'js-u3-l2-e1',

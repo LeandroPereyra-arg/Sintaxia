@@ -1,23 +1,44 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UnidadCard from '@/components/UnidadCard.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
-import { obtenerCurso } from '@/data/cursos.js'
-import { unidadesJavaScript } from '@/data/unidades.js'
-import { leccionesDeUnidad, lecciones } from '@/data/lecciones/index.js'
+import {
+  obtenerCurso,
+  listarUnidades,
+  listarLecciones,
+  listarLeccionesDeCurso
+} from '@/servicios/contenido.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
 const router = useRouter()
-const curso = obtenerCurso('javascript')
+const CURSO_ID = 'javascript'
+
+const curso = ref(null)
+const unidadesCurso = ref([])
+const leccionesCurso = ref([])
+const conteoPorUnidad = ref({})
+const cargando = ref(true)
+
+onMounted(async () => {
+  curso.value = await obtenerCurso(CURSO_ID)
+  unidadesCurso.value = await listarUnidades(CURSO_ID)
+  leccionesCurso.value = await listarLeccionesDeCurso(CURSO_ID)
+  const conteos = {}
+  for (const unidad of unidadesCurso.value) {
+    conteos[unidad.id] = (await listarLecciones(unidad.id)).length
+  }
+  conteoPorUnidad.value = conteos
+  cargando.value = false
+})
 
 const {
   estado,
   estadoUnidad,
   progresoUnidad,
-  leccionesCompletadasDeUnidad,
+  leccionesAprobadasDeUnidad,
   progresoCurso,
   totalLeccionesCompletadas,
   proximaLeccion
@@ -25,12 +46,12 @@ const {
 
 /** Se arma una lista con la unidad y su progreso ya calculado. */
 const unidades = computed(() =>
-  unidadesJavaScript.map((unidad) => ({
+  unidadesCurso.value.map((unidad) => ({
     unidad,
     estado: estadoUnidad(unidad.id),
     progreso: progresoUnidad(unidad.id),
-    completadas: leccionesCompletadasDeUnidad(unidad.id),
-    totales: leccionesDeUnidad(unidad.id).length
+    completadas: leccionesAprobadasDeUnidad(unidad.id),
+    totales: conteoPorUnidad.value[unidad.id] ?? 0
   }))
 )
 
@@ -46,6 +67,8 @@ function continuar() {
 
 <template>
   <div class="curso seccion contenedor">
+    <p v-if="cargando" class="texto-secundario centrado">Cargando el curso...</p>
+    <template v-else>
     <nav class="miga" aria-label="Ruta de navegacion">
       <router-link :to="{ name: 'cursos' }">Cursos</router-link>
       <span aria-hidden="true">›</span>
@@ -66,8 +89,8 @@ function continuar() {
         <h1>Curso de {{ curso.nombre }}</h1>
         <p class="texto-secundario">{{ curso.descripcion }}</p>
         <ul class="portada__datos">
-          <li><strong>{{ unidadesJavaScript.length }}</strong> unidades</li>
-          <li><strong>{{ lecciones.length }}</strong> lecciones</li>
+          <li><strong>{{ unidadesCurso.length }}</strong> unidades</li>
+          <li><strong>{{ leccionesCurso.length }}</strong> lecciones</li>
           <li><strong>{{ estado.xp }}</strong> XP acumulados</li>
           <li><strong>{{ estado.racha }}</strong> dias de racha</li>
         </ul>
@@ -76,7 +99,7 @@ function continuar() {
       <div class="portada__progreso">
         <BarraProgreso :valor="progresoCurso" etiqueta="Progreso del curso" />
         <p class="portada__contador">
-          {{ totalLeccionesCompletadas }} / {{ lecciones.length }} lecciones · {{ progresoCurso }} %
+          {{ totalLeccionesCompletadas }} / {{ leccionesCurso.length }} lecciones · {{ progresoCurso }} %
         </p>
         <BaseBoton v-if="proximaLeccion" ancho-completo @click="continuar">
           {{ totalLeccionesCompletadas > 0 ? 'Continuar' : 'Empezar' }}
@@ -107,6 +130,7 @@ function continuar() {
         </li>
       </ul>
     </section>
+    </template>
   </div>
 </template>
 

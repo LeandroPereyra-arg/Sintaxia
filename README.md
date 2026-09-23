@@ -143,6 +143,10 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [3. Wireframes](docs/03-wireframes.md) | Bocetos de todas las pantallas principales, incluida la version movil |
 | [4. Identidad visual](docs/04-identidad-visual.md) | Paleta, tipografias, botones, tarjetas, iconos y su justificacion |
 | [5. Backend, autenticacion y base de datos](docs/05-backend-autenticacion-y-base-de-datos.md) | Modelo de datos, flujo OAuth, endpoints, medallas, ranking y seguridad |
+| [6. Reglas de avance y finalizacion](docs/06-reglas-de-avance.md) | Completada contra aprobada, umbral, desbloqueo de lecciones y unidades |
+| [7. Registro de pruebas](docs/07-registro-de-pruebas.md) | Los 11 casos probados, con problemas encontrados y correcciones |
+| [8. Modelo de datos (DER)](docs/08-modelo-de-datos.md) | Tablas, tipos, claves y restricciones · diagrama en draw.io |
+| [9. Aporte de cada integrante](docs/09-aporte-integrantes.md) | Reparto del trabajo y guion de la demostracion |
 
 ---
 
@@ -214,6 +218,7 @@ Al terminar una leccion, las medallas que otorga el servidor se festejan en los 
 ```
 src/
 ├── api/               cliente.js — todas las llamadas a la API
+├── servicios/         contenido.js — modulo unico de acceso al contenido
 ├── assets/styles/     variables.css (identidad visual) + main.css
 ├── router/            10 rutas con nombre
 ├── data/              cursos, unidades, lecciones y ejercicios (nada en el HTML)
@@ -237,6 +242,25 @@ server/
 Detalle completo en [docs/02-estructura-y-arquitectura.md](docs/02-estructura-y-arquitectura.md).
 
 ---
+
+## La unidad desarrollada
+
+La **Unidad 1 - Primeros pasos** es la que esta desarrollada por completo para
+esta etapa:
+
+| Leccion | Teoria | Actividades |
+|---|---|---|
+| 1. Que es JavaScript | Explicacion + ejemplo con `console.log` | 4 de opcion multiple |
+| 2. Variables y constantes | Explicacion + ejemplo con `let` y `const` | 4 de opcion multiple |
+| 3. Tipos de datos | Explicacion + ejemplo con `typeof` | 4 de opcion multiple |
+
+Cada leccion abre en su **pantalla de teoria**, con la explicacion y un ejemplo
+de codigo que conserva el formato y se lee en el celular, y desde ahi se pasa a
+las actividades. Las reglas de avance estan en
+[docs/06](docs/06-reglas-de-avance.md).
+
+Las otras cinco unidades tienen su teoria escrita y quedan **bloqueadas** hasta
+completar la anterior.
 
 ## Contenido del curso de JavaScript
 

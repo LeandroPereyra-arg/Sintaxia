@@ -1,15 +1,14 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import MedallaCard from '@/components/MedallaCard.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
 import { useContador } from '@/composables/useContador.js'
-import { obtenerLeccion, leccionesDeUnidad } from '@/data/lecciones/index.js'
-import { obtenerUnidad } from '@/data/unidades.js'
-import { useProgreso } from '@/composables/useProgreso.js'
+import { obtenerLeccion, obtenerUnidad, listarLecciones } from '@/servicios/contenido.js'
+import { useProgreso, UMBRAL_APROBACION } from '@/composables/useProgreso.js'
 
 /** Pantalla de cierre de una leccion: puntaje, XP ganado y que sigue. */
 const props = defineProps({
@@ -20,17 +19,35 @@ const route = useRoute()
 const router = useRouter()
 const { estado, progresoUnidad, unidadCompletada, ultimoResultado } = useProgreso()
 
-const leccion = computed(() => obtenerLeccion(props.leccionId))
-const unidad = computed(() => (leccion.value ? obtenerUnidad(leccion.value.unidadId) : null))
+const leccion = ref(null)
+const unidad = ref(null)
+const hermanas = ref([])
+
+async function cargar() {
+  try {
+    leccion.value = await obtenerLeccion(props.leccionId)
+    unidad.value = await obtenerUnidad(leccion.value.unidadId)
+    hermanas.value = await listarLecciones(leccion.value.unidadId)
+  } catch {
+    leccion.value = null
+  }
+}
+
+onMounted(cargar)
+watch(() => props.leccionId, cargar)
 
 const total = computed(() => Number(route.query.total ?? leccion.value?.ejercicios.length ?? 0))
 const aciertos = computed(() => Number(route.query.aciertos ?? 0))
 const xpGanado = computed(() => Number(route.query.xp ?? 0))
 const vidas = computed(() => Number(route.query.vidas ?? 0))
 
+const incorrectas = computed(() => Math.max(0, total.value - aciertos.value))
 const porcentaje = computed(() =>
   total.value === 0 ? 0 : Math.round((aciertos.value / total.value) * 100)
 )
+
+/** Una leccion se aprueba a partir del umbral definido en useProgreso. */
+const aprobada = computed(() => !sinVidas.value && porcentaje.value >= UMBRAL_APROBACION * 100)
 
 const sinVidas = computed(() => vidas.value <= 0)
 
@@ -43,6 +60,7 @@ const animoSintax = computed(() => {
 })
 
 const xpAnimado = useContador(xpGanado)
+const incorrectasAnimadas = useContador(incorrectas, { duracion: 700 })
 const aciertosAnimados = useContador(aciertos, { duracion: 700 })
 const porcentajeAnimado = useContador(porcentaje, { duracion: 700 })
 
@@ -56,9 +74,8 @@ const mensaje = computed(() => {
 /** Siguiente leccion de la misma unidad, si queda alguna. */
 const siguienteLeccion = computed(() => {
   if (!leccion.value) return null
-  const hermanas = leccionesDeUnidad(leccion.value.unidadId)
-  const pos = hermanas.findIndex((l) => l.id === leccion.value.id)
-  return hermanas[pos + 1] ?? null
+  const pos = hermanas.value.findIndex((l) => l.id === leccion.value.id)
+  return hermanas.value[pos + 1] ?? null
 })
 
 const unidadTerminada = computed(() => (unidad.value ? unidadCompletada(unidad.value.id) : false))
@@ -79,8 +96,9 @@ const medallasNuevas = computed(() => {
   }))
 })
 
+/** Reintentar arranca un intento nuevo: las respuestas anteriores no cuentan. */
 function repetir() {
-  router.push({ name: 'leccion', params: { leccionId: props.leccionId } })
+  router.push({ name: 'actividades', params: { leccionId: props.leccionId } })
 }
 
 function siguiente() {
@@ -102,23 +120,32 @@ function siguiente() {
       <p class="tarjeta__leccion">{{ leccion.titulo }}</p>
 
       <ul class="marcadores">
-        <li class="marcador marcador--xp">
-          <span class="marcador__valor">+{{ xpAnimado }}</span>
-          <span class="marcador__texto">XP ganados</span>
+        <li class="marcador marcador--total">
+          <span class="marcador__valor">{{ total }}</span>
+          <span class="marcador__texto">Actividades</span>
         </li>
         <li class="marcador marcador--acierto">
-          <span class="marcador__valor">{{ aciertosAnimados }}/{{ total }}</span>
-          <span class="marcador__texto">Respuestas correctas</span>
+          <span class="marcador__valor">{{ aciertosAnimados }}</span>
+          <span class="marcador__texto">Correctas</span>
+        </li>
+        <li class="marcador marcador--error">
+          <span class="marcador__valor">{{ incorrectasAnimadas }}</span>
+          <span class="marcador__texto">Incorrectas</span>
         </li>
         <li class="marcador marcador--precision">
           <span class="marcador__valor">{{ porcentajeAnimado }} %</span>
           <span class="marcador__texto">Precision</span>
         </li>
-        <li class="marcador marcador--racha">
-          <span class="marcador__valor">{{ estado.racha }}</span>
-          <span class="marcador__texto">Dias de racha</span>
-        </li>
       </ul>
+
+      <p class="extras">
+        <span><Icono nombre="rayo" :tamano="15" /> +{{ xpAnimado }} XP</span>
+        <span><Icono nombre="llama" :tamano="15" /> {{ estado.racha }} dias de racha</span>
+        <span class="extras__estado" :class="aprobada ? 'extras__estado--ok' : 'extras__estado--no'">
+          <Icono :nombre="aprobada ? 'checkCirculo' : 'equisCirculo'" :tamano="15" />
+          {{ aprobada ? 'Leccion aprobada' : 'Leccion no aprobada' }}
+        </span>
+      </p>
 
       <section v-if="medallasNuevas.length" class="medallas-nuevas">
         <p class="medallas-nuevas__titulo">
@@ -147,11 +174,19 @@ function siguiente() {
       </div>
 
       <div class="acciones">
-        <BaseBoton variante="contorno" @click="repetir">Repetir leccion</BaseBoton>
-        <BaseBoton v-if="!sinVidas" @click="siguiente">
-          {{ siguienteLeccion ? 'Siguiente leccion' : 'Volver al curso' }}
+        <BaseBoton variante="contorno" @click="repetir">Intentar de nuevo</BaseBoton>
+
+        <BaseBoton
+          variante="contorno"
+          :to="{ name: 'unidad', params: { unidadId: leccion.unidadId } }"
+        >
+          Volver a la unidad
         </BaseBoton>
-        <BaseBoton v-else variante="secundario" :to="{ name: 'curso-javascript' }">
+
+        <BaseBoton v-if="aprobada && siguienteLeccion" @click="siguiente">
+          Siguiente leccion
+        </BaseBoton>
+        <BaseBoton v-else-if="aprobada" :to="{ name: 'curso-javascript' }">
           Volver al curso
         </BaseBoton>
       </div>
@@ -229,9 +264,9 @@ function siguiente() {
   font-weight: 700;
 }
 
-.marcador--xp {
-  border-color: var(--c-amarillo);
-  background: var(--c-amarillo-suave);
+.marcador--total {
+  border-color: var(--c-violeta);
+  background: var(--c-violeta-suave);
 }
 .marcador--acierto {
   border-color: var(--c-verde);
@@ -241,9 +276,33 @@ function siguiente() {
   border-color: var(--c-azul);
   background: var(--c-azul-suave);
 }
-.marcador--racha {
+.marcador--error {
   border-color: var(--c-rojo);
   background: var(--c-rojo-suave);
+}
+
+.extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-3);
+  justify-content: center;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: var(--c-gris);
+}
+
+.extras span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.extras__estado--ok {
+  color: var(--c-verde-osc);
+}
+
+.extras__estado--no {
+  color: var(--c-rojo-osc);
 }
 
 .medallas-nuevas {
