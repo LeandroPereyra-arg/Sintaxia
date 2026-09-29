@@ -6,6 +6,7 @@ import Icono from '@/components/Icono.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
 import { pasosBienvenida } from '@/data/bienvenida.js'
+import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 import { useAuth } from '@/composables/useAuth.js'
 import { urlLogin } from '@/api/cliente.js'
 import { marcarBienvenidaVista } from '@/composables/useBienvenida.js'
@@ -49,7 +50,7 @@ function terminar(destino) {
 }
 
 function comoInvitado() {
-  terminar({ name: 'curso-javascript' })
+  terminar({ name: 'curso', params: { cursoId: CURSO_POR_DEFECTO } })
 }
 
 function saltear() {

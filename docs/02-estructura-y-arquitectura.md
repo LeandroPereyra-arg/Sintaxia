@@ -9,15 +9,21 @@ La aplicacion es una SPA (Single Page Application) con **11 vistas**:
 | 0 | Bienvenida | `/bienvenida` | `bienvenida` | Presentacion en cuatro pasos deslizables y eleccion de como entrar. Se muestra sola la primera vez. |
 | 1 | Inicio | `/` | `inicio` | Presentacion del proyecto, como funciona y boton para empezar. |
 | 2 | Cursos | `/cursos` | `cursos` | Catalogo de lenguajes con buscador y filtro por estado. |
-| 3 | Curso de JavaScript | `/cursos/javascript` | `curso-javascript` | Datos del curso y el camino de las 6 unidades. |
-| 4 | Unidad | `/cursos/javascript/unidades/:unidadId` | `unidad` | Lecciones que componen una unidad. |
-| 5 | Leccion | `/cursos/javascript/lecciones/:leccionId` | `leccion` | Pantalla de ejercicios (a pantalla completa). |
-| 6 | Resultados | `/cursos/javascript/lecciones/:leccionId/resultados` | `resultados` | Puntaje, XP ganado y que sigue. |
+| 3 | Curso | `/cursos/:cursoId` | `curso` | Datos del curso y el camino de sus unidades. |
+| 4 | Unidad | `/unidades/:unidadId` | `unidad` | Lecciones que componen una unidad. |
+| 5 | Leccion | `/lecciones/:leccionId` | `leccion` | Teoria y ejemplo de codigo, con el boton para empezar. |
+| 6 | Actividades | `/lecciones/:leccionId/actividades` | `actividades` | Pantalla de ejercicios (a pantalla completa). |
+| 7 | Resultados | `/lecciones/:leccionId/resultados` | `resultados` | Puntaje, XP ganado y que sigue. |
 | 7 | Perfil | `/perfil` | `perfil` | XP, racha, meta diaria, avance por unidad y logros. |
 | 8 | 404 | `/:rutaInexistente(.*)*` | `no-encontrado` | Pagina de error. |
 
 Las rutas usan nombres (`:to="{ name: 'leccion' }"`) para no escribir URLs a mano en las
 plantillas: si manana cambia la direccion, se toca un solo archivo.
+
+Desde la etapa 3 el curso **no** esta escrito en la direccion: `/cursos/:cursoId`
+recibe el identificador que tiene la fila en la base y con el pide sus unidades.
+Las direcciones viejas (`/cursos/javascript/unidades/js-u1` y companiia) siguen
+funcionando como redirecciones.
 
 ## Flujo de navegacion
 
@@ -89,7 +95,14 @@ animacion/
     ├── router/
     │   └── index.js            Definicion de las 8 rutas
     │
-    ├── data/                   CAPA DE DATOS (nada de contenido en el HTML)
+    ├── servicios/              ACCESO A DATOS
+    │   ├── supabase.js         Unico lugar donde se crea el cliente
+    │   └── contenido.js        Unico lugar donde se arman las consultas
+    │
+    ├── data/                   Contenido de prueba de la etapa 2. Desde la
+    │   │                       etapa 3 la aplicacion NO lo lee: solo alimenta
+    │   │                       al generador de supabase/02-datos-iniciales.sql
+    │   │                       y a la API de cuentas.
     │   ├── index.js            Punto de entrada unico ("@/data")
     │   ├── cursos.js           Catalogo de los 6 cursos
     │   ├── unidades.js         Las 6 unidades del curso de JavaScript
@@ -137,7 +150,10 @@ animacion/
 
 ## Modelo de datos
 
-Ningun texto de contenido esta escrito dentro de una plantilla: todo sale de `src/data/`.
+Ningun texto de contenido esta escrito dentro de una plantilla: todo sale de la
+base, a traves de `src/servicios/contenido.js`. Las estructuras que siguen son
+las que ese modulo le entrega a las pantallas; el detalle de las tablas esta en
+[10. Supabase y modelo de datos](10-supabase-y-modelo-de-datos.md).
 
 ### Curso
 
@@ -149,10 +165,10 @@ Ningun texto de contenido esta escrito dentro de una plantilla: todo sale de `sr
   estado: 'disponible' | 'proximamente' | 'bloqueado',
   nivel: 'Principiante',
   icono: 'JS', color: '#f7df1e', colorTexto: '#1f2933',  // representacion visual
-  totalUnidades: 6, totalLecciones: 14, horasEstimadas: 12,
+  totalUnidades: 6, totalLecciones: 14, horasEstimadas: 12,   // cifras previstas
   etiquetas: ['Web', 'Front-end'],
   requisito: 'Completa el curso de JavaScript...',   // solo si esta bloqueado
-  ruta: { name: 'curso-javascript' } | null
+  ruta: { name: 'curso', params: { cursoId: 'javascript' } } | null   // la arma el modulo
 }
 ```
 

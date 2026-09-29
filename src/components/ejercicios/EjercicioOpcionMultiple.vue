@@ -1,12 +1,18 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { mezclar } from '@/utils/verificarRespuesta.js'
 
 /** Ejercicio de opcion multiple: una sola opcion correcta. */
 const props = defineProps({
   ejercicio: { type: Object, required: true },
   modelValue: { type: [String, null], default: null },
-  bloqueado: { type: Boolean, default: false }
+  bloqueado: { type: Boolean, default: false },
+  /**
+   * Cual era la opcion correcta. Llega DESPUES de comprobar: la respuesta no
+   * viaja con el ejercicio, la devuelve el servidor cuando el estudiante
+   * contesta. Mientras vale null no se pinta nada.
+   */
+  idCorrecto: { type: [String, null], default: null }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -20,8 +26,6 @@ watch(
   }
 )
 
-const idCorrecto = computed(() => props.ejercicio.respuesta)
-
 function elegir(opcion) {
   if (props.bloqueado) return
   emit('update:modelValue', opcion.id)
@@ -29,11 +33,11 @@ function elegir(opcion) {
 
 function clasesDe(opcion) {
   const elegida = props.modelValue === opcion.id
-  if (!props.bloqueado) return { 'opcion--elegida': elegida }
+  if (!props.bloqueado || !props.idCorrecto) return { 'opcion--elegida': elegida }
   return {
     'opcion--elegida': elegida,
-    'opcion--correcta': opcion.id === idCorrecto.value,
-    'opcion--incorrecta': elegida && opcion.id !== idCorrecto.value
+    'opcion--correcta': opcion.id === props.idCorrecto,
+    'opcion--incorrecta': elegida && opcion.id !== props.idCorrecto
   }
 }
 </script>

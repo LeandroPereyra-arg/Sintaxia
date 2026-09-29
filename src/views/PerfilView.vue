@@ -6,13 +6,14 @@ import SintaxMascota from '@/components/SintaxMascota.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import MedallaCard from '@/components/MedallaCard.vue'
 import CalendarioActividad from '@/components/CalendarioActividad.vue'
-import { unidadesJavaScript, ESTADO_UNIDAD } from '@/data/unidades.js'
-import { lecciones, leccionesDeUnidad } from '@/data/lecciones/index.js'
+import { ESTADO_UNIDAD } from '@/constantes/estados.js'
+import { useCatalogo, CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 import { api } from '@/api/cliente.js'
 import { useAuth } from '@/composables/useAuth.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
 const { estado: sesion, autenticado, salir, iniciar } = useAuth()
+const { estado: catalogo, cargarCurso, leccionesDeUnidad } = useCatalogo()
 const {
   estado,
   enCuenta,
@@ -46,7 +47,7 @@ const usuario = computed(() => sesion.usuario)
 const medallasObtenidas = computed(() => medallas.value.filter((m) => m.obtenida).length)
 
 const resumenUnidades = computed(() =>
-  unidadesJavaScript.map((unidad) => ({
+  catalogo.unidades.map((unidad) => ({
     ...unidad,
     estado: estadoUnidad(unidad.id),
     progreso: progresoUnidad(unidad.id),
@@ -63,7 +64,7 @@ const medallasInvitado = computed(() => {
     racha: estado.racha,
     xp: estado.xp,
     unidades: unidadesListas,
-    curso: totalLeccionesCompletadas.value >= lecciones.length ? 1 : 0
+    curso: totalLeccionesCompletadas.value >= catalogo.lecciones.length ? 1 : 0
   }
   const definiciones = [
     { codigo: 'primer_paso', nombre: 'Primer paso', descripcion: 'Completa tu primera leccion.', icono: 'huevo', nivel: 'bronce', tipo: 'lecciones', objetivo: 1 },
@@ -111,6 +112,8 @@ async function cargarDatosDeCuenta() {
 }
 
 onMounted(async () => {
+  // El resumen por unidad necesita la estructura del curso.
+  cargarCurso(CURSO_POR_DEFECTO)
   await iniciar()
   await cargarDatosDeCuenta()
 })

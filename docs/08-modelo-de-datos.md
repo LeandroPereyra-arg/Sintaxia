@@ -1,6 +1,16 @@
-# 8. Modelo de datos (DER)
+# 8. Modelo de datos (DER) — etapa 2
 
-Diagrama entidad-relacion del contenido educativo de Sintaxia.
+Diagrama entidad-relacion del contenido educativo de Sintaxia, tal como se
+disenio en la **etapa 2**.
+
+> **Este documento quedo superado por el de la etapa 3.** El modelo que esta
+> realmente implementado, con su diccionario de datos completo, las politicas de
+> acceso y la funcion de comprobacion, esta en
+> [10. Supabase y modelo de datos](10-supabase-y-modelo-de-datos.md). Lo que
+> cambio al implementarlo: el motor paso de MySQL a PostgreSQL (Supabase), se
+> agrego el campo `orden` en cada nivel, y el curso dejo de guardar contadores de
+> unidades y lecciones. Este documento se conserva como registro del diseno
+> original.
 
 - **Archivo editable:** [`der/sintaxia-der.drawio`](der/sintaxia-der.drawio) — se abre
   en [app.diagrams.net](https://app.diagrams.net) (Archivo → Abrir desde → Dispositivo)

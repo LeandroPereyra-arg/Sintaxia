@@ -1,4 +1,5 @@
 <script setup>
+import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 import Icono from '@/components/Icono.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -129,7 +130,7 @@ async function usarDemo() {
         <p class="texto-secundario">
           Tambien podes practicar sin cuenta. Cuando entres, ese progreso se sube solo.
         </p>
-        <BaseBoton variante="texto" :to="{ name: 'curso-javascript' }">
+        <BaseBoton variante="texto" :to="{ name: 'curso', params: { cursoId: CURSO_POR_DEFECTO } }">
           Seguir como invitado <Icono nombre="flechaDerecha" :tamano="16" />
         </BaseBoton>
       </div>

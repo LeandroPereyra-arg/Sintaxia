@@ -1,7 +1,7 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
-import { ESTADO_CURSO, ETIQUETA_ESTADO_CURSO } from '@/data/cursos.js'
+import { ESTADO_CURSO, ETIQUETA_ESTADO_CURSO } from '@/constantes/estados.js'
 import BaseBoton from '@/components/BaseBoton.vue'
 
 /**

@@ -18,5 +18,5 @@ recorrerla durante la entrega.
     mostrar el ejemplo de codigo, que se desplaza dentro de su caja.
 11. **Direccion invalida** → abrir una leccion que no existe y mostrar el aviso.
 
-El recorrido automatizado de `npm run pruebas` cubre los mismos pasos, asi que
+El recorrido automatizado de `npm run pruebas:etapa2` cubre los mismos pasos, asi que
 sirve como ensayo previo a la demostracion.

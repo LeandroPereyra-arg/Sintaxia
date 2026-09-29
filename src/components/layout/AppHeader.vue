@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import LogoSintaxia from '@/components/LogoSintaxia.vue'
 import { useAuth } from '@/composables/useAuth.js'
 import { useProgreso } from '@/composables/useProgreso.js'
+import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,10 +17,10 @@ const menuUsuario = ref(false)
 const contenedorUsuario = ref(null)
 
 const enlaces = [
-  { nombre: 'inicio', texto: 'Inicio' },
-  { nombre: 'cursos', texto: 'Cursos' },
-  { nombre: 'curso-javascript', texto: 'JavaScript' },
-  { nombre: 'ranking', texto: 'Ranking' }
+  { to: { name: 'inicio' }, texto: 'Inicio' },
+  { to: { name: 'cursos' }, texto: 'Cursos' },
+  { to: { name: 'curso', params: { cursoId: CURSO_POR_DEFECTO } }, texto: 'JavaScript' },
+  { to: { name: 'ranking' }, texto: 'Ranking' }
 ]
 
 const usuario = computed(() => sesion.usuario)
@@ -75,8 +76,8 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
       <nav class="nav" :class="{ 'nav--abierto': menuAbierto }">
         <router-link
           v-for="enlace in enlaces"
-          :key="enlace.nombre"
-          :to="{ name: enlace.nombre }"
+          :key="enlace.texto"
+          :to="enlace.to"
           class="nav__enlace"
           @click="cerrarTodo"
         >

@@ -1,7 +1,7 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
 import { computed } from 'vue'
-import { ESTADO_UNIDAD, ETIQUETA_ESTADO_UNIDAD } from '@/data/unidades.js'
+import { ESTADO_UNIDAD, ETIQUETA_ESTADO_UNIDAD } from '@/constantes/estados.js'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 

@@ -6,9 +6,11 @@ import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import MedallaCard from '@/components/MedallaCard.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
+import EstadoConsulta from '@/components/EstadoConsulta.vue'
 import { useContador } from '@/composables/useContador.js'
 import { obtenerLeccion, obtenerUnidad, listarLecciones } from '@/servicios/contenido.js'
 import { useProgreso, UMBRAL_APROBACION } from '@/composables/useProgreso.js'
+import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 
 /** Pantalla de cierre de una leccion: puntaje, XP ganado y que sigue. */
 const props = defineProps({
@@ -22,21 +24,24 @@ const { estado, progresoUnidad, unidadCompletada, ultimoResultado } = useProgres
 const leccion = ref(null)
 const unidad = ref(null)
 const hermanas = ref([])
+const errorCarga = ref(null)
 
 async function cargar() {
+  errorCarga.value = null
   try {
     leccion.value = await obtenerLeccion(props.leccionId)
     unidad.value = await obtenerUnidad(leccion.value.unidadId)
     hermanas.value = await listarLecciones(leccion.value.unidadId)
-  } catch {
+  } catch (e) {
     leccion.value = null
+    errorCarga.value = e
   }
 }
 
 onMounted(cargar)
 watch(() => props.leccionId, cargar)
 
-const total = computed(() => Number(route.query.total ?? leccion.value?.ejercicios.length ?? 0))
+const total = computed(() => Number(route.query.total ?? 0))
 const aciertos = computed(() => Number(route.query.aciertos ?? 0))
 const xpGanado = computed(() => Number(route.query.xp ?? 0))
 const vidas = computed(() => Number(route.query.vidas ?? 0))
@@ -105,7 +110,7 @@ function siguiente() {
   if (siguienteLeccion.value) {
     router.push({ name: 'leccion', params: { leccionId: siguienteLeccion.value.id } })
   } else {
-    router.push({ name: 'curso-javascript' })
+    router.push({ name: 'curso', params: { cursoId: unidad.value?.cursoId ?? CURSO_POR_DEFECTO } })
   }
 }
 </script>
@@ -186,7 +191,10 @@ function siguiente() {
         <BaseBoton v-if="aprobada && siguienteLeccion" @click="siguiente">
           Siguiente leccion
         </BaseBoton>
-        <BaseBoton v-else-if="aprobada" :to="{ name: 'curso-javascript' }">
+        <BaseBoton
+          v-else-if="aprobada && unidad"
+          :to="{ name: 'curso', params: { cursoId: unidad.cursoId } }"
+        >
           Volver al curso
         </BaseBoton>
       </div>
@@ -198,7 +206,15 @@ function siguiente() {
       </p>
     </div>
 
-    <p v-else class="centrado">No encontramos los resultados de esa leccion.</p>
+    <EstadoConsulta
+      v-else
+      :error="errorCarga ?? { message: 'No encontramos los resultados de esa leccion.', reintentable: false }"
+      @reintentar="cargar"
+    >
+      <template #salida>
+        <BaseBoton :to="{ name: 'cursos' }">Ver los cursos</BaseBoton>
+      </template>
+    </EstadoConsulta>
   </div>
 </template>
 

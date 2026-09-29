@@ -1,21 +1,31 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
 import Carrusel from '@/components/Carrusel.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
-import { cursos, ESTADO_CURSO } from '@/data/cursos.js'
-import { lecciones } from '@/data/lecciones/index.js'
+import { useCatalogo, CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
+import { ESTADO_CURSO } from '@/constantes/estados.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
 const router = useRouter()
+const { estado: catalogo, cargarCursos, cargarCurso } = useCatalogo()
 const { estado, progresoCurso, proximaLeccion, totalLeccionesCompletadas } = useProgreso()
 
+// La portada muestra cifras del catalogo, asi que lo pide al entrar.
+onMounted(() => {
+  cargarCursos()
+  cargarCurso(CURSO_POR_DEFECTO)
+})
+
 const cursosDisponibles = computed(
-  () => cursos.filter((curso) => curso.estado === ESTADO_CURSO.DISPONIBLE).length
+  () => catalogo.cursos.filter((curso) => curso.estado === ESTADO_CURSO.DISPONIBLE).length
 )
+
+const totalLecciones = computed(() => catalogo.lecciones.length)
+const cursoActivo = computed(() => catalogo.curso)
 
 const beneficios = [
   {
@@ -55,7 +65,7 @@ function comenzar() {
   if (leccion) {
     router.push({ name: 'leccion', params: { leccionId: leccion.id } })
   } else {
-    router.push({ name: 'curso-javascript' })
+    router.push({ name: 'curso', params: { cursoId: catalogo.cursoId } })
   }
 }
 </script>
@@ -87,8 +97,8 @@ function comenzar() {
 
           <ul class="portada__datos">
             <li><strong>{{ cursosDisponibles }}</strong> curso disponible</li>
-            <li><strong>{{ lecciones.length }}</strong> lecciones</li>
-            <li><strong>{{ cursos.length }}</strong> lenguajes en camino</li>
+            <li><strong>{{ totalLecciones }}</strong> lecciones</li>
+            <li><strong>{{ catalogo.cursos.length }}</strong> lenguajes en camino</li>
           </ul>
         </div>
 
@@ -118,15 +128,15 @@ function comenzar() {
         <div>
           <h2>Hola de nuevo, {{ estado.nombre }}</h2>
           <p class="texto-secundario">
-            Llevas {{ totalLeccionesCompletadas }} de {{ lecciones.length }} lecciones del curso de
-            JavaScript.
+            Llevas {{ totalLeccionesCompletadas }} de {{ totalLecciones }} lecciones del curso de
+            {{ cursoActivo?.nombre ?? 'programacion' }}.
           </p>
         </div>
         <div class="progreso__barra">
           <BarraProgreso :valor="progresoCurso" etiqueta="Progreso del curso de JavaScript" />
           <p class="progreso__porcentaje">{{ progresoCurso }} % completado</p>
         </div>
-        <BaseBoton :to="{ name: 'curso-javascript' }">Ir al curso</BaseBoton>
+        <BaseBoton :to="{ name: 'curso', params: { cursoId: catalogo.cursoId } }">Ir al curso</BaseBoton>
       </div>
     </section>
 

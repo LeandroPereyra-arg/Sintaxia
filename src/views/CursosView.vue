@@ -3,9 +3,12 @@ import Icono from '@/components/Icono.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CursoCard from '@/components/CursoCard.vue'
-import { listarCursos, ESTADO_CURSO } from '@/servicios/contenido.js'
+import EstadoConsulta from '@/components/EstadoConsulta.vue'
+import { useCatalogo } from '@/composables/useCatalogo.js'
+import { ESTADO_CURSO } from '@/constantes/estados.js'
 
 const router = useRouter()
+const { estado: catalogo, cargarCursos, recargarCursos } = useCatalogo()
 
 const filtros = [
   { id: 'todos', texto: 'Todos' },
@@ -17,14 +20,11 @@ const filtros = [
 const filtroActivo = ref('todos')
 const busqueda = ref('')
 
-const cursos = ref([])
-const cargando = ref(true)
+const cursos = computed(() => catalogo.cursos)
 
-onMounted(async () => {
-  cursos.value = await listarCursos()
-  cargando.value = false
-})
+onMounted(() => cargarCursos())
 
+/** Los filtros y el buscador trabajan sobre lo que ya vino de la base. */
 const cursosFiltrados = computed(() => {
   const texto = busqueda.value.trim().toLowerCase()
   return cursos.value.filter((curso) => {
@@ -81,17 +81,25 @@ function abrirCurso(curso) {
       </button>
     </div>
 
-    <p v-if="cargando" class="vacio">Cargando los cursos...</p>
+    <EstadoConsulta
+      :cargando="catalogo.cargandoCursos"
+      :error="catalogo.errorCursos"
+      :vacio="!catalogo.cargandoCursos && !catalogo.errorCursos && cursos.length === 0"
+      texto-cargando="Cargando los cursos..."
+      titulo-vacio="Todavia no hay cursos publicados"
+      texto-vacio="Cuando el equipo publique el primer curso vas a verlo aca."
+      @reintentar="recargarCursos"
+    >
+      <ul v-if="cursosFiltrados.length" class="grilla anim-lista">
+        <li v-for="curso in cursosFiltrados" :key="curso.id">
+          <CursoCard :curso="curso" @seleccionar="abrirCurso" />
+        </li>
+      </ul>
 
-    <ul v-else-if="cursosFiltrados.length" class="grilla anim-lista">
-      <li v-for="curso in cursosFiltrados" :key="curso.id">
-        <CursoCard :curso="curso" @seleccionar="abrirCurso" />
-      </li>
-    </ul>
-
-    <p v-else class="vacio">
-      No encontramos cursos con ese filtro. Proba con otra busqueda.
-    </p>
+      <p v-else class="vacio">
+        No encontramos cursos con ese filtro. Proba con otra busqueda.
+      </p>
+    </EstadoConsulta>
   </div>
 </template>
 

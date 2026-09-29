@@ -1,11 +1,12 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
 import Icono from '@/components/Icono.vue'
-import SintaxMascota from '@/components/SintaxMascota.vue'
 import BloqueCodigo from '@/components/BloqueCodigo.vue'
-import { obtenerLeccion, obtenerUnidad, ContenidoNoEncontrado } from '@/servicios/contenido.js'
+import EstadoConsulta from '@/components/EstadoConsulta.vue'
+import { obtenerLeccion, obtenerUnidad, contarActividades } from '@/servicios/contenido.js'
+import { useCatalogo } from '@/composables/useCatalogo.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
 /**
@@ -14,45 +15,55 @@ import { useProgreso } from '@/composables/useProgreso.js'
  * Muestra el titulo, la explicacion y el ejemplo de codigo, y recien despues
  * ofrece empezar las actividades. La idea es que nadie llegue a una pregunta
  * sobre algo que todavia no le explicaron.
+ *
+ * La leccion se pide por su identificador; la unidad, por la clave foranea que
+ * trae la propia leccion.
  */
 const props = defineProps({
   leccionId: { type: String, required: true }
 })
 
 const router = useRouter()
+const { estado: catalogo, cargarCurso } = useCatalogo()
 const { leccionDisponible, leccionCompletada, leccionAprobada, precisionLeccion, motivoBloqueo } =
   useProgreso()
 
 const leccion = ref(null)
 const unidad = ref(null)
+const totalActividades = ref(0)
 const cargando = ref(true)
-const error = ref('')
+const error = ref(null)
 
 async function cargar() {
   cargando.value = true
-  error.value = ''
+  error.value = null
   leccion.value = null
+  unidad.value = null
   try {
     const datos = await obtenerLeccion(props.leccionId)
+    const [suUnidad, cantidad] = await Promise.all([
+      obtenerUnidad(datos.unidadId),
+      contarActividades(datos.id)
+    ])
     leccion.value = datos
-    unidad.value = await obtenerUnidad(datos.unidadId)
+    unidad.value = suUnidad
+    totalActividades.value = cantidad
+    // El catalogo hace falta para saber si la leccion esta habilitada.
+    cargarCurso(suUnidad.cursoId)
   } catch (e) {
-    error.value =
-      e instanceof ContenidoNoEncontrado
-        ? 'No encontramos esa leccion. Puede que el enlace sea viejo o este mal escrito.'
-        : 'Hubo un problema al cargar la leccion.'
+    error.value = e
   } finally {
     cargando.value = false
   }
 }
 
-onMounted(cargar)
-watch(() => props.leccionId, cargar)
+watch(() => props.leccionId, cargar, { immediate: true })
 
 const bloqueada = computed(() => leccion.value && !leccionDisponible(props.leccionId))
 const motivo = computed(() => (bloqueada.value ? motivoBloqueo(props.leccionId) : ''))
 const completada = computed(() => leccionCompletada(props.leccionId))
 const aprobada = computed(() => leccionAprobada(props.leccionId))
+const ejemplo = computed(() => leccion.value?.teoria?.ejemplo ?? null)
 
 const textoBoton = computed(() => {
   if (aprobada.value) return 'Volver a practicar'
@@ -61,31 +72,33 @@ const textoBoton = computed(() => {
 })
 
 function comenzar() {
-  if (bloqueada.value) return
+  if (bloqueada.value || totalActividades.value === 0) return
   router.push({ name: 'actividades', params: { leccionId: props.leccionId } })
 }
 </script>
 
 <template>
   <div class="intro seccion contenedor">
-    <p v-if="cargando" class="estado">Cargando la leccion...</p>
-
-    <!-- Leccion inexistente: se avisa y se ofrece una salida -->
-    <div v-else-if="error" class="vacio">
-      <SintaxMascota estado="confundido" :alto="140" alt="" />
-      <h1>No encontramos esa leccion</h1>
-      <p class="texto-secundario">{{ error }}</p>
-      <div class="vacio__acciones">
-        <BaseBoton :to="{ name: 'curso-javascript' }">Ir al curso</BaseBoton>
+    <EstadoConsulta
+      :cargando="cargando"
+      :error="error"
+      texto-cargando="Cargando la leccion..."
+      @reintentar="cargar"
+    >
+      <template #salida>
         <BaseBoton variante="contorno" :to="{ name: 'cursos' }">Ver todos los cursos</BaseBoton>
-      </div>
-    </div>
+      </template>
 
-    <template v-else-if="leccion">
+    <template v-if="leccion">
       <nav class="miga" aria-label="Ruta de navegacion">
         <router-link :to="{ name: 'cursos' }">Cursos</router-link>
         <span aria-hidden="true">›</span>
-        <router-link :to="{ name: 'curso-javascript' }">JavaScript</router-link>
+        <router-link
+          v-if="unidad"
+          :to="{ name: 'curso', params: { cursoId: unidad.cursoId } }"
+        >
+          {{ catalogo.curso?.nombre ?? 'Curso' }}
+        </router-link>
         <span aria-hidden="true">›</span>
         <router-link :to="{ name: 'unidad', params: { unidadId: leccion.unidadId } }">
           Unidad {{ unidad?.numero }}
@@ -115,16 +128,16 @@ function comenzar() {
           <p class="teoria__texto">{{ leccion.teoria.explicacion }}</p>
         </section>
 
-        <!-- Ejemplo de codigo -->
-        <section class="ejemplo">
+        <!-- Ejemplo de codigo (la leccion puede no tenerlo) -->
+        <section v-if="ejemplo" class="ejemplo">
           <h2>
             <Icono nombre="pieza" :tamano="19" />
-            {{ leccion.teoria.ejemplo.titulo }}
+            {{ ejemplo.titulo }}
           </h2>
-          <BloqueCodigo :codigo="leccion.teoria.ejemplo.codigo" :etiqueta="leccion.teoria.ejemplo.titulo" />
-          <p v-if="leccion.teoria.ejemplo.nota" class="ejemplo__nota">
+          <BloqueCodigo :codigo="ejemplo.codigo" :etiqueta="ejemplo.titulo" />
+          <p v-if="ejemplo.nota" class="ejemplo__nota">
             <Icono nombre="bombita" :tamano="15" />
-            {{ leccion.teoria.ejemplo.nota }}
+            {{ ejemplo.nota }}
           </p>
         </section>
 
@@ -133,7 +146,7 @@ function comenzar() {
           <ul class="pie__datos">
             <li>
               <Icono nombre="diana" :tamano="16" />
-              {{ leccion.ejercicios.length }} actividades
+              {{ totalActividades }} actividades
             </li>
             <li>
               <Icono nombre="rayo" :tamano="16" />
@@ -148,14 +161,17 @@ function comenzar() {
           <p v-if="bloqueada" class="aviso">
             <Icono nombre="candado" :tamano="16" /> {{ motivo }}
           </p>
+          <p v-else-if="totalActividades === 0" class="aviso">
+            <Icono nombre="reloj" :tamano="16" /> Esta leccion todavia no tiene actividades publicadas.
+          </p>
 
           <BaseBoton
             tamano="grande"
             ancho-completo
-            :deshabilitado="bloqueada"
+            :deshabilitado="bloqueada || totalActividades === 0"
             @click="comenzar"
           >
-            {{ bloqueada ? 'Leccion bloqueada' : textoBoton }}
+            {{ bloqueada ? 'Leccion bloqueada' : totalActividades === 0 ? 'Sin actividades' : textoBoton }}
           </BaseBoton>
 
           <BaseBoton
@@ -167,6 +183,7 @@ function comenzar() {
         </footer>
       </article>
     </template>
+    </EstadoConsulta>
   </div>
 </template>
 

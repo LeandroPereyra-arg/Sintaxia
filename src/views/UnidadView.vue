@@ -1,27 +1,31 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Icono from '@/components/Icono.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
-import SintaxMascota from '@/components/SintaxMascota.vue'
-import {
-  obtenerUnidad,
-  listarLecciones,
-  ESTADO_UNIDAD,
-  ContenidoNoEncontrado
-} from '@/servicios/contenido.js'
+import EstadoConsulta from '@/components/EstadoConsulta.vue'
+import { useCatalogo } from '@/composables/useCatalogo.js'
 import { useProgreso } from '@/composables/useProgreso.js'
+import { ESTADO_UNIDAD } from '@/constantes/estados.js'
 
 /**
- * Detalle de una unidad: las lecciones que la componen.
- * Todo el contenido se le pide al modulo de acceso a datos.
+ * Detalle de una unidad: muestra SOLO las lecciones de esa unidad.
+ * La relacion la resuelve la base: las lecciones se filtran por unidad_id.
  */
 const props = defineProps({
   unidadId: { type: String, required: true }
 })
 
 const router = useRouter()
+const {
+  estado: catalogo,
+  cargarCurso,
+  recargarCurso,
+  obtenerUnidadCacheada,
+  leccionesDeUnidad
+} = useCatalogo()
+
 const {
   estadoUnidad,
   progresoUnidad,
@@ -32,31 +36,24 @@ const {
   motivoBloqueo
 } = useProgreso()
 
-const unidad = ref(null)
-const lecciones = ref([])
-const cargando = ref(true)
-const error = ref('')
+// La unidad puede abrirse directamente desde la URL, asi que se pide la
+// estructura del curso si todavia no esta en memoria.
+watch(() => props.unidadId, () => cargarCurso(), { immediate: true })
 
-async function cargar() {
-  cargando.value = true
-  error.value = ''
-  unidad.value = null
-  lecciones.value = []
-  try {
-    unidad.value = await obtenerUnidad(props.unidadId)
-    lecciones.value = await listarLecciones(props.unidadId)
-  } catch (e) {
-    error.value =
-      e instanceof ContenidoNoEncontrado
-        ? 'No encontramos esa unidad.'
-        : 'Hubo un problema al cargar la unidad.'
-  } finally {
-    cargando.value = false
+const unidad = computed(() => obtenerUnidadCacheada(props.unidadId))
+const curso = computed(() => catalogo.curso)
+const lecciones = computed(() => (unidad.value ? leccionesDeUnidad(unidad.value.id) : []))
+
+/** Si el curso cargo bien pero esa unidad no existe, es un error sin reintento. */
+const errorUnidad = computed(() => {
+  if (catalogo.errorCurso) return catalogo.errorCurso
+  if (catalogo.cargandoCurso || !catalogo.cursoCargado) return null
+  if (unidad.value) return null
+  return {
+    message: 'Puede que el enlace sea viejo o que la unidad ya no este publicada.',
+    reintentable: false
   }
-}
-
-onMounted(cargar)
-watch(() => props.unidadId, cargar)
+})
 
 const bloqueada = computed(
   () => unidad.value && estadoUnidad(unidad.value.id) === ESTADO_UNIDAD.BLOQUEADA
@@ -82,92 +79,105 @@ function abrirLeccion(leccion) {
 
 <template>
   <div class="unidad-vista seccion contenedor">
-    <p v-if="cargando" class="estado">Cargando la unidad...</p>
+    <EstadoConsulta
+      :cargando="catalogo.cargandoCurso"
+      :error="errorUnidad"
+      texto-cargando="Cargando la unidad..."
+      @reintentar="recargarCurso()"
+    >
+      <template #salida>
+        <BaseBoton :to="{ name: 'cursos' }">Volver a los cursos</BaseBoton>
+      </template>
 
-    <div v-else-if="error" class="vacio">
-      <SintaxMascota estado="confundido" :alto="130" alt="" />
-      <h1>No encontramos esa unidad</h1>
-      <p class="texto-secundario">{{ error }}</p>
-      <BaseBoton :to="{ name: 'curso-javascript' }">Volver al curso</BaseBoton>
-    </div>
+      <template v-if="unidad">
+        <nav class="miga" aria-label="Ruta de navegacion">
+          <router-link :to="{ name: 'cursos' }">Cursos</router-link>
+          <span aria-hidden="true">›</span>
+          <router-link :to="{ name: 'curso', params: { cursoId: unidad.cursoId } }">
+            {{ curso?.nombre ?? 'Curso' }}
+          </router-link>
+          <span aria-hidden="true">›</span>
+          <span>Unidad {{ unidad.numero }}</span>
+        </nav>
 
-    <template v-else-if="unidad">
-      <nav class="miga" aria-label="Ruta de navegacion">
-        <router-link :to="{ name: 'cursos' }">Cursos</router-link>
-        <span aria-hidden="true">›</span>
-        <router-link :to="{ name: 'curso-javascript' }">JavaScript</router-link>
-        <span aria-hidden="true">›</span>
-        <span>Unidad {{ unidad.numero }}</span>
-      </nav>
-
-      <header class="cabecera" :style="{ '--color-unidad': unidad.color }">
-        <Icono class="cabecera__icono" :nombre="unidad.icono" :tamano="40" :trazo="1.9" />
-        <div>
-          <p class="cabecera__numero">Unidad {{ unidad.numero }}</p>
-          <h1>{{ unidad.titulo }}</h1>
-          <p class="texto-secundario">{{ unidad.descripcion }}</p>
-        </div>
-        <div class="cabecera__progreso">
-          <BarraProgreso
-            :valor="progresoUnidad(unidad.id)"
-            :color="unidad.color"
-            :etiqueta="`Progreso de la unidad ${unidad.numero}`"
-          />
-          <p class="cabecera__porcentaje">{{ progresoUnidad(unidad.id) }} % completado</p>
-        </div>
-      </header>
-
-      <p v-if="bloqueada" class="aviso">
-        <Icono nombre="candado" :tamano="17" /> Esta unidad todavia esta bloqueada. Termina la unidad anterior para abrirla.
-      </p>
-
-      <ol class="lecciones anim-lista">
-        <li v-for="leccion in listaLecciones" :key="leccion.id" class="leccion">
-          <Icono
-            class="leccion__icono"
-            :class="{ 'leccion__icono--ok': leccion.aprobada }"
-            :nombre="leccion.aprobada ? 'checkCirculo' : !leccion.disponible ? 'candado' : leccion.icono"
-            :tamano="26"
-            :trazo="2.1"
-          />
-
-          <div class="leccion__texto">
-            <h3>{{ leccion.numero }}. {{ leccion.titulo }}</h3>
-            <p class="texto-secundario">{{ leccion.descripcion }}</p>
-            <p class="leccion__meta">
-              {{ leccion.ejercicios.length }} actividades · {{ leccion.xp }} XP
-              <template v-if="leccion.completada">
-                · mejor intento: {{ leccion.precision }} %
-              </template>
-            </p>
-
-            <p v-if="leccion.aprobada" class="leccion__estado leccion__estado--ok">
-              <Icono nombre="check" :tamano="14" /> Aprobada
-            </p>
-            <p v-else-if="leccion.completada" class="leccion__estado leccion__estado--media">
-              <Icono nombre="equis" :tamano="14" /> Completada, pero todavia no aprobada
-            </p>
-            <p v-else-if="!leccion.disponible" class="leccion__estado leccion__estado--off">
-              <Icono nombre="candado" :tamano="14" /> {{ leccion.motivo }}
-            </p>
+        <header class="cabecera" :style="{ '--color-unidad': unidad.color }">
+          <Icono class="cabecera__icono" :nombre="unidad.icono" :tamano="40" :trazo="1.9" />
+          <div>
+            <p class="cabecera__numero">Unidad {{ unidad.numero }}</p>
+            <h1>{{ unidad.titulo }}</h1>
+            <p class="texto-secundario">{{ unidad.descripcion }}</p>
           </div>
+          <div class="cabecera__progreso">
+            <BarraProgreso
+              :valor="progresoUnidad(unidad.id)"
+              :color="unidad.color"
+              :etiqueta="`Progreso de la unidad ${unidad.numero}`"
+            />
+            <p class="cabecera__porcentaje">{{ progresoUnidad(unidad.id) }} % completado</p>
+          </div>
+        </header>
 
-          <BaseBoton
-            :variante="leccion.aprobada ? 'contorno' : 'primario'"
-            :deshabilitado="!leccion.disponible"
-            tamano="chico"
-            @click="abrirLeccion(leccion)"
-          >
-            {{ leccion.aprobada ? 'Repasar' : leccion.completada ? 'Reintentar' : 'Empezar' }}
-          </BaseBoton>
-        </li>
-      </ol>
+        <p v-if="bloqueada" class="aviso">
+          <Icono nombre="candado" :tamano="17" /> Esta unidad todavia esta bloqueada. Termina la unidad anterior para abrirla.
+        </p>
 
-      <BaseBoton variante="texto" :to="{ name: 'curso-javascript' }">
-        <Icono nombre="flechaIzquierda" :tamano="16" /> Volver al curso
-      </BaseBoton>
-    </template>
+        <!-- La unidad existe pero todavia no tiene lecciones publicadas. -->
+        <div v-if="lecciones.length === 0" class="aviso aviso--proximamente">
+          <p>
+            <Icono nombre="reloj" :tamano="17" /> Esta unidad todavia no tiene lecciones publicadas.
+          </p>
+          <p class="texto-secundario">
+            Estamos preparando el contenido: cuando este listo va a aparecer aca.
+          </p>
+        </div>
 
+        <ol v-else class="lecciones anim-lista">
+          <li v-for="leccion in listaLecciones" :key="leccion.id" class="leccion">
+            <Icono
+              class="leccion__icono"
+              :class="{ 'leccion__icono--ok': leccion.aprobada }"
+              :nombre="leccion.aprobada ? 'checkCirculo' : !leccion.disponible ? 'candado' : leccion.icono"
+              :tamano="26"
+              :trazo="2.1"
+            />
+
+            <div class="leccion__texto">
+              <h3>{{ leccion.numero }}. {{ leccion.titulo }}</h3>
+              <p class="texto-secundario">{{ leccion.descripcion }}</p>
+              <p class="leccion__meta">
+                {{ leccion.xp }} XP
+                <template v-if="leccion.completada">
+                  · mejor intento: {{ leccion.precision }} %
+                </template>
+              </p>
+
+              <p v-if="leccion.aprobada" class="leccion__estado leccion__estado--ok">
+                <Icono nombre="check" :tamano="14" /> Aprobada
+              </p>
+              <p v-else-if="leccion.completada" class="leccion__estado leccion__estado--media">
+                <Icono nombre="equis" :tamano="14" /> Completada, pero todavia no aprobada
+              </p>
+              <p v-else-if="!leccion.disponible" class="leccion__estado leccion__estado--off">
+                <Icono nombre="candado" :tamano="14" /> {{ leccion.motivo }}
+              </p>
+            </div>
+
+            <BaseBoton
+              :variante="leccion.aprobada ? 'contorno' : 'primario'"
+              :deshabilitado="!leccion.disponible"
+              tamano="chico"
+              @click="abrirLeccion(leccion)"
+            >
+              {{ leccion.aprobada ? 'Repasar' : leccion.completada ? 'Reintentar' : 'Empezar' }}
+            </BaseBoton>
+          </li>
+        </ol>
+
+        <BaseBoton variante="texto" :to="{ name: 'curso', params: { cursoId: unidad.cursoId } }">
+          <Icono nombre="flechaIzquierda" :tamano="16" /> Volver al curso
+        </BaseBoton>
+      </template>
+    </EstadoConsulta>
   </div>
 </template>
 
@@ -220,6 +230,11 @@ function abrirLeccion(leccion) {
   font-weight: 700;
   color: var(--c-gris);
   margin-top: 0.3rem;
+}
+
+.aviso--proximamente {
+  display: grid;
+  gap: 0.35rem;
 }
 
 .aviso {

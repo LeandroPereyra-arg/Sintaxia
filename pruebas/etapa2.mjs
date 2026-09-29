@@ -1,5 +1,5 @@
 import { chromium, devices } from 'playwright'
-const base = 'http://localhost:5173'
+const base = process.env.URL_APP ?? 'http://localhost:5173'
 const LECCION = 'js-u1-l1'
 const ACT = `${base}/cursos/javascript/lecciones/${LECCION}/actividades`
 const resultados = []
@@ -137,8 +137,9 @@ await limpio()
 {
   await p.goto(base + '/cursos/javascript/lecciones/no-existe', { waitUntil: 'networkidle' })
   await p.waitForTimeout(600)
-  const aviso = await p.locator('.vacio h1').innerText().catch(() => '')
-  const haySalida = await p.locator('.vacio__acciones a').count()
+  // Desde la etapa 3 el aviso lo dibuja el componente EstadoConsulta.
+  const aviso = await p.locator('.estado h2').innerText().catch(() => '')
+  const haySalida = await p.locator('.estado__acciones a, .estado__acciones button').count()
   registrar(8, 'Abrir una leccion con identificador inexistente',
     'Avisa que no existe y ofrece una salida, sin pantalla rota',
     `"${aviso}" con ${haySalida} accesos de salida`,
