@@ -1,20 +1,31 @@
 <script setup>
-import Icono from '@/components/Icono.vue'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import Icono from '@/components/Icono.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraFeedback from '@/components/BarraFeedback.vue'
+import EstadoConsulta from '@/components/EstadoConsulta.vue'
 import EjercicioOpcionMultiple from '@/components/ejercicios/EjercicioOpcionMultiple.vue'
-import EjercicioVerdaderoFalso from '@/components/ejercicios/EjercicioVerdaderoFalso.vue'
-import EjercicioCompletar from '@/components/ejercicios/EjercicioCompletar.vue'
-import EjercicioOrdenar from '@/components/ejercicios/EjercicioOrdenar.vue'
-import { obtenerLeccion, obtenerUnidad } from '@/servicios/contenido.js'
+import {
+  obtenerLeccionConActividades,
+  obtenerUnidad,
+  comprobarRespuesta
+} from '@/servicios/contenido.js'
 import { TIPO_EJERCICIO, ETIQUETA_TIPO_EJERCICIO } from '@/data/tiposEjercicio.js'
-import { esRespuestaCorrecta, respuestaVacia, textoRespuestaCorrecta } from '@/utils/verificarRespuesta.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
-/** Pantalla donde el estudiante resuelve los ejercicios de una leccion. */
+/**
+ * Pantalla donde el estudiante resuelve las actividades de una leccion.
+ *
+ * La correccion NO se hace aca: la aplicacion nunca se descarga las soluciones.
+ * Al comprobar, se le manda al servidor el identificador de la pregunta y el de
+ * la opcion elegida, y el servidor responde si acerto y por que
+ * (ver supabase/04-funcion-comprobar.sql).
+ *
+ * Si esa llamada falla por conexion, la respuesta NO se da por incorrecta: se
+ * avisa y se puede volver a comprobar la misma opcion.
+ */
 const props = defineProps({
   leccionId: { type: String, required: true }
 })
@@ -28,6 +39,7 @@ const VIDAS_INICIALES = 3
 const leccion = ref(null)
 const unidad = ref(null)
 const cargando = ref(true)
+const error = ref(null)
 const ejercicios = computed(() => leccion.value?.ejercicios ?? [])
 
 const indice = ref(0)
@@ -36,15 +48,24 @@ const comprobado = ref(false)
 const aciertos = ref(0)
 const vidas = ref(VIDAS_INICIALES)
 
+// Resultado que devolvio el servidor para la actividad actual.
+const resultado = ref(null)
+const comprobando = ref(false)
+const errorComprobacion = ref('')
+
 const ejercicio = computed(() => ejercicios.value[indice.value] ?? null)
 const esUltimo = computed(() => indice.value === ejercicios.value.length - 1)
 
-const correcta = computed(() =>
-  ejercicio.value ? esRespuestaCorrecta(ejercicio.value, respuesta.value) : false
-)
+const correcta = computed(() => resultado.value?.correcta === true)
+
+/** Cual era la opcion correcta, para pintarla una vez comprobada. */
+const idCorrecto = computed(() => {
+  if (!resultado.value) return null
+  return resultado.value.correcta ? respuesta.value : resultado.value.opcionCorrectaId
+})
 
 const puedeComprobar = computed(
-  () => ejercicio.value !== null && !respuestaVacia(ejercicio.value, respuesta.value)
+  () => ejercicio.value !== null && respuesta.value !== null && !comprobando.value
 )
 
 const progreso = computed(() => {
@@ -53,52 +74,31 @@ const progreso = computed(() => {
   return Math.round((resueltos / ejercicios.value.length) * 100)
 })
 
-/** Cada tipo de ejercicio se dibuja con su propio componente. */
-const componenteEjercicio = computed(() => {
-  switch (ejercicio.value?.tipo) {
-    case TIPO_EJERCICIO.OPCION_MULTIPLE:
-      return EjercicioOpcionMultiple
-    case TIPO_EJERCICIO.VERDADERO_FALSO:
-      return EjercicioVerdaderoFalso
-    case TIPO_EJERCICIO.COMPLETAR:
-      return EjercicioCompletar
-    case TIPO_EJERCICIO.ORDENAR:
-      return EjercicioOrdenar
-    default:
-      return null
-  }
-})
-
-/** Valor inicial de la respuesta segun el tipo (texto, lista o nada). */
-function respuestaVaciaDe(tipo) {
-  if (tipo === TIPO_EJERCICIO.COMPLETAR) return ''
-  if (tipo === TIPO_EJERCICIO.ORDENAR) return []
-  return null
-}
-
 /**
  * Arranca un intento limpio: las respuestas y el puntaje del intento anterior
  * no se arrastran. Se llama al entrar y cada vez que cambia la leccion.
  */
 function reiniciar() {
   indice.value = 0
-  respuesta.value = respuestaVaciaDe(ejercicios.value[0]?.tipo)
+  respuesta.value = null
   comprobado.value = false
+  resultado.value = null
+  errorComprobacion.value = ''
   aciertos.value = 0
   vidas.value = VIDAS_INICIALES
 }
 
 async function cargar() {
   cargando.value = true
+  error.value = null
   leccion.value = null
   unidad.value = null
   try {
-    const datos = await obtenerLeccion(props.leccionId)
+    const datos = await obtenerLeccionConActividades(props.leccionId)
     leccion.value = datos
     unidad.value = await obtenerUnidad(datos.unidadId)
-  } catch {
-    // Leccion inexistente: la plantilla muestra el aviso y una salida.
-    leccion.value = null
+  } catch (e) {
+    error.value = e
   } finally {
     cargando.value = false
     reiniciar()
@@ -107,13 +107,34 @@ async function cargar() {
 
 watch(() => props.leccionId, cargar, { immediate: true })
 
-function comprobar() {
+/**
+ * Le pregunta al servidor si la opcion elegida es la correcta.
+ *
+ * `comprobado` se marca UNICAMENTE cuando llega la respuesta, asi que apretar
+ * el boton varias veces no suma aciertos ni descuenta vidas de mas: mientras
+ * hay una comprobacion en curso, `comprobando` bloquea las siguientes.
+ */
+async function comprobar() {
   if (!puedeComprobar.value || comprobado.value) return
-  comprobado.value = true
-  if (correcta.value) {
-    aciertos.value++
-  } else {
-    vidas.value--
+
+  comprobando.value = true
+  errorComprobacion.value = ''
+  try {
+    const respuestaServidor = await comprobarRespuesta(ejercicio.value.id, respuesta.value)
+    resultado.value = respuestaServidor
+    comprobado.value = true
+    if (respuestaServidor.correcta) {
+      aciertos.value++
+    } else {
+      vidas.value--
+    }
+  } catch (e) {
+    // No se pudo comprobar: la respuesta NO se cuenta como incorrecta.
+    errorComprobacion.value = e?.reintentable
+      ? 'No pudimos comprobar tu respuesta. Revisa la conexion y volve a intentarlo.'
+      : (e?.message ?? 'No pudimos comprobar tu respuesta.')
+  } finally {
+    comprobando.value = false
   }
 }
 
@@ -129,8 +150,12 @@ async function terminar() {
   if (aprobada) {
     guardando.value = true
     try {
-      const resultado = await completarLeccion(props.leccionId, { aciertos: aciertos.value, total })
-      xpGanado = resultado.xpGanado
+      const resumen = await completarLeccion(props.leccionId, {
+        aciertos: aciertos.value,
+        total,
+        xp: leccion.value?.xp ?? null
+      })
+      xpGanado = resumen.xpGanado
     } finally {
       guardando.value = false
     }
@@ -154,8 +179,10 @@ async function continuar() {
     return
   }
   indice.value++
-  respuesta.value = respuestaVaciaDe(ejercicio.value?.tipo)
+  respuesta.value = null
   comprobado.value = false
+  resultado.value = null
+  errorComprobacion.value = ''
 }
 
 function salir() {
@@ -184,7 +211,7 @@ function salir() {
       </div>
     </header>
 
-    <!-- Ejercicio -->
+    <!-- Actividad -->
     <section class="leccion__cuerpo contenedor">
       <p class="leccion__tipo">
         {{ ETIQUETA_TIPO_EJERCICIO[ejercicio.tipo] }} ·
@@ -193,26 +220,31 @@ function salir() {
 
       <h1 class="leccion__consigna">{{ ejercicio.consigna }}</h1>
 
-      <pre
-        v-if="ejercicio.codigo && ejercicio.tipo !== TIPO_EJERCICIO.COMPLETAR"
-        class="bloque-codigo leccion__codigo"
-      >{{ ejercicio.codigo }}</pre>
+      <pre v-if="ejercicio.codigo" class="bloque-codigo leccion__codigo">{{ ejercicio.codigo }}</pre>
 
-      <component
-        :is="componenteEjercicio"
+      <EjercicioOpcionMultiple
+        v-if="ejercicio.tipo === TIPO_EJERCICIO.OPCION_MULTIPLE"
         v-model="respuesta"
         :ejercicio="ejercicio"
         :bloqueado="comprobado"
-        @comprobar="comprobar"
+        :id-correcto="idCorrecto"
       />
+      <p v-else class="leccion__aviso">
+        Este tipo de actividad todavia no esta disponible.
+      </p>
+
+      <!-- No se pudo comprobar: la respuesta no se cuenta como incorrecta -->
+      <p v-if="errorComprobacion" class="leccion__error" role="alert">
+        <Icono nombre="alerta" :tamano="17" /> {{ errorComprobacion }}
+      </p>
     </section>
 
-    <!-- Pie: comprobar o feedback -->
+    <!-- Pie: comprobar o devolucion -->
     <BarraFeedback
       v-if="comprobado"
       :correcta="correcta"
-      :explicacion="ejercicio.explicacion"
-      :respuesta-correcta="textoRespuestaCorrecta(ejercicio)"
+      :explicacion="resultado?.explicacion ?? ''"
+      :respuesta-correcta="resultado?.opcionCorrectaTexto ?? ''"
       :texto-boton="vidas <= 0 ? 'Ver resultados' : esUltimo ? 'Terminar' : 'Continuar'"
       @continuar="continuar"
     />
@@ -220,21 +252,31 @@ function salir() {
     <footer v-else class="leccion__pie">
       <div class="contenedor leccion__pie-interior">
         <BaseBoton variante="texto" @click="salir">Salir</BaseBoton>
-        <BaseBoton tamano="grande" :deshabilitado="!puedeComprobar" @click="comprobar">
-          Comprobar
+        <BaseBoton
+          tamano="grande"
+          :deshabilitado="!puedeComprobar"
+          @click="comprobar"
+        >
+          {{ comprobando ? 'Comprobando...' : errorComprobacion ? 'Reintentar' : 'Comprobar' }}
         </BaseBoton>
       </div>
     </footer>
   </div>
 
-  <div v-else-if="cargando" class="seccion contenedor centrado">
-    <p class="texto-secundario">Cargando las actividades...</p>
-  </div>
-
-  <div v-else class="seccion contenedor centrado">
-    <h1>No encontramos esa leccion</h1>
-    <p class="texto-secundario">Puede que el enlace sea viejo o que la leccion haya cambiado.</p>
-    <BaseBoton :to="{ name: 'curso-javascript' }">Volver al curso</BaseBoton>
+  <div v-else class="seccion contenedor">
+    <EstadoConsulta
+      :cargando="cargando"
+      :error="error"
+      :vacio="!cargando && !error && ejercicios.length === 0"
+      texto-cargando="Cargando las actividades..."
+      titulo-vacio="Esta leccion todavia no tiene actividades"
+      texto-vacio="El equipo las esta preparando. Volve a mirar en unos dias."
+      @reintentar="cargar"
+    >
+      <template #salida>
+        <BaseBoton :to="{ name: 'cursos' }">Ver los cursos</BaseBoton>
+      </template>
+    </EstadoConsulta>
   </div>
 </template>
 
@@ -306,6 +348,24 @@ function salir() {
 
 .leccion__codigo {
   margin-bottom: var(--e-1);
+}
+
+.leccion__aviso {
+  color: var(--c-gris);
+  font-weight: 600;
+}
+
+.leccion__error {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--c-amarillo-suave);
+  border: 2px solid var(--c-amarillo);
+  color: var(--c-amarillo-osc);
+  border-radius: var(--r-md);
+  padding: var(--e-2) var(--e-3);
+  font-weight: 700;
+  font-size: var(--t-sm);
 }
 
 .leccion__pie {

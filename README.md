@@ -1,14 +1,18 @@
 # Sintaxia · Aprende a programar jugando
 
 Aplicacion web estilo **Duolingo pero para lenguajes de programacion**, desarrollada con
-**Vue 3 + Vite + Vue Router** y un backend propio de **Node.js + Express + MySQL**.
+**Vue 3 + Vite + Vue Router**. El contenido de los cursos vive en una base
+**PostgreSQL en Supabase**; las cuentas y el progreso, en un backend propio de
+**Node.js + Express + MySQL**.
 
 Lecciones de cinco minutos, ejercicios interactivos con correccion inmediata, vidas, XP,
 rachas, medallas y un camino de unidades que se va desbloqueando. Se puede practicar sin
 cuenta o **iniciar sesion con Google o GitHub** para guardar el progreso en la base de datos.
 
-El curso implementado es el de **JavaScript**: 6 unidades, 14 lecciones y 44 ejercicios de
-4 tipos distintos.
+El curso implementado es el de **JavaScript**. Desde la etapa 3 los cursos, las
+unidades, las lecciones y las actividades se leen de Supabase: hay una unidad
+publicada (3 lecciones y 12 actividades de opcion multiple) y el resto de las
+unidades queda como "proximamente" hasta que se cargue su contenido.
 
 ![Pagina de inicio](docs/capturas/01-inicio.png)
 
@@ -16,15 +20,28 @@ El curso implementado es el de **JavaScript**: 6 unidades, 14 lecciones y 44 eje
 
 ## Como ejecutarlo
 
-### Solo el front (sin backend)
+### El contenido: Supabase
 
 ```bash
 npm install
+cp .env.example .env
+#   Completa VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY con los datos
+#   del panel de Supabase (Project Settings -> API).
 npm run dev        # http://localhost:5173
 ```
 
-Funciona igual: sin servidor, la app entra en **modo invitado** y guarda el progreso en el
-navegador.
+En el proyecto de Supabase hay que ejecutar, en este orden, los scripts de la
+carpeta [`supabase/`](supabase/): `01-esquema.sql`, `02-datos-iniciales.sql`,
+`03-politicas-rls.sql` y `04-funcion-comprobar.sql`. Los datos del proyecto y la
+organizacion de las tablas estan en [`supabase/README.md`](supabase/README.md).
+
+Sin cuenta, la app entra en **modo invitado** y guarda el progreso en el
+navegador; el contenido igual sale de Supabase.
+
+> En el `.env` del front solo va la **clave publicable**. Todo lo que empieza con
+> `VITE_` queda dentro del paquete que se descarga el navegador: que sea una
+> variable de entorno no lo convierte en secreto. La clave `service_role` no
+> aparece nunca en la aplicacion.
 
 ### Completo, con cuentas y base de datos
 
@@ -48,8 +65,13 @@ Requiere **Node 18+** y **MySQL 8** (o MariaDB 10.6+). Con `PERMITIR_LOGIN_DEMO=
 | `npm run dev:api` | Solo la API, recargando al guardar |
 | `npm run dev:todo` | Los dos a la vez |
 | `npm run build` | Compila el front a `/dist` |
-| `npm run db:migrar` | Crea la base y las tablas |
+| `npm run db:migrar` | Crea la base de cuentas (MySQL) y las tablas |
 | `npm run db:sembrar` | Carga o actualiza las medallas |
+| `npm run supabase:datos` | Regenera `supabase/02-datos-iniciales.sql` |
+| `npm run supabase:local` | Prepara una base PostgreSQL local con los scripts de Supabase (pruebas) |
+| `npm run supabase:puente` | Expone esa base local como la API de Supabase (pruebas) |
+| `npm run pruebas:etapa2` | Recorrido de actividades y resultados |
+| `npm run pruebas:etapa3` | Consultas a la base, permisos y manejo de errores |
 
 ---
 
@@ -147,6 +169,8 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [7. Registro de pruebas](docs/07-registro-de-pruebas.md) | Los 11 casos probados, con problemas encontrados y correcciones |
 | [8. Modelo de datos (DER)](docs/08-modelo-de-datos.md) | Tablas, tipos, claves y restricciones · diagrama en draw.io |
 | [9. Demostracion](docs/09-demostracion.md) | Guion para mostrar el recorrido completo |
+| [10. Supabase y modelo de datos](docs/10-supabase-y-modelo-de-datos.md) | Diccionario de datos, relaciones, politicas de RLS y funcion de comprobacion |
+| [11. Registro de pruebas (etapa 3)](docs/11-registro-de-pruebas-etapa3.md) | Los 12 casos probados contra la base, con problemas y correcciones |
 
 ---
 
@@ -216,16 +240,26 @@ Al terminar una leccion, las medallas que otorga el servidor se festejan en los 
 ## Estructura del proyecto
 
 ```
+supabase/
+├── 00-roles-locales.sql      solo para reproducir el esquema fuera de Supabase
+├── 01-esquema.sql            tablas, claves, restricciones y validaciones
+├── 02-datos-iniciales.sql    carga inicial del contenido (generado)
+├── 03-politicas-rls.sql      Row Level Security y permisos por columna
+├── 04-funcion-comprobar.sql  correccion de respuestas del lado del servidor
+└── README.md                 datos del proyecto y organizacion de las tablas
+
 src/
-├── api/               cliente.js — todas las llamadas a la API
-├── servicios/         contenido.js — modulo unico de acceso al contenido
+├── servicios/         supabase.js (cliente unico) · contenido.js (consultas)
+├── api/               cliente.js — llamadas a la API de cuentas
+├── constantes/        estados.js — vocabulario compartido con la base
 ├── assets/styles/     variables.css (identidad visual) + main.css
-├── router/            10 rutas con nombre
-├── data/              cursos, unidades, lecciones y ejercicios (nada en el HTML)
-├── composables/       useAuth.js (sesion) · useProgreso.js (invitado o cuenta)
+├── router/            rutas con nombre, el curso sale del identificador
+├── data/              contenido de prueba: hoy solo alimenta al generador del
+│                      script de carga inicial y a la API de cuentas
+├── composables/       useAuth.js · useProgreso.js · useCatalogo.js (cache)
 ├── utils/             verificarRespuesta.js
-├── components/        BaseBoton, BarraProgreso, BarraFeedback, MedallaCard,
-│                      CalendarioActividad, CursoCard, UnidadCard,
+├── components/        BaseBoton, BarraProgreso, BarraFeedback, EstadoConsulta,
+│                      MedallaCard, CalendarioActividad, CursoCard, UnidadCard,
 │                      layout/ y ejercicios/
 └── views/             una por ruta
 

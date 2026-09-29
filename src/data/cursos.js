@@ -1,23 +1,18 @@
 /**
  * Catalogo de cursos de Sintaxia.
  *
- * Toda la informacion de los cursos vive en este archivo (y no dentro de las
- * plantillas de Vue) para que las vistas solo se ocupen de mostrar datos.
+ * ATENCION: desde la etapa 3 la aplicacion NO lee este archivo. El contenido
+ * sale de Supabase a traves de `src/servicios/contenido.js`.
+ *
+ * Este archivo se conserva por dos motivos:
+ *   1. es la fuente con la que se genera supabase/02-datos-iniciales.sql
+ *      (ver supabase/generar-datos-iniciales.mjs);
+ *   2. la API de cuentas de la etapa 2 lo usa para validar el XP.
  */
 
-/** Estados posibles de un curso. */
-export const ESTADO_CURSO = {
-  DISPONIBLE: 'disponible',
-  PROXIMAMENTE: 'proximamente',
-  BLOQUEADO: 'bloqueado'
-}
-
-/** Texto legible para cada estado (se usa en las etiquetas de las tarjetas). */
-export const ETIQUETA_ESTADO_CURSO = {
-  [ESTADO_CURSO.DISPONIBLE]: 'Disponible',
-  [ESTADO_CURSO.PROXIMAMENTE]: 'Proximamente',
-  [ESTADO_CURSO.BLOQUEADO]: 'Bloqueado'
-}
+// Los estados viven en un solo lugar, compartido con la base de datos.
+export { ESTADO_CURSO, ETIQUETA_ESTADO_CURSO } from '../constantes/estados.js'
+import { ESTADO_CURSO } from '../constantes/estados.js'
 
 export const cursos = [
   {
@@ -34,8 +29,7 @@ export const cursos = [
     totalUnidades: 6,
     totalLecciones: 14,
     horasEstimadas: 12,
-    etiquetas: ['Web', 'Front-end', 'Back-end'],
-    ruta: { name: 'curso-javascript' }
+    etiquetas: ['Web', 'Front-end', 'Back-end']
   },
   {
     id: 'python',
@@ -51,8 +45,7 @@ export const cursos = [
     totalUnidades: 6,
     totalLecciones: 15,
     horasEstimadas: 13,
-    etiquetas: ['Datos', 'Automatizacion'],
-    ruta: null
+    etiquetas: ['Datos', 'Automatizacion']
   },
   {
     id: 'html-css',
@@ -68,8 +61,7 @@ export const cursos = [
     totalUnidades: 5,
     totalLecciones: 12,
     horasEstimadas: 9,
-    etiquetas: ['Web', 'Diseno'],
-    ruta: null
+    etiquetas: ['Web', 'Diseno']
   },
   {
     id: 'sql',
@@ -85,8 +77,7 @@ export const cursos = [
     totalUnidades: 5,
     totalLecciones: 11,
     horasEstimadas: 8,
-    etiquetas: ['Datos', 'Back-end'],
-    ruta: null
+    etiquetas: ['Datos', 'Back-end']
   },
   {
     id: 'java',
@@ -103,8 +94,7 @@ export const cursos = [
     totalLecciones: 18,
     horasEstimadas: 16,
     etiquetas: ['POO', 'Back-end'],
-    requisito: 'Completa el curso de JavaScript para desbloquearlo',
-    ruta: null
+    requisito: 'Completa el curso de JavaScript para desbloquearlo'
   },
   {
     id: 'cpp',
@@ -121,8 +111,7 @@ export const cursos = [
     totalLecciones: 19,
     horasEstimadas: 20,
     etiquetas: ['Sistemas', 'Videojuegos'],
-    requisito: 'Necesitas un curso intermedio completado',
-    ruta: null
+    requisito: 'Necesitas un curso intermedio completado'
   }
 ]
 

@@ -1,6 +1,6 @@
 import { computed, reactive, ref, watch } from 'vue'
-import { unidadesJavaScript, ESTADO_UNIDAD } from '@/data/unidades.js'
-import { leccionesDeUnidad, obtenerLeccion, lecciones } from '@/data/lecciones/index.js'
+import { ESTADO_UNIDAD } from '@/constantes/estados.js'
+import { useCatalogo } from '@/composables/useCatalogo.js'
 import { api } from '@/api/cliente.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -81,6 +81,16 @@ function hoy() {
 export function useProgreso() {
   const { estado: sesion, autenticado, refrescar } = useAuth()
 
+  // La estructura del curso (unidades y lecciones) viene del catalogo, que la
+  // trajo de Supabase a traves del modulo de acceso a datos. Aca se lee de
+  // forma sincronica porque estas funciones se usan dentro de las plantillas.
+  const {
+    estado: catalogo,
+    unidadesDelCurso,
+    leccionesDeUnidad,
+    obtenerLeccionCacheada: obtenerLeccion
+  } = useCatalogo()
+
   // ---------------------------------------------------------------
   // Consultas (identicas en los dos modos)
   // ---------------------------------------------------------------
@@ -128,13 +138,19 @@ export function useProgreso() {
     return total > 0 && leccionesAprobadasDeUnidad(unidadId) === total
   }
 
-  /** La unidad 1 siempre esta abierta; cada una se desbloquea al terminar la anterior. */
+  /**
+   * La primera unidad siempre esta abierta; cada una se desbloquea al terminar
+   * la anterior. Una unidad sin lecciones publicadas se muestra aparte: no esta
+   * bloqueada por el progreso, todavia no tiene contenido cargado.
+   */
   function estadoUnidad(unidadId) {
-    const indice = unidadesJavaScript.findIndex((unidad) => unidad.id === unidadId)
+    const unidades = unidadesDelCurso()
+    const indice = unidades.findIndex((unidad) => unidad.id === unidadId)
     if (indice === -1) return ESTADO_UNIDAD.BLOQUEADA
+    if (leccionesDeUnidad(unidadId).length === 0) return ESTADO_UNIDAD.SIN_CONTENIDO
     if (unidadCompletada(unidadId)) return ESTADO_UNIDAD.COMPLETADA
     if (indice === 0) return ESTADO_UNIDAD.DISPONIBLE
-    return unidadCompletada(unidadesJavaScript[indice - 1].id)
+    return unidadCompletada(unidades[indice - 1].id)
       ? ESTADO_UNIDAD.DISPONIBLE
       : ESTADO_UNIDAD.BLOQUEADA
   }
@@ -148,7 +164,9 @@ export function useProgreso() {
   function leccionDisponible(leccionId) {
     const leccion = obtenerLeccion(leccionId)
     if (!leccion) return false
-    if (estadoUnidad(leccion.unidadId) === ESTADO_UNIDAD.BLOQUEADA) return false
+    const estadoDeLaUnidad = estadoUnidad(leccion.unidadId)
+    if (estadoDeLaUnidad === ESTADO_UNIDAD.BLOQUEADA) return false
+    if (estadoDeLaUnidad === ESTADO_UNIDAD.SIN_CONTENIDO) return false
     if (leccionCompletada(leccionId)) return true
 
     const hermanas = leccionesDeUnidad(leccion.unidadId)
@@ -174,14 +192,18 @@ export function useProgreso() {
 
   /** Primera leccion sin aprobar que ademas se pueda abrir. */
   const proximaLeccion = computed(
-    () => lecciones.find((leccion) => !leccionAprobada(leccion.id) && leccionDisponible(leccion.id)) ?? null
+    () =>
+      catalogo.lecciones.find(
+        (leccion) => !leccionAprobada(leccion.id) && leccionDisponible(leccion.id)
+      ) ?? null
   )
 
   const totalLeccionesCompletadas = computed(() => Object.keys(estado.lecciones).length)
 
   const progresoCurso = computed(() => {
-    if (lecciones.length === 0) return 0
-    return Math.round((totalLeccionesCompletadas.value / lecciones.length) * 100)
+    const total = catalogo.lecciones.length
+    if (total === 0) return 0
+    return Math.round((totalLeccionesCompletadas.value / total) * 100)
   })
 
   const precisionGeneral = computed(() => {
@@ -288,9 +310,10 @@ export function useProgreso() {
    * En modo cuenta el XP y las medallas los decide el servidor.
    * Devuelve { xpGanado, medallasNuevas }.
    */
-  async function completarLeccion(leccionId, { aciertos, total }) {
-    const leccion = obtenerLeccion(leccionId)
-    if (!leccion) return { xpGanado: 0, medallasNuevas: [] }
+  async function completarLeccion(leccionId, { aciertos, total, xp = null }) {
+    // El XP de la leccion se toma del catalogo; si la pantalla llego directo
+    // por la URL y el catalogo todavia no esta cargado, lo pasa ella misma.
+    const xpLeccion = xp ?? obtenerLeccion(leccionId)?.xp ?? 0
 
     if (autenticado.value && estado.modo === 'cuenta') {
       try {
@@ -321,7 +344,7 @@ export function useProgreso() {
     actualizarRachaLocal()
     const yaCompletada = leccionCompletada(leccionId)
     const proporcion = total === 0 ? 0 : aciertos / total
-    const xpGanado = Math.round(leccion.xp * proporcion * (yaCompletada ? 0.5 : 1))
+    const xpGanado = Math.round(xpLeccion * proporcion * (yaCompletada ? 0.5 : 1))
 
     const previo = estado.lecciones[leccionId]
     estado.lecciones[leccionId] = {

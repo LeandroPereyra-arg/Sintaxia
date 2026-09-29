@@ -5,19 +5,9 @@
  * estudiante se guarda aparte en el composable `useProgreso`.
  */
 
-/** Estados posibles de una unidad. */
-export const ESTADO_UNIDAD = {
-  COMPLETADA: 'completada',
-  DISPONIBLE: 'disponible',
-  BLOQUEADA: 'bloqueada'
-}
-
-/** Texto legible para cada estado. */
-export const ETIQUETA_ESTADO_UNIDAD = {
-  [ESTADO_UNIDAD.COMPLETADA]: 'Completada',
-  [ESTADO_UNIDAD.DISPONIBLE]: 'Disponible',
-  [ESTADO_UNIDAD.BLOQUEADA]: 'Bloqueada'
-}
+// Los estados viven en un solo lugar, compartido con la base de datos.
+export { ESTADO_UNIDAD, ETIQUETA_ESTADO_UNIDAD } from '../constantes/estados.js'
+import { ESTADO_UNIDAD } from '../constantes/estados.js'
 
 export const unidadesJavaScript = [
   {

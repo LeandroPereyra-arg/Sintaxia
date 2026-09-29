@@ -85,7 +85,7 @@ Ademas de los casos anteriores, se comprobo que:
 npm run dev:todo
 
 # 2. Correr el guion de pruebas (necesita Playwright)
-node pruebas/etapa2.mjs
+npm run pruebas:etapa2
 ```
 
 El guion recorre los 11 casos, imprime la tabla de arriba y termina con un

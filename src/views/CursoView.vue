@@ -1,38 +1,30 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
-import { computed, onMounted, ref } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import UnidadCard from '@/components/UnidadCard.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
-import {
-  obtenerCurso,
-  listarUnidades,
-  listarLecciones,
-  listarLeccionesDeCurso
-} from '@/servicios/contenido.js'
+import EstadoConsulta from '@/components/EstadoConsulta.vue'
+import { useCatalogo } from '@/composables/useCatalogo.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 
-const router = useRouter()
-const CURSO_ID = 'javascript'
-
-const curso = ref(null)
-const unidadesCurso = ref([])
-const leccionesCurso = ref([])
-const conteoPorUnidad = ref({})
-const cargando = ref(true)
-
-onMounted(async () => {
-  curso.value = await obtenerCurso(CURSO_ID)
-  unidadesCurso.value = await listarUnidades(CURSO_ID)
-  leccionesCurso.value = await listarLeccionesDeCurso(CURSO_ID)
-  const conteos = {}
-  for (const unidad of unidadesCurso.value) {
-    conteos[unidad.id] = (await listarLecciones(unidad.id)).length
-  }
-  conteoPorUnidad.value = conteos
-  cargando.value = false
+/**
+ * Pantalla de un curso: muestra SOLO las unidades de ese curso.
+ * El identificador llega por la URL y es el mismo que tiene la fila en la base.
+ */
+const props = defineProps({
+  cursoId: { type: String, required: true }
 })
+
+const router = useRouter()
+const { estado: catalogo, cargarCurso, recargarCurso, leccionesDeUnidad } = useCatalogo()
+
+watch(() => props.cursoId, (cursoId) => cargarCurso(cursoId), { immediate: true })
+
+const curso = computed(() => catalogo.curso)
+const unidadesCurso = computed(() => catalogo.unidades)
+const leccionesCurso = computed(() => catalogo.lecciones)
 
 const {
   estado,
@@ -51,7 +43,7 @@ const unidades = computed(() =>
     estado: estadoUnidad(unidad.id),
     progreso: progresoUnidad(unidad.id),
     completadas: leccionesAprobadasDeUnidad(unidad.id),
-    totales: conteoPorUnidad.value[unidad.id] ?? 0
+    totales: leccionesDeUnidad(unidad.id).length
   }))
 )
 
@@ -67,12 +59,24 @@ function continuar() {
 
 <template>
   <div class="curso seccion contenedor">
-    <p v-if="cargando" class="texto-secundario centrado">Cargando el curso...</p>
-    <template v-else>
+    <EstadoConsulta
+      :cargando="catalogo.cargandoCurso"
+      :error="catalogo.errorCurso"
+      :vacio="!catalogo.cargandoCurso && !catalogo.errorCurso && unidadesCurso.length === 0"
+      texto-cargando="Cargando el curso..."
+      titulo-vacio="Este curso todavia no tiene unidades"
+      texto-vacio="Estamos preparando el contenido. Mientras tanto podes mirar los otros cursos."
+      @reintentar="recargarCurso(props.cursoId)"
+    >
+      <template #salida>
+        <BaseBoton variante="contorno" :to="{ name: 'cursos' }">Ver todos los cursos</BaseBoton>
+      </template>
+
+    <template v-if="curso">
     <nav class="miga" aria-label="Ruta de navegacion">
       <router-link :to="{ name: 'cursos' }">Cursos</router-link>
       <span aria-hidden="true">›</span>
-      <span>JavaScript</span>
+      <span>{{ curso.nombre }}</span>
     </nav>
 
     <!-- Encabezado del curso -->
@@ -131,6 +135,7 @@ function continuar() {
       </ul>
     </section>
     </template>
+    </EstadoConsulta>
   </div>
 </template>
 
