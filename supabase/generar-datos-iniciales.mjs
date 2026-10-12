@@ -46,6 +46,15 @@ function arreglo(valores) {
   return `array[${valores.map(txt).join(', ')}]`
 }
 
+/** Clausula que actualiza todas las columnas dadas cuando el id ya existe. */
+function alActualizar(columnas) {
+  return (
+    ' on conflict (id) do update set\n' +
+    columnas.map((c) => `  ${c} = excluded.${c}`).join(',\n') +
+    ';'
+  )
+}
+
 function fila(valores) {
   return `  (${valores.join(', ')})`
 }
@@ -60,14 +69,16 @@ w('-- --------------------------------------------------------------------------
 w('--  ARCHIVO GENERADO: no editarlo a mano.')
 w('--  Se regenera con  npm run supabase:datos  a partir de src/data/.')
 w('--')
-w('--  Se ejecuta despues de 01-esquema.sql. Vuelve a dejar el contenido como')
-w('--  estaba: borra lo que haya y lo inserta de nuevo, todo en una transaccion.')
+w('--  Se ejecuta despues de 01-esquema.sql. Inserta el contenido y, si ya existe,')
+w('--  lo actualiza (upsert por id). NO BORRA NADA: desde la etapa 4 hay historial de')
+w('--  participantes que depende de las lecciones, y un borrado en cascada se lo')
+w('--  llevaria puesto. Se puede correr todas las veces que haga falta.')
+w('--')
+w('--  Consecuencia: si se saca una leccion o una pregunta del contenido de origen,')
+w('--  este script no la elimina de la base. Eso se hace a mano, con intencion.')
 w('-- ===========================================================================')
 w()
 w('begin;')
-w()
-w('-- El borrado en cascada de cursos arrastra unidades, lecciones, preguntas y opciones.')
-w('delete from public.cursos;')
 w()
 
 // --- cursos ----------------------------------------------------------------
@@ -98,7 +109,12 @@ w(
         indice + 1
       ])
     )
-    .join(',\n') + ';'
+    .join(',\n') +
+    alActualizar([
+      'nombre', 'descripcion', 'nivel', 'icono', 'color', 'color_texto', 'estado',
+      'requisito', 'horas_estimadas', 'unidades_previstas', 'lecciones_previstas',
+      'etiquetas', 'orden'
+    ])
 )
 w()
 
@@ -127,7 +143,8 @@ w(
         arreglo(unidad.temas)
       ])
     )
-    .join(',\n') + ';'
+    .join(',\n') +
+    alActualizar(['curso_id', 'orden', 'titulo', 'descripcion', 'icono', 'color', 'estado', 'temas'])
 )
 w()
 
@@ -159,7 +176,11 @@ w(
         txt('publicada')
       ])
     )
-    .join(',\n') + ';'
+    .join(',\n') +
+    alActualizar([
+      'unidad_id', 'orden', 'titulo', 'descripcion', 'icono', 'xp', 'explicacion',
+      'ejemplo_titulo', 'ejemplo_codigo', 'ejemplo_nota', 'estado'
+    ])
 )
 w()
 
@@ -207,7 +228,8 @@ w(
         txt('publicada')
       ])
     )
-    .join(',\n') + ';'
+    .join(',\n') +
+    alActualizar(['leccion_id', 'orden', 'tipo', 'enunciado', 'codigo', 'explicacion', 'estado'])
 )
 w()
 
@@ -228,7 +250,8 @@ w(
         opcion.esCorrecta ? 'true' : 'false'
       ])
     )
-    .join(',\n') + ';'
+    .join(',\n') +
+    alActualizar(['pregunta_id', 'orden', 'texto', 'es_correcta'])
 )
 w()
 w('commit;')

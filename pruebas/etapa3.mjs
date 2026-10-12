@@ -10,7 +10,7 @@
  *   2. levantar el puente de PostgREST:         node pruebas/servidor-supabase-local.mjs
  *   3. levantar la aplicacion apuntando ahi:
  *        VITE_SUPABASE_URL=http://localhost:5599 \
- *        VITE_SUPABASE_PUBLISHABLE_KEY=clave-de-prueba-local \
+ *        VITE_SUPABASE_PUBLISHABLE_KEY=<clavePublicable de http://localhost:5599/__control/claves> \
  *        npm run dev -- --port 5174
  *
  * Despues:  node pruebas/etapa3.mjs
@@ -19,9 +19,14 @@
  */
 import { chromium } from 'playwright'
 import pg from 'pg'
+import { leerClaves } from './local/ayudas.mjs'
 
 const BASE = process.env.URL_APP ?? 'http://localhost:5174'
 const API_SUPABASE = process.env.URL_SUPABASE ?? 'http://localhost:5599'
+
+// Clave publicable REAL del entorno local: las pruebas de permisos tienen que fallar por RLS,
+// no porque la clave sea invalida.
+const { clavePublicable: CLAVE } = await leerClaves()
 
 const conexion = new pg.Client({
   host: process.env.PGHOST ?? '127.0.0.1',
@@ -128,6 +133,15 @@ try {
   }
 
   const ctx = await navegador.newContext({ viewport: { width: 1280, height: 900 } })
+
+  // Desde la etapa 4 las lecciones exigen sesion: se entra una vez como invitado.
+  {
+    const inicio = await nuevaPagina(ctx)
+    await inicio.goto(`${BASE}/ingresar`, { waitUntil: 'networkidle' })
+    await inicio.getByRole('button', { name: /Continuar como invitado/ }).click()
+    await inicio.waitForURL('**/perfil', { timeout: 15000 })
+    await inicio.close()
+  }
 
   // -------------------------------------------------------------------
   // 2. Modificar un titulo en la base y volver a consultar
@@ -319,11 +333,11 @@ try {
     const pagina = await nuevaPagina(ctx)
     await pagina.goto(`${BASE}/cursos`, { waitUntil: 'networkidle' })
 
-    const intentos = await pagina.evaluate(async (api) => {
+    const intentos = await pagina.evaluate(async ({ api, clave }) => {
       const cabeceras = {
         'Content-Type': 'application/json',
-        apikey: 'clave-de-prueba-local',
-        Authorization: 'Bearer clave-de-prueba-local'
+        apikey: clave,
+        Authorization: `Bearer ${clave}`
       }
       const resultados = {}
       for (const [nombre, opciones] of Object.entries({
@@ -343,7 +357,7 @@ try {
         resultados[nombre] = r.status
       }
       return resultados
-    }, API_SUPABASE)
+    }, { api: API_SUPABASE, clave: CLAVE })
 
     const { rows } = await conexion.query("select nombre from cursos where id = 'javascript'")
     const ninguna200 = Object.values(intentos).every((estado) => estado >= 400)
@@ -367,8 +381,8 @@ try {
     await pagina.goto(`${BASE}/lecciones/js-u1-l1/actividades`, { waitUntil: 'networkidle' })
     await pagina.waitForSelector('.opcion')
 
-    const intento = await pagina.evaluate(async (api) => {
-      const cabeceras = { apikey: 'clave-de-prueba-local', Authorization: 'Bearer clave-de-prueba-local' }
+    const intento = await pagina.evaluate(async ({ api, clave }) => {
+      const cabeceras = { apikey: clave, Authorization: `Bearer ${clave}` }
       const opciones = await fetch(`${api}/rest/v1/opciones?select=id,es_correcta`, { headers: cabeceras })
       const preguntas = await fetch(`${api}/rest/v1/preguntas?select=id,explicacion`, { headers: cabeceras })
       const todo = await fetch(`${api}/rest/v1/opciones?select=*`, { headers: cabeceras })
@@ -377,7 +391,7 @@ try {
         preguntas: preguntas.status,
         todo: todo.status
       }
-    }, API_SUPABASE)
+    }, { api: API_SUPABASE, clave: CLAVE })
 
     // Ademas: lo que si llego al navegador no contiene la solucion.
     const htmlSinSolucion = !(await pagina.content()).includes('es_correcta')

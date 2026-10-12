@@ -1,10 +1,10 @@
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, effectScope, reactive, ref, watch } from 'vue'
 import { ESTADO_UNIDAD } from '@/constantes/estados.js'
 import { useCatalogo } from '@/composables/useCatalogo.js'
-import { api } from '@/api/cliente.js'
 import { useAuth } from '@/composables/useAuth.js'
-
-const CLAVE_ALMACENAMIENTO = 'sintaxia:progreso:v1'
+import { listarMisIntentos, registrarIntento, borrarMiHistorial } from '@/servicios/progreso.js'
+import { SinSesion } from '@/servicios/errores.js'
+import { calcularEstadisticas } from '@/utils/estadisticas.js'
 
 /**
  * Porcentaje de aciertos necesario para APROBAR una leccion.
@@ -17,82 +17,122 @@ const CLAVE_ALMACENAMIENTO = 'sintaxia:progreso:v1'
 export const UMBRAL_APROBACION = 0.6
 
 /**
- * Progreso del estudiante.
+ * Progreso de la persona que esta usando la app.
  *
- * Funciona en dos modos:
- *   · invitado -> todo se guarda en localStorage (la app anda sin backend)
- *   · cuenta   -> la fuente de verdad es la API; el XP y las medallas los
- *                 calcula el servidor, que es el unico que puede otorgarlos
+ * Desde la etapa 4 sale del HISTORIAL guardado en Supabase (tabla
+ * intentos_leccion), que pertenece al usuario de la sesion actual, sea invitado
+ * o cuenta. No hay copia en el navegador: al cerrar sesion se descarta.
  *
- * El resto de la aplicacion usa siempre la misma interfaz, sin enterarse
- * de en cual de los dos esta.
+ * De ese historial se calculan, con una funcion pura (utils/estadisticas.js), el
+ * mejor resultado de cada leccion, el XP, la racha y el calendario.
  */
 
-function estadoInicial() {
-  return {
-    modo: 'invitado',
-    nombre: 'Estudiante',
-    avatar: 'buho',
-    xp: 0,
-    racha: 0,
-    metaDiaria: 50,
-    xpDeHoy: 0,
-    ultimaFecha: new Date().toISOString().slice(0, 10),
-    /** { [leccionId]: { aciertos, total, fecha } } */
-    lecciones: {}
-  }
-}
-
-function cargarDelNavegador() {
-  const base = estadoInicial()
-  if (typeof localStorage === 'undefined') return base
-  try {
-    const guardado = localStorage.getItem(CLAVE_ALMACENAMIENTO)
-    return guardado ? { ...base, ...JSON.parse(guardado), modo: 'invitado' } : base
-  } catch {
-    return base
-  }
-}
-
-const estado = reactive(cargarDelNavegador())
+const historial = reactive({
+  intentos: [],
+  cargando: false,
+  cargado: false,
+  error: null
+})
 
 /** Resultado de la ultima leccion, para la pantalla de resultados. */
 const ultimoResultado = ref(null)
 
-// En modo invitado el progreso se persiste en el navegador.
-// En modo cuenta no se toca el localStorage: manda el servidor.
-watch(
-  estado,
-  (valor) => {
-    if (valor.modo !== 'invitado') return
-    try {
-      localStorage.setItem(CLAVE_ALMACENAMIENTO, JSON.stringify(valor))
-    } catch {
-      /* modo privado o almacenamiento lleno: el progreso solo vive en memoria */
-    }
-  },
-  { deep: true }
-)
+let idDelHistorial = null
 
-function hoy() {
-  return new Date().toISOString().slice(0, 10)
+async function cargarHistorial() {
+  const { estado: sesion } = useAuth()
+  const id = sesion.sesion?.user?.id ?? null
+
+  if (!id) {
+    historial.intentos = []
+    historial.cargado = false
+    historial.error = null
+    idDelHistorial = null
+    return
+  }
+
+  historial.cargando = true
+  historial.error = null
+  try {
+    const intentos = await listarMisIntentos()
+    // Si mientras tanto cambio la sesion, esta respuesta ya no es de esta persona.
+    if (useAuth().estado.sesion?.user?.id !== id) return
+    historial.intentos = intentos
+    historial.cargado = true
+    idDelHistorial = id
+  } catch (error) {
+    if (useAuth().estado.sesion?.user?.id !== id) return
+    historial.error = error
+  } finally {
+    historial.cargando = false
+  }
+}
+
+// Cuando cambia la persona (entra, sale o se cambia de cuenta) cambia el historial.
+//
+// El watch va en un effectScope propio: creado dentro del setup de un componente
+// se detendria cuando ese componente se desmonte, y tiene que vivir toda la sesion.
+let observando = false
+function observarSesion() {
+  if (observando) return
+  observando = true
+  const { estado: sesion } = useAuth()
+  effectScope(true).run(() => {
+    watch(
+      () => sesion.sesion?.user?.id ?? null,
+      (id) => {
+        if (id === idDelHistorial) return
+        historial.intentos = []
+        historial.cargado = false
+        ultimoResultado.value = null
+        cargarHistorial()
+      },
+      { immediate: true }
+    )
+  })
 }
 
 export function useProgreso() {
-  const { estado: sesion, autenticado, refrescar } = useAuth()
+  observarSesion()
 
-  // La estructura del curso (unidades y lecciones) viene del catalogo, que la
-  // trajo de Supabase a traves del modulo de acceso a datos. Aca se lee de
-  // forma sincronica porque estas funciones se usan dentro de las plantillas.
-  const {
-    estado: catalogo,
-    unidadesDelCurso,
-    leccionesDeUnidad,
-    obtenerLeccionCacheada: obtenerLeccion
-  } = useCatalogo()
+  const { estado: sesion, usuario, esCuenta } = useAuth()
+  const { estado: catalogo, unidadesDelCurso, leccionesDeUnidad, obtenerLeccionCacheada: obtenerLeccion } =
+    useCatalogo()
 
   // ---------------------------------------------------------------
-  // Consultas (identicas en los dos modos)
+  // Estadisticas derivadas del historial
+  // ---------------------------------------------------------------
+
+  const xpPorLeccion = computed(() =>
+    Object.fromEntries(catalogo.lecciones.map((leccion) => [leccion.id, leccion.xp]))
+  )
+
+  const estadisticas = computed(() => calcularEstadisticas(historial.intentos, xpPorLeccion.value))
+
+  /**
+   * Vista simple del progreso, con los mismos nombres que usan las pantallas.
+   * Los valores derivados se leen sin `.value` gracias a que `reactive` desenvuelve
+   * los `computed`.
+   */
+  const estado = reactive({
+    nombre: computed(() => sesion.perfil?.alias ?? 'Estudiante'),
+    avatar: computed(() => sesion.perfil?.avatar ?? 'buho'),
+    metaDiaria: computed(() => sesion.perfil?.metaDiaria ?? 50),
+    xp: computed(() => estadisticas.value.xp),
+    xpDeHoy: computed(() => estadisticas.value.xpDeHoy),
+    racha: computed(() => estadisticas.value.racha),
+    rachaMaxima: computed(() => estadisticas.value.rachaMaxima),
+    /** { [leccionId]: { aciertos, total, fecha, intentos } } con el MEJOR resultado. */
+    lecciones: computed(() => estadisticas.value.lecciones),
+    /** [{ fecha, xp, lecciones }] por dia, para el calendario. */
+    actividad: computed(() => estadisticas.value.actividad),
+    cargando: computed(() => historial.cargando),
+    cargado: computed(() => historial.cargado),
+    error: computed(() => historial.error)
+  })
+
+  // ---------------------------------------------------------------
+  // Consultas
   // ---------------------------------------------------------------
 
   /** Termino todas las actividades, sin importar cuantas acerto. */
@@ -216,182 +256,38 @@ export function useProgreso() {
 
   const metaCumplida = computed(() => estado.xpDeHoy >= estado.metaDiaria)
 
-  const enCuenta = computed(() => estado.modo === 'cuenta')
-
-  // ---------------------------------------------------------------
-  // Modo cuenta: cargar y sincronizar con la API
-  // ---------------------------------------------------------------
-
-  /** Copia al estado local lo que devolvio el servidor. */
-  function aplicarUsuario(usuario) {
-    if (!usuario) return
-    estado.nombre = usuario.nombre
-    estado.avatar = usuario.avatarIcono ?? estado.avatar
-    estado.xp = usuario.xp
-    estado.racha = usuario.racha
-    estado.metaDiaria = usuario.metaDiaria
-  }
-
-  /** Progreso hecho como invitado, con el formato que espera la API. */
-  function progresoInvitado() {
-    return Object.entries(estado.lecciones).map(([leccionId, registro]) => ({
-      leccionId,
-      aciertos: registro.aciertos,
-      total: registro.total
-    }))
-  }
-
-  function limpiarProgresoInvitado() {
-    try {
-      localStorage.removeItem(CLAVE_ALMACENAMIENTO)
-    } catch {
-      /* sin localStorage no hay nada que limpiar */
-    }
-  }
-
-  /**
-   * Pasa a modo cuenta: sube lo que hizo como invitado y despues se queda
-   * con lo que diga el servidor.
-   */
-  async function cargarCuenta({ sincronizar = true } = {}) {
-    if (!sesion.usuario) return
-
-    let resumenSincronizacion = null
-    if (sincronizar) {
-      const pendientes = estado.modo === 'invitado' ? progresoInvitado() : []
-      if (pendientes.length > 0) {
-        try {
-          resumenSincronizacion = await api.sincronizar(pendientes)
-          limpiarProgresoInvitado()
-          // La sincronizacion cambio el XP, la racha y las medallas del usuario,
-          // asi que hay que volver a traerlo para no mostrar datos viejos.
-          await refrescar()
-        } catch {
-          /* si falla la sincronizacion no perdemos nada: el local sigue ahi */
-        }
-      }
-    }
-
-    try {
-      const progreso = await api.progreso()
-      estado.modo = 'cuenta'
-      estado.lecciones = progreso.lecciones
-      estado.xpDeHoy = progreso.xpDeHoy
-      estado.ultimaFecha = hoy()
-      aplicarUsuario(sesion.usuario)
-    } catch {
-      /* si la API falla seguimos mostrando lo que ya teniamos */
-    }
-
-    return resumenSincronizacion
-  }
-
-  /** Vuelve a modo invitado (al cerrar sesion). */
-  function volverAInvitado() {
-    Object.assign(estado, estadoInicial())
-    limpiarProgresoInvitado()
-  }
-
   // ---------------------------------------------------------------
   // Acciones
   // ---------------------------------------------------------------
 
-  function actualizarRachaLocal() {
-    const fecha = hoy()
-    if (estado.ultimaFecha === fecha) return
-    const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-    estado.racha = estado.ultimaFecha === ayer ? estado.racha + 1 : 1
-    estado.xpDeHoy = 0
-    estado.ultimaFecha = fecha
-  }
-
   /**
-   * Registra una leccion aprobada.
-   * En modo cuenta el XP y las medallas los decide el servidor.
-   * Devuelve { xpGanado, medallasNuevas }.
+   * Guarda una leccion terminada en el historial de la persona.
+   * Devuelve { xpGanado, medallasNuevas }. Si no se pudo guardar lanza el error:
+   * la pantalla no pierde el resultado y puede ofrecer reintentar.
    */
-  async function completarLeccion(leccionId, { aciertos, total, xp = null }) {
-    // El XP de la leccion se toma del catalogo; si la pantalla llego directo
-    // por la URL y el catalogo todavia no esta cargado, lo pasa ella misma.
-    const xpLeccion = xp ?? obtenerLeccion(leccionId)?.xp ?? 0
+  async function completarLeccion(leccionId, { aciertos, total }) {
+    if (!usuario.value) throw new SinSesion()
 
-    if (autenticado.value && estado.modo === 'cuenta') {
-      try {
-        const respuesta = await api.registrarLeccion(leccionId, aciertos, total)
-        estado.lecciones[leccionId] = {
-          aciertos: Math.max(estado.lecciones[leccionId]?.aciertos ?? 0, aciertos),
-          total,
-          fecha: new Date().toISOString()
-        }
-        estado.xpDeHoy += respuesta.xpGanado
-        // El servidor devuelve el usuario ya actualizado (XP, racha y liga):
-        // lo guardamos para que la cabecera y el perfil no queden atrasados.
-        sesion.usuario = respuesta.usuario
-        aplicarUsuario(respuesta.usuario)
+    const xpAntes = estado.xp
+    const intento = await registrarIntento(leccionId, aciertos, total)
+    historial.intentos = [...historial.intentos, intento]
 
-        const resultado = {
-          xpGanado: respuesta.xpGanado,
-          medallasNuevas: respuesta.medallasNuevas ?? []
-        }
-        ultimoResultado.value = { leccionId, ...resultado }
-        return resultado
-      } catch {
-        // Si la API falla, guardamos local para no perderle la leccion al estudiante.
-      }
-    }
-
-    // --- modo invitado ---
-    actualizarRachaLocal()
-    const yaCompletada = leccionCompletada(leccionId)
-    const proporcion = total === 0 ? 0 : aciertos / total
-    const xpGanado = Math.round(xpLeccion * proporcion * (yaCompletada ? 0.5 : 1))
-
-    const previo = estado.lecciones[leccionId]
-    estado.lecciones[leccionId] = {
-      aciertos: previo ? Math.max(previo.aciertos, aciertos) : aciertos,
-      total,
-      fecha: new Date().toISOString()
-    }
-    estado.xp += xpGanado
-    estado.xpDeHoy += xpGanado
-
-    const resultado = { xpGanado, medallasNuevas: [] }
+    const resultado = { xpGanado: Math.max(0, estado.xp - xpAntes), medallasNuevas: [] }
     ultimoResultado.value = { leccionId, ...resultado }
     return resultado
   }
 
-  /** Cambia datos del perfil. En modo cuenta viaja a la API. */
-  async function actualizarPerfil(cambios) {
-    if (autenticado.value && estado.modo === 'cuenta') {
-      const mapeado = {}
-      if (cambios.nombre !== undefined) mapeado.nombre = cambios.nombre
-      if (cambios.usuario !== undefined) mapeado.usuario = cambios.usuario
-      if (cambios.bio !== undefined) mapeado.bio = cambios.bio
-      if (cambios.pais !== undefined) mapeado.pais = cambios.pais
-      if (cambios.avatar !== undefined) mapeado.avatarIcono = cambios.avatar
-      if (cambios.metaDiaria !== undefined) mapeado.metaDiaria = cambios.metaDiaria
-
-      const { usuario } = await api.guardarPerfil(mapeado)
-      sesion.usuario = usuario
-      aplicarUsuario(usuario)
-      return usuario
-    }
-
-    if (cambios.nombre !== undefined) estado.nombre = cambios.nombre
-    if (cambios.avatar !== undefined) estado.avatar = cambios.avatar
-    if (cambios.metaDiaria !== undefined) estado.metaDiaria = Number(cambios.metaDiaria)
-    return null
-  }
-
-  /** Borra el progreso local. Solo tiene sentido en modo invitado. */
-  function reiniciarProgreso() {
-    Object.assign(estado, estadoInicial())
+  /** Borra todo el historial propio. */
+  async function reiniciarProgreso() {
+    if (!usuario.value) throw new SinSesion()
+    await borrarMiHistorial(usuario.value.id)
+    historial.intentos = []
   }
 
   return {
     estado,
     ultimoResultado,
-    enCuenta,
+    esCuenta,
     // consultas
     leccionCompletada,
     leccionAprobada,
@@ -410,9 +306,7 @@ export function useProgreso() {
     metaCumplida,
     // acciones
     completarLeccion,
-    actualizarPerfil,
     reiniciarProgreso,
-    cargarCuenta,
-    volverAInvitado
+    recargarHistorial: cargarHistorial
   }
 }

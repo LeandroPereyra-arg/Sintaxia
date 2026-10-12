@@ -24,7 +24,13 @@
  *     la conexion) y los que no (ese contenido no existe). Las pantallas usan
  *     esa diferencia para decidir si ofrecen el boton de reintentar.
  */
-import { supabase, hayConfiguracion, MENSAJE_SIN_CONFIGURACION } from '@/servicios/supabase.js'
+import { supabase, hayConfiguracion } from '@/servicios/supabase.js'
+import {
+  ErrorDeContenido,
+  ContenidoNoEncontrado,
+  ErrorDeConsulta,
+  SinConfiguracion
+} from '@/servicios/errores.js'
 import {
   ESTADO_CURSO,
   ETIQUETA_ESTADO_CURSO,
@@ -36,43 +42,10 @@ import {
 
 // ---------------------------------------------------------------------------
 // Errores
+// Las clases viven en errores.js, compartidas con los demas servicios; se
+// vuelven a exportar aca para que las pantallas sigan importandolas de este modulo.
 // ---------------------------------------------------------------------------
-
-/** Base de todos los errores del contenido. */
-export class ErrorDeContenido extends Error {
-  constructor(mensaje, { reintentable = false, causa = null } = {}) {
-    super(mensaje)
-    this.name = 'ErrorDeContenido'
-    this.reintentable = reintentable
-    this.causa = causa
-  }
-}
-
-/** El contenido pedido no existe o no esta publicado. Reintentar no ayuda. */
-export class ContenidoNoEncontrado extends ErrorDeContenido {
-  constructor(que, id) {
-    super(`No encontramos ${que}.`, { reintentable: false })
-    this.name = 'ContenidoNoEncontrado'
-    this.que = que
-    this.id = id
-  }
-}
-
-/** No se pudo hablar con la base. Tiene sentido volver a intentar. */
-export class ErrorDeConsulta extends ErrorDeContenido {
-  constructor(mensaje, causa = null) {
-    super(mensaje, { reintentable: true, causa })
-    this.name = 'ErrorDeConsulta'
-  }
-}
-
-/** Falta el .env: no es un problema de red, es de configuracion. */
-export class SinConfiguracion extends ErrorDeContenido {
-  constructor() {
-    super(MENSAJE_SIN_CONFIGURACION, { reintentable: false })
-    this.name = 'SinConfiguracion'
-  }
-}
+export { ErrorDeContenido, ContenidoNoEncontrado, ErrorDeConsulta, SinConfiguracion }
 
 /**
  * Codigos de PostgreSQL que significan "esto no existe" y no "fallo la red".

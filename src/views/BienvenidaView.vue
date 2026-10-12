@@ -6,9 +6,9 @@ import Icono from '@/components/Icono.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
 import { pasosBienvenida } from '@/data/bienvenida.js'
+import MensajeEstado from '@/components/MensajeEstado.vue'
 import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 import { useAuth } from '@/composables/useAuth.js'
-import { urlLogin } from '@/api/cliente.js'
 import { marcarBienvenidaVista } from '@/composables/useBienvenida.js'
 
 /**
@@ -19,24 +19,16 @@ import { marcarBienvenidaVista } from '@/composables/useBienvenida.js'
  * Se muestra sola la primera vez y se puede volver a ver desde el pie.
  */
 const router = useRouter()
-const { estado: sesion, iniciar, entrarDemo } = useAuth()
+const { conSesion, hayConfig, iniciar, entrarComoInvitado } = useAuth()
 
 const carrusel = ref(null)
 const pasoActual = ref(0)
 const entrando = ref(false)
-const error = ref('')
+const error = ref(null)
 
 /** Hay un paso mas que los del carrusel: el de las acciones finales. */
 const totalPasos = computed(() => pasosBienvenida.length + 1)
 const enUltimo = computed(() => pasoActual.value === totalPasos.value - 1)
-
-const proveedoresVisuales = { google: 'Google', github: 'GitHub' }
-const disponibles = computed(() =>
-  sesion.proveedores
-    .filter((p) => p in proveedoresVisuales)
-    .map((p) => ({ id: p, nombre: proveedoresVisuales[p] }))
-)
-const hayDemo = computed(() => sesion.proveedores.includes('demo'))
 
 onMounted(iniciar)
 
@@ -49,31 +41,29 @@ function terminar(destino) {
   router.push(destino)
 }
 
-function comoInvitado() {
-  terminar({ name: 'curso', params: { cursoId: CURSO_POR_DEFECTO } })
+/**
+ * "Continuar como invitado" crea una sesion anonima con un usuario propio (no una
+ * cuenta compartida). Si ya hay una sesion abierta, se reutiliza: no se crea otra.
+ */
+async function comoInvitado() {
+  entrando.value = true
+  error.value = null
+  try {
+    if (!conSesion.value) await entrarComoInvitado()
+    terminar({ name: 'curso', params: { cursoId: CURSO_POR_DEFECTO } })
+  } catch (e) {
+    error.value = e
+  } finally {
+    entrando.value = false
+  }
 }
 
 function saltear() {
   terminar({ name: 'inicio' })
 }
 
-/** El login con proveedor se va del sitio, asi que se marca antes de salir. */
-function irAProveedor(id) {
-  marcarBienvenidaVista()
-  window.location.href = urlLogin(id, '/perfil')
-}
-
-async function probarDemo() {
-  entrando.value = true
-  error.value = ''
-  try {
-    await entrarDemo('Estudiante de prueba')
-    terminar({ name: 'perfil' })
-  } catch (e) {
-    error.value = e.message
-  } finally {
-    entrando.value = false
-  }
+function irA(destino) {
+  terminar(destino)
 }
 </script>
 
@@ -126,38 +116,23 @@ async function probarDemo() {
           </div>
           <h2 class="paso__titulo">Empecemos</h2>
           <p class="paso__texto">
-            Con una cuenta guardas tu progreso y competis en el ranking. Tambien podes probar
-            sin registrarte.
+            Con una cuenta guardas tu progreso en cualquier dispositivo. Tambien podes empezar
+            como invitado: si despues creas una cuenta, no perdes lo que hiciste.
           </p>
 
           <div class="acciones">
-            <a
-              v-for="proveedor in disponibles"
-              :key="proveedor.id"
-              class="proveedor"
-              :class="`proveedor--${proveedor.id}`"
-              :href="urlLogin(proveedor.id, '/perfil')"
-              @click.prevent="irAProveedor(proveedor.id)"
-            >
-              <Icono :nombre="proveedor.id" :tamano="19" :trazo="0" />
-              Continuar con {{ proveedor.nombre }}
-            </a>
-
-            <BaseBoton
-              v-if="hayDemo"
-              variante="secundario"
-              ancho-completo
-              :deshabilitado="entrando"
-              @click="probarDemo"
-            >
-              {{ entrando ? 'Entrando...' : 'Entrar con el modo de prueba' }}
+            <BaseBoton tamano="grande" ancho-completo @click="irA({ name: 'registro' })">
+              Crear mi cuenta
+            </BaseBoton>
+            <BaseBoton variante="contorno" ancho-completo @click="irA({ name: 'ingresar' })">
+              Ya tengo cuenta
             </BaseBoton>
 
-            <button type="button" class="invitado" @click="comoInvitado">
-              Seguir como invitado
+            <button type="button" class="invitado" :disabled="entrando || !hayConfig" @click="comoInvitado">
+              {{ entrando ? 'Entrando...' : 'Continuar como invitado' }}
             </button>
 
-            <p v-if="error" class="error">{{ error }}</p>
+            <MensajeEstado v-if="error" tipo="error">{{ error.message }}</MensajeEstado>
           </div>
         </section>
       </Carrusel>
@@ -309,38 +284,6 @@ async function probarDemo() {
   margin-top: var(--e-2);
 }
 
-.proveedor {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  font-family: var(--f-titulo);
-  font-weight: 800;
-  font-size: var(--t-sm);
-  border-radius: var(--r-md);
-  padding: 0.9rem 1.2rem;
-  border: 2px solid var(--c-borde);
-  transition: transform 0.08s ease, filter 0.15s ease;
-}
-
-.proveedor:active {
-  transform: translateY(3px);
-  box-shadow: none;
-}
-
-.proveedor--google {
-  background: var(--c-blanco);
-  color: var(--c-tinta);
-  box-shadow: 0 4px 0 var(--c-borde);
-}
-
-.proveedor--github {
-  background: #1f2933;
-  color: #ffffff;
-  border-color: #1f2933;
-  box-shadow: 0 4px 0 #0d141b;
-}
-
 .invitado {
   font-family: var(--f-titulo);
   font-weight: 700;
@@ -350,9 +293,14 @@ async function probarDemo() {
   border-radius: var(--r-md);
 }
 
-.invitado:hover {
+.invitado:hover:not(:disabled) {
   color: var(--c-tinta);
   background: var(--c-fondo);
+}
+
+.invitado:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .error {

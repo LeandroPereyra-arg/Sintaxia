@@ -10,6 +10,7 @@ import EstadoConsulta from '@/components/EstadoConsulta.vue'
 import { useContador } from '@/composables/useContador.js'
 import { obtenerLeccion, obtenerUnidad, listarLecciones } from '@/servicios/contenido.js'
 import { useProgreso, UMBRAL_APROBACION } from '@/composables/useProgreso.js'
+import MensajeEstado from '@/components/MensajeEstado.vue'
 import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 
 /** Pantalla de cierre de una leccion: puntaje, XP ganado y que sigue. */
@@ -19,7 +20,7 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
-const { estado, progresoUnidad, unidadCompletada, ultimoResultado } = useProgreso()
+const { estado, progresoUnidad, unidadCompletada, ultimoResultado, completarLeccion } = useProgreso()
 
 const leccion = ref(null)
 const unidad = ref(null)
@@ -45,6 +46,34 @@ const total = computed(() => Number(route.query.total ?? 0))
 const aciertos = computed(() => Number(route.query.aciertos ?? 0))
 const xpGanado = computed(() => Number(route.query.xp ?? 0))
 const vidas = computed(() => Number(route.query.vidas ?? 0))
+
+/**
+ * La leccion se termino pero el guardado fallo (sin conexion, sesion vencida).
+ * El resultado se muestra igual y se puede reintentar sin perderlo.
+ */
+const sinGuardar = computed(() => route.query.guardado === '0' && !sinVidas.value)
+const reintentando = ref(false)
+const errorGuardado = ref(null)
+
+async function reintentarGuardado() {
+  reintentando.value = true
+  errorGuardado.value = null
+  try {
+    const resultado = await completarLeccion(props.leccionId, {
+      aciertos: aciertos.value,
+      total: total.value
+    })
+    router.replace({
+      name: 'resultados',
+      params: { leccionId: props.leccionId },
+      query: { ...route.query, guardado: 1, xp: resultado.xpGanado }
+    })
+  } catch (error) {
+    errorGuardado.value = error
+  } finally {
+    reintentando.value = false
+  }
+}
 
 const incorrectas = computed(() => Math.max(0, total.value - aciertos.value))
 const porcentaje = computed(() =>
@@ -123,6 +152,17 @@ function siguiente() {
       <h1>{{ mensaje.titulo }}</h1>
       <p class="texto-secundario">{{ mensaje.texto }}</p>
       <p class="tarjeta__leccion">{{ leccion.titulo }}</p>
+
+      <MensajeEstado v-if="sinGuardar" tipo="alerta">
+        <p>
+          <strong>No pudimos guardar este resultado.</strong> No lo perdiste: sigue aca. Cuando haya
+          conexion, guardalo para que cuente en tu progreso.
+        </p>
+        <p v-if="errorGuardado">{{ errorGuardado.message }}</p>
+        <BaseBoton tamano="chico" :deshabilitado="reintentando" @click="reintentarGuardado">
+          {{ reintentando ? 'Guardando...' : 'Reintentar guardado' }}
+        </BaseBoton>
+      </MensajeEstado>
 
       <ul class="marcadores">
         <li class="marcador marcador--total">

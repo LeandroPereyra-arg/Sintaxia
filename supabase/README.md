@@ -10,11 +10,18 @@ en este orden:
 | 2 | `02-datos-iniciales.sql` | Carga el contenido inicial (curso, unidades, lecciones, preguntas y opciones). |
 | 3 | `03-politicas-rls.sql` | Enciende Row Level Security y define quien puede leer que. |
 | 4 | `04-funcion-comprobar.sql` | Crea la funcion que corrige las respuestas del lado del servidor. |
+| 5 | `05-perfiles-y-progreso.sql` | Etapa 4. Perfiles ligados a Supabase Auth (alias y codigo) e historial de intentos. No borra datos. |
+| 6 | `06-politicas-rls-etapa4.sql` | Etapa 4. Permisos y RLS: cada persona ve y modifica solo lo propio; distingue invitado de cuenta. |
+| 7 | `07-limpieza-invitados.sql` | Etapa 4. Funcion que borra invitados abandonados (solo `service_role`). |
 
 `00-roles-locales.sql` **no se ejecuta en Supabase**: solo sirve para crear los
-roles `anon`, `authenticated` y `service_role` cuando se reproduce el esquema en
-una instalacion comun de PostgreSQL (por ejemplo, para correr las pruebas
-automaticas del proyecto).
+roles `anon`, `authenticated`, `service_role` y `postgres` y el esquema `auth` cuando se
+reproduce el proyecto en una instalacion comun de PostgreSQL (por ejemplo, para correr
+las pruebas automaticas). Ver `npm run supabase:local`.
+
+**Atencion con el orden:** `01-esquema.sql` borra y recrea el contenido, asi que solo se
+corre en un proyecto nuevo. Los scripts `02` y `05` a `07` se pueden volver a correr sin
+perder datos ni permisos (esta probado: caso 34 de la etapa 4).
 
 `generar-datos-iniciales.mjs` regenera `02-datos-iniciales.sql` a partir del
 contenido que ya estaba en `src/data/`, para no transcribirlo a mano:
@@ -75,6 +82,8 @@ cursos
 | `lecciones` | Teoria y ejemplo de codigo de cada leccion | 3 (unidad 1) |
 | `preguntas` | Actividades de una leccion, con su explicacion | 12 |
 | `opciones` | Opciones de respuesta, con la marca de cual es correcta | 48 |
+| `perfiles` | Un perfil por participante (mismo id que `auth.users`): alias, codigo, avatar, meta | uno por usuario |
+| `intentos_leccion` | Historial: una fila por leccion terminada | segun el uso |
 
 Dos columnas aparecen en varias tablas y conviene no confundirlas:
 

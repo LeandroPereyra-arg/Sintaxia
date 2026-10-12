@@ -3,7 +3,8 @@
 Guion para mostrar la aplicacion de punta a punta, en el orden en que conviene
 recorrerla durante la entrega.
 
-1. **Inicio** → "Ver cursos".
+1. **Bienvenida** → recorrer los pasos y elegir **"Continuar como invitado"**
+   (o crear una cuenta). Mirar el catalogo no pide sesion; hacer una leccion si.
 2. **Cursos** → tarjeta de JavaScript.
 3. **Curso** → la Unidad 1 esta disponible y el resto bloqueado.
 4. **Unidad 1** → las lecciones 2 y 3 aparecen bloqueadas, con el motivo escrito.
@@ -17,6 +18,9 @@ recorrerla durante la entrega.
 10. **En el celular** → abrir el mismo recorrido en una pantalla angosta y
     mostrar el ejemplo de codigo, que se desplaza dentro de su caja.
 11. **Direccion invalida** → abrir una leccion que no existe y mostrar el aviso.
+12. **Perfil** → mostrar el alias con codigo y el aviso de invitado; **"Crear mi
+    cuenta"** y comprobar que el historial se conserva (el XP sigue ahi).
+13. **Cerrar sesion como invitado** → mostrar la advertencia antes de salir.
 
 El recorrido automatizado de `npm run pruebas:etapa2` cubre los mismos pasos, asi que
 sirve como ensayo previo a la demostracion.

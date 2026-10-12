@@ -1,13 +1,14 @@
 # Sintaxia · Aprende a programar jugando
 
 Aplicacion web estilo **Duolingo pero para lenguajes de programacion**, desarrollada con
-**Vue 3 + Vite + Vue Router**. El contenido de los cursos vive en una base
-**PostgreSQL en Supabase**; las cuentas y el progreso, en un backend propio de
-**Node.js + Express + MySQL**.
+**Vue 3 + Vite + Vue Router** sobre **Supabase**: el contenido de los cursos, el acceso
+(invitados, registro e inicio de sesion con **Supabase Auth**), los perfiles y el
+historial de cada persona viven en una base PostgreSQL protegida con RLS.
 
 Lecciones de cinco minutos, ejercicios interactivos con correccion inmediata, vidas, XP,
-rachas, medallas y un camino de unidades que se va desbloqueando. Se puede practicar sin
-cuenta o **iniciar sesion con Google o GitHub** para guardar el progreso en la base de datos.
+rachas, medallas y un camino de unidades que se va desbloqueando. Se puede entrar como
+**invitado** (con un usuario propio) o **crear una cuenta con correo y contrasena**; un
+invitado que crea su cuenta **conserva su historial**.
 
 El curso implementado es el de **JavaScript**. Desde la etapa 3 los cursos, las
 unidades, las lecciones y las actividades se leen de Supabase: hay una unidad
@@ -43,21 +44,24 @@ navegador; el contenido igual sale de Supabase.
 > variable de entorno no lo convierte en secreto. La clave `service_role` no
 > aparece nunca en la aplicacion.
 
-### Completo, con cuentas y base de datos
+### Probarlo en la maquina, con Supabase local
+
+Las claves del proyecto real no se suben al repositorio, asi que las pruebas corren contra
+un entorno local equivalente: **Supabase Auth real** (compilado desde su codigo fuente),
+PostgreSQL con los mismos scripts de `supabase/` y una imitacion de la API de datos.
 
 ```bash
-npm install
-cp .env.example .env
-#   Genera el secreto de sesion:
-#   node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-
-npm run db:migrar     # crea la base y las 6 tablas
-npm run db:sembrar    # carga el catalogo de 14 medallas
-npm run dev:todo      # front en :5173 y API en :3000
+npm run auth:compilar     # una sola vez; hace falta Go
+npm run supabase:local    # arma la base desde cero
+npm run pruebas:entorno   # Auth + datos + correos de prueba + la app (queda corriendo)
+npm run pruebas:etapa4    # en otra terminal
 ```
 
-Requiere **Node 18+** y **MySQL 8** (o MariaDB 10.6+). Con `PERMITIR_LOGIN_DEMO=true` en el
-`.env` se puede entrar sin configurar credenciales de Google ni de GitHub.
+Requiere **Node 18+**, **PostgreSQL 14+** y **Go** (solo para compilar Auth). Detalle en
+[docs/13-registro-de-pruebas-etapa4.md](docs/13-registro-de-pruebas-etapa4.md).
+
+> El servidor Express con MySQL de la etapa 2 (carpeta `server/`) **ya no lo usa la
+> aplicacion**: queda como referencia. El acceso paso a Supabase Auth.
 
 | Script | Que hace |
 |---|---|
@@ -65,13 +69,15 @@ Requiere **Node 18+** y **MySQL 8** (o MariaDB 10.6+). Con `PERMITIR_LOGIN_DEMO=
 | `npm run dev:api` | Solo la API, recargando al guardar |
 | `npm run dev:todo` | Los dos a la vez |
 | `npm run build` | Compila el front a `/dist` |
-| `npm run db:migrar` | Crea la base de cuentas (MySQL) y las tablas |
-| `npm run db:sembrar` | Carga o actualiza las medallas |
+| `npm run db:migrar` · `db:sembrar` | Base de la etapa 2 (MySQL). Ya no se usa |
+| `npm run auth:compilar` | Compila Supabase Auth para probar en local |
+| `npm run pruebas:entorno` | Levanta Auth, API de datos, correos de prueba y la app |
 | `npm run supabase:datos` | Regenera `supabase/02-datos-iniciales.sql` |
 | `npm run supabase:local` | Prepara una base PostgreSQL local con los scripts de Supabase (pruebas) |
 | `npm run supabase:puente` | Expone esa base local como la API de Supabase (pruebas) |
 | `npm run pruebas:etapa2` | Recorrido de actividades y resultados |
 | `npm run pruebas:etapa3` | Consultas a la base, permisos y manejo de errores |
+| `npm run pruebas:etapa4` | Invitados, registro, sesion, conversion, recuperacion y RLS |
 
 ---
 
@@ -108,7 +114,7 @@ justo debajo.
 La aplicacion tiene que funcionar igual en la web y en un telefono Android, asi que:
 
 - **Bienvenida tipo app.** La primera vez que se abre, aparece una presentacion de cuatro
-  pasos que se pasan deslizando y termina ofreciendo entrar con Google, con GitHub o seguir
+  pasos que se pasan deslizando y termina ofreciendo crear una cuenta, ingresar o seguir
   como invitado. En el escritorio se muestra encuadrada con el ancho de un celular.
 - **Carruseles con `scroll-snap` del navegador**, no movidos con JavaScript: el gesto lo
   maneja el sistema, asi que se siente igual que en una app nativa (sigue el dedo y frena
@@ -171,6 +177,8 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [9. Demostracion](docs/09-demostracion.md) | Guion para mostrar el recorrido completo |
 | [10. Supabase y modelo de datos](docs/10-supabase-y-modelo-de-datos.md) | Diccionario de datos, relaciones, politicas de RLS y funcion de comprobacion |
 | [11. Registro de pruebas (etapa 3)](docs/11-registro-de-pruebas-etapa3.md) | Los 12 casos probados contra la base, con problemas y correcciones |
+| [12. Acceso y sesiones (etapa 4)](docs/12-acceso-y-sesiones.md) | Invitados, registro, alias, permisos, configuracion de Supabase y decisiones |
+| [13. Registro de pruebas (etapa 4)](docs/13-registro-de-pruebas-etapa4.md) | Los 35 casos, que es real y que simulado, problemas y lo que no se probo |
 
 ---
 
@@ -212,24 +220,31 @@ encuadrada con el ancho de un celular.
 
 ![Bienvenida en escritorio](docs/capturas/17-bienvenida-escritorio.png)
 
-### Iniciar sesion
-Google y GitHub. Los botones aparecen solo si el servidor tiene cargadas esas credenciales.
+### Ingresar, crear cuenta o seguir como invitado
+Correo y contrasena, o un usuario de invitado propio. Si ya hay un invitado, la pantalla
+avisa que entrar a otra cuenta **no pasa su historial**.
 
-![Iniciar sesion](docs/capturas/09-ingresar.png)
+<p>
+  <img src="docs/capturas/09-ingresar.png" width="260" alt="Ingresar">
+  <img src="docs/capturas/18-registro.png" width="260" alt="Crear cuenta">
+</p>
 
-### Perfil con cuenta
-Medallas, calendario de actividad, liga, racha maxima y puesto en el ranking.
+### Perfil
+Alias con codigo (`Invitado#8681`, `Ana_Dev#1027`), si es invitado o cuenta, sus medallas,
+su actividad y su progreso. Al invitado se le recuerda que su historial depende de la
+sesion, y al cerrarla se le advierte antes.
 
-![Perfil](docs/capturas/11-perfil-cuenta.png)
+<p>
+  <img src="docs/capturas/10-perfil-invitado.png" width="240" alt="Perfil de un invitado">
+  <img src="docs/capturas/19-cerrar-sesion-invitado.png" width="240" alt="Advertencia al cerrar sesion como invitado">
+  <img src="docs/capturas/11-perfil-cuenta.png" width="240" alt="Perfil de una cuenta">
+</p>
 
-### Medalla desbloqueada
-Al terminar una leccion, las medallas que otorga el servidor se festejan en los resultados.
+### Ranking
+Todavia no esta disponible: necesita mostrar datos de otras personas y las politicas de
+la base lo impiden hasta que exista una vista publica controlada. La pantalla lo explica.
 
-![Medalla nueva](docs/capturas/12-resultados-medalla.png)
-
-### Ranking semanal
-
-![Ranking](docs/capturas/13-ranking.png)
+<img src="docs/capturas/13-ranking.png" width="260" alt="Ranking proximamente">
 
 ### En telefono
 
@@ -246,24 +261,27 @@ supabase/
 ├── 02-datos-iniciales.sql    carga inicial del contenido (generado)
 ├── 03-politicas-rls.sql      Row Level Security y permisos por columna
 ├── 04-funcion-comprobar.sql  correccion de respuestas del lado del servidor
+├── 05-perfiles-y-progreso.sql   perfiles ligados a Auth e historial de intentos
+├── 06-politicas-rls-etapa4.sql  permisos y RLS: cada persona, solo lo propio
+├── 07-limpieza-invitados.sql    borra invitados abandonados
 └── README.md                 datos del proyecto y organizacion de las tablas
 
 src/
-├── servicios/         supabase.js (cliente unico) · contenido.js (consultas)
-├── api/               cliente.js — llamadas a la API de cuentas
+├── servicios/         supabase.js (cliente) · auth.js · contenido.js · perfiles.js · progreso.js
 ├── constantes/        estados.js — vocabulario compartido con la base
 ├── assets/styles/     variables.css (identidad visual) + main.css
 ├── router/            rutas con nombre, el curso sale del identificador
 ├── data/              contenido de prueba: hoy solo alimenta al generador del
 │                      script de carga inicial y a la API de cuentas
-├── composables/       useAuth.js · useProgreso.js · useCatalogo.js (cache)
+├── composables/       useAuth.js (sesion) · useProgreso.js · useCatalogo.js (cache)
 ├── utils/             verificarRespuesta.js
 ├── components/        BaseBoton, BarraProgreso, BarraFeedback, EstadoConsulta,
+│                      CampoTexto, MensajeEstado, AvisoDatos, BotonCerrarSesion,
 │                      MedallaCard, CalendarioActividad, CursoCard, UnidadCard,
 │                      layout/ y ejercicios/
 └── views/             una por ruta
 
-server/
+server/                (etapa 2: YA NO LO USA LA APP; queda como referencia)
 ├── index.js           Express: middlewares, rutas y manejo de errores
 ├── config.js          Variables de entorno y validacion al arrancar
 ├── auth/              sesion.js (cookie JWT) · oauth.js (Google y GitHub)
@@ -334,17 +352,21 @@ completar la anterior.
 
 ## Cuentas y progreso
 
-| | Invitado | Con cuenta |
-|---|---|---|
-| Practicar y ver resultados | si | si |
-| Donde se guarda | navegador | MySQL |
-| Se pierde al limpiar el navegador | si | no |
-| Medallas | 7, calculadas localmente | 14, otorgadas por el servidor |
-| Calendario de actividad | — | si |
-| Ranking y ligas | solo mirar | competir |
+| | Sin sesion | Invitado | Cuenta |
+|---|---|---|---|
+| Ver el catalogo de cursos | si | si | si |
+| Hacer lecciones y guardar progreso | no, pide ingresar | si | si |
+| Alias | — | `Invitado#codigo` (no lo elige) | el que elija, con codigo |
+| Donde se guarda el historial | — | Supabase, ligado a su sesion | Supabase, ligado a su cuenta |
+| Se pierde al cerrar sesion o cambiar de dispositivo | — | **si** | no |
+| Aparecera en el ranking | no | no | si |
 
-Al iniciar sesion, lo que hiciste como invitado **se sube solo** y se fusiona con la cuenta
-sin pagar XP dos veces por la misma leccion.
+Un invitado que crea su cuenta **sigue siendo el mismo usuario**: conserva su historial, no
+se crea otra cuenta ni se copia nada desde el cliente. Si en cambio entra a una cuenta que
+ya existia, los historiales **no se fusionan** y la app lo advierte antes.
+
+Cada persona ve y modifica solo sus datos (RLS). Detalle de los flujos, los permisos y la
+configuracion de Supabase en [docs/12-acceso-y-sesiones.md](docs/12-acceso-y-sesiones.md).
 
 ---
 

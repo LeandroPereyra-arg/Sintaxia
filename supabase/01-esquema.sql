@@ -6,12 +6,19 @@
 --  preguntas y opciones de respuesta. El progreso de cada estudiante NO se
 --  guarda aca; se modela en la etapa siguiente (ver docs/10-supabase.md).
 --
---  Se ejecuta completo en el SQL Editor de Supabase. Es idempotente: se puede
---  volver a correr sobre una base vacia sin cambios manuales.
+--  Se ejecuta completo en el SQL Editor de Supabase sobre un proyecto NUEVO.
+--
+--  ATENCION: este script BORRA y vuelve a crear las tablas del contenido
+--  (drop table ... cascade). Desde la etapa 4 hay datos de participantes que
+--  dependen de ellas, asi que NO se vuelve a correr en un proyecto que ya tiene
+--  usuarios: los cambios posteriores se hacen con ALTER TABLE o scripts nuevos.
+--  Para recargar solo el contenido alcanza con 02-datos-iniciales.sql, que no
+--  borra nada.
 --
 --  Orden de ejecucion de los scripts:
 --    01-esquema.sql  ->  02-datos-iniciales.sql  ->  03-politicas-rls.sql
---                    ->  04-funcion-comprobar.sql
+--                    ->  04-funcion-comprobar.sql  ->  05-perfiles-y-progreso.sql
+--                    ->  06-politicas-rls-etapa4.sql  ->  07-limpieza-invitados.sql
 -- ===========================================================================
 
 begin;
