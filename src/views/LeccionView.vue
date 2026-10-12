@@ -147,15 +147,16 @@ async function terminar() {
   const aprobada = vidas.value > 0
 
   let xpGanado = 0
+  // Si no se pudo guardar (sin conexion, sesion vencida), el resultado NO se pierde:
+  // se muestra igual y la pantalla de resultados ofrece reintentar el guardado.
+  let guardado = 1
   if (aprobada) {
     guardando.value = true
     try {
-      const resumen = await completarLeccion(props.leccionId, {
-        aciertos: aciertos.value,
-        total,
-        xp: leccion.value?.xp ?? null
-      })
-      xpGanado = resumen.xpGanado
+      const resultado = await completarLeccion(props.leccionId, { aciertos: aciertos.value, total })
+      xpGanado = resultado.xpGanado
+    } catch {
+      guardado = 0
     } finally {
       guardando.value = false
     }
@@ -168,7 +169,8 @@ async function terminar() {
       aciertos: aciertos.value,
       total,
       xp: xpGanado,
-      vidas: vidas.value
+      vidas: vidas.value,
+      guardado
     }
   })
 }

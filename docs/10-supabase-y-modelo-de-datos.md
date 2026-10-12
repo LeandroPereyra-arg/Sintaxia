@@ -9,6 +9,12 @@ Vue consulta el contenido.
 - Scripts: [`supabase/`](../supabase/) · datos del proyecto en [`supabase/README.md`](../supabase/README.md)
 - Registro de pruebas: [`11-registro-de-pruebas-etapa3.md`](11-registro-de-pruebas-etapa3.md)
 
+> **Actualizacion de la etapa 4.** Donde este documento dice que el progreso de cada
+> participante vive "en memoria y en `localStorage`" o en las tablas `usuarios`,
+> `progreso_lecciones` y `respuestas` "de una etapa siguiente", ya esta resuelto de otra
+> forma: el acceso es Supabase Auth, y los datos de cada persona estan en `perfiles` e
+> `intentos_leccion`. Ver [12. Acceso y sesiones](12-acceso-y-sesiones.md).
+
 ---
 
 ## 10.1 Que informacion corresponde a cada nivel

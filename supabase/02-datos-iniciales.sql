@@ -5,14 +5,16 @@
 --  ARCHIVO GENERADO: no editarlo a mano.
 --  Se regenera con  npm run supabase:datos  a partir de src/data/.
 --
---  Se ejecuta despues de 01-esquema.sql. Vuelve a dejar el contenido como
---  estaba: borra lo que haya y lo inserta de nuevo, todo en una transaccion.
+--  Se ejecuta despues de 01-esquema.sql. Inserta el contenido y, si ya existe,
+--  lo actualiza (upsert por id). NO BORRA NADA: desde la etapa 4 hay historial de
+--  participantes que depende de las lecciones, y un borrado en cascada se lo
+--  llevaria puesto. Se puede correr todas las veces que haga falta.
+--
+--  Consecuencia: si se saca una leccion o una pregunta del contenido de origen,
+--  este script no la elimina de la base. Eso se hace a mano, con intencion.
 -- ===========================================================================
 
 begin;
-
--- El borrado en cascada de cursos arrastra unidades, lecciones, preguntas y opciones.
-delete from public.cursos;
 
 -- ---------------------------------------------------------------------------
 -- Cursos (6)
@@ -26,7 +28,20 @@ values
   ('html-css', 'HTML y CSS', 'La estructura y el diseno de cualquier sitio web. Etiquetas, selectores, cajas, flexbox y diseno responsivo.', 'Principiante', '</>', '#e34f26', '#ffffff', 'proximamente', null, 9, 5, 12, array['Web', 'Diseno'], 3),
   ('sql', 'SQL', 'Consulta y modifica bases de datos relacionales. SELECT, filtros, ordenamientos, joins y agrupaciones.', 'Intermedio', 'DB', '#00758f', '#ffffff', 'proximamente', null, 8, 5, 11, array['Datos', 'Back-end'], 4),
   ('java', 'Java', 'Programacion orientada a objetos con tipado estatico. Clases, objetos, herencia y colecciones.', 'Intermedio', 'Ja', '#f89820', '#1f2933', 'bloqueado', 'Completa el curso de JavaScript para desbloquearlo', 16, 7, 18, array['POO', 'Back-end'], 5),
-  ('cpp', 'C++', 'Rendimiento y control de la memoria. Punteros, referencias, structs y el manejo manual de recursos.', 'Avanzado', 'C++', '#00599c', '#ffffff', 'bloqueado', 'Necesitas un curso intermedio completado', 20, 7, 19, array['Sistemas', 'Videojuegos'], 6);
+  ('cpp', 'C++', 'Rendimiento y control de la memoria. Punteros, referencias, structs y el manejo manual de recursos.', 'Avanzado', 'C++', '#00599c', '#ffffff', 'bloqueado', 'Necesitas un curso intermedio completado', 20, 7, 19, array['Sistemas', 'Videojuegos'], 6) on conflict (id) do update set
+  nombre = excluded.nombre,
+  descripcion = excluded.descripcion,
+  nivel = excluded.nivel,
+  icono = excluded.icono,
+  color = excluded.color,
+  color_texto = excluded.color_texto,
+  estado = excluded.estado,
+  requisito = excluded.requisito,
+  horas_estimadas = excluded.horas_estimadas,
+  unidades_previstas = excluded.unidades_previstas,
+  lecciones_previstas = excluded.lecciones_previstas,
+  etiquetas = excluded.etiquetas,
+  orden = excluded.orden;
 
 -- ---------------------------------------------------------------------------
 -- Unidades del curso de JavaScript (6)
@@ -41,7 +56,15 @@ values
   ('js-u3', 'javascript', 3, 'Bucles y repeticion', 'Repetir instrucciones sin escribirlas mil veces usando for, while y los cortes de un bucle.', 'repetir', '#7434db', 'proximamente', array['for', 'while', 'break y continue']),
   ('js-u4', 'javascript', 4, 'Funciones', 'Agrupar codigo reutilizable, pasarle parametros, devolver resultados y entender el alcance de las variables.', 'pieza', '#ff8a3d', 'proximamente', array['Declaracion', 'Parametros', 'return', 'Funciones flecha']),
   ('js-u5', 'javascript', 5, 'Arrays y objetos', 'Guardar muchos datos juntos: listas ordenadas, propiedades con nombre y los metodos mas usados.', 'caja', '#e94f8a', 'proximamente', array['Arrays', 'push y length', 'Objetos', 'map y filter']),
-  ('js-u6', 'javascript', 6, 'JavaScript en la pagina', 'Conectar el codigo con el HTML: buscar elementos, cambiar su contenido y responder a los clics del usuario.', 'globo', '#12b0a0', 'proximamente', array['DOM', 'querySelector', 'Eventos', 'textContent']);
+  ('js-u6', 'javascript', 6, 'JavaScript en la pagina', 'Conectar el codigo con el HTML: buscar elementos, cambiar su contenido y responder a los clics del usuario.', 'globo', '#12b0a0', 'proximamente', array['DOM', 'querySelector', 'Eventos', 'textContent']) on conflict (id) do update set
+  curso_id = excluded.curso_id,
+  orden = excluded.orden,
+  titulo = excluded.titulo,
+  descripcion = excluded.descripcion,
+  icono = excluded.icono,
+  color = excluded.color,
+  estado = excluded.estado,
+  temas = excluded.temas;
 
 -- ---------------------------------------------------------------------------
 -- Lecciones publicadas (3)
@@ -66,7 +89,18 @@ const esMayor = true     // boolean
 
 console.log(typeof edad)     // "number"
 console.log(typeof nombre)   // "string"
-console.log(typeof "42")     // "string", no "number"', 'typeof siempre devuelve el nombre del tipo como texto.', 'publicada');
+console.log(typeof "42")     // "string", no "number"', 'typeof siempre devuelve el nombre del tipo como texto.', 'publicada') on conflict (id) do update set
+  unidad_id = excluded.unidad_id,
+  orden = excluded.orden,
+  titulo = excluded.titulo,
+  descripcion = excluded.descripcion,
+  icono = excluded.icono,
+  xp = excluded.xp,
+  explicacion = excluded.explicacion,
+  ejemplo_titulo = excluded.ejemplo_titulo,
+  ejemplo_codigo = excluded.ejemplo_codigo,
+  ejemplo_nota = excluded.ejemplo_nota,
+  estado = excluded.estado;
 
 -- ---------------------------------------------------------------------------
 -- Preguntas (12) - todas de opcion multiple
@@ -90,7 +124,14 @@ nombre = "Grace"', 'Reasignar una constante lanza el error "Assignment to consta
   ('js-u1-l3-a3', 'js-u1-l3', 3, 'opcion-multiple', 'Cual es el orden correcto para declarar un nombre y mostrar un saludo?', null, 'Una variable tiene que existir antes de usarse. Primero se declara nombre, despues se arma saludo con ese valor y recien al final se lo muestra.', 'publicada'),
   ('js-u1-l3-a4', 'js-u1-l3', 4, 'opcion-multiple', 'Que imprime este codigo?', 'const a = 5
 const b = "5"
-console.log(typeof a === typeof b)', 'typeof a es "number" y typeof b es "string". Como los dos textos son distintos, la comparacion da false.', 'publicada');
+console.log(typeof a === typeof b)', 'typeof a es "number" y typeof b es "string". Como los dos textos son distintos, la comparacion da false.', 'publicada') on conflict (id) do update set
+  leccion_id = excluded.leccion_id,
+  orden = excluded.orden,
+  tipo = excluded.tipo,
+  enunciado = excluded.enunciado,
+  codigo = excluded.codigo,
+  explicacion = excluded.explicacion,
+  estado = excluded.estado;
 
 -- ---------------------------------------------------------------------------
 -- Opciones de respuesta (48)
@@ -145,6 +186,10 @@ values
   ('js-u1-l3-a4-a', 'js-u1-l3-a4', 1, 'true', false),
   ('js-u1-l3-a4-b', 'js-u1-l3-a4', 2, 'false', true),
   ('js-u1-l3-a4-c', 'js-u1-l3-a4', 3, '"number"', false),
-  ('js-u1-l3-a4-d', 'js-u1-l3-a4', 4, 'Error', false);
+  ('js-u1-l3-a4-d', 'js-u1-l3-a4', 4, 'Error', false) on conflict (id) do update set
+  pregunta_id = excluded.pregunta_id,
+  orden = excluded.orden,
+  texto = excluded.texto,
+  es_correcta = excluded.es_correcta;
 
 commit;

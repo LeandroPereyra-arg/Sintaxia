@@ -1,376 +1,102 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
-import { computed, onMounted, ref } from 'vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
-import { api } from '@/api/cliente.js'
 import { useAuth } from '@/composables/useAuth.js'
 
-/** Tabla de posiciones de la semana, con las ligas explicadas al costado. */
-const { estado: sesion, autenticado } = useAuth()
-
-const cargando = ref(true)
-const error = ref('')
-const tabla = ref([])
-const ligas = ref([])
-const yo = ref(null)
-const miId = ref(null)
-
-const podio = computed(() => tabla.value.slice(0, 3))
-const resto = computed(() => tabla.value.slice(3))
-
-const COLORES_PODIO = ['#e8b923', '#9aa7b4', '#c8834a']
-
-onMounted(async () => {
-  try {
-    const datos = await api.ranking()
-    tabla.value = datos.tabla
-    ligas.value = datos.ligas
-    yo.value = datos.yo
-    miId.value = datos.usuarioId
-  } catch (e) {
-    // estado 0 = no hubo respuesta; 5xx = el servidor esta caido detras del proxy.
-    error.value =
-      e.estado === 0 || e.estado >= 500
-        ? 'El servidor no esta disponible, asi que todavia no se puede ver la tabla de posiciones.'
-        : e.message
-  } finally {
-    cargando.value = false
-  }
-})
-
-/** Inicial para cuando el usuario no tiene foto ni emoji. */
-function inicial(fila) {
-  return (fila.nombre ?? fila.usuario ?? '?').trim().charAt(0).toUpperCase()
-}
-
-function esMio(fila) {
-  return miId.value !== null && fila.usuarioId === miId.value
-}
+/**
+ * Ranking semanal.
+ *
+ * Todavia no esta disponible. Un ranking necesita mostrar datos de OTRAS personas
+ * (su alias y su XP), y desde la etapa 4 las politicas de la base impiden a
+ * proposito que alguien lea datos ajenos. Cuando llegue la etapa de la
+ * competencia se va a publicar una vista controlada con lo unico que puede verse:
+ * alias con codigo y XP de la semana, solo de cuentas permanentes.
+ */
+const { esInvitado, conSesion } = useAuth()
 </script>
 
 <template>
   <div class="ranking seccion contenedor">
-    <header class="cabecera">
-      <div>
-        <h1>Ranking semanal</h1>
-        <p class="texto-secundario">
-          Se ordena por el XP que ganaste esta semana. Arranca de cero todos los lunes.
-        </p>
-      </div>
-      <p v-if="yo && yo.puesto" class="mi-puesto">
-        Vas <strong>{{ yo.puesto }}º</strong> con <strong>{{ yo.xpSemana }}</strong> XP
+    <div class="tarjeta">
+      <SintaxMascota estado="pensando" :alto="120" alt="" />
+      <h1>El ranking esta en camino</h1>
+      <p class="texto-secundario">
+        Va a llegar junto con la competencia. Vas a poder ver tu posicion de la semana contra otras
+        personas.
       </p>
-    </header>
 
-    <p v-if="cargando" class="estado">Cargando la tabla...</p>
-    <p v-else-if="error" class="estado estado--error">{{ error }}</p>
-
-    <template v-else>
-      <div v-if="tabla.length === 0" class="estado estado--vacio">
-        <SintaxMascota estado="pensando" :alto="130" alt="" />
-        <p>Todavia nadie sumo XP esta semana. Resolve una leccion y sé el primero.</p>
-      </div>
-
-      <!-- Podio -->
-      <ol v-if="podio.length" class="podio anim-lista">
-        <li
-          v-for="(fila, i) in podio"
-          :key="fila.usuarioId"
-          class="podio__puesto"
-          :class="[`podio__puesto--${i + 1}`, { 'podio__puesto--yo': esMio(fila) }]"
-        >
-          <Icono class="podio__medalla" nombre="medalla" :tamano="30" :trazo="2" :style="{ color: COLORES_PODIO[i] }" />
-          <div class="avatar avatar--grande">
-            <img v-if="fila.avatarUrl" :src="fila.avatarUrl" :alt="''" />
-            <Icono v-else-if="fila.avatarIcono" :nombre="fila.avatarIcono" :tamano="20" />
-            <span v-else>{{ inicial(fila) }}</span>
-          </div>
-          <p class="podio__nombre">{{ fila.nombre }}</p>
-          <p class="podio__usuario">@{{ fila.usuario }}</p>
-          <p class="podio__xp">{{ fila.xpSemana }} XP</p>
+      <ul class="reglas">
+        <li>
+          <Icono nombre="escudo" :tamano="18" />
+          <span>
+            Se va a mostrar <strong>solo tu alias con un codigo</strong> (por ejemplo
+            <code>Ana#0427</code>) y tu XP de la semana. Nunca tu correo ni tu historial.
+          </span>
         </li>
-      </ol>
-
-      <!-- Resto de la tabla -->
-      <ul v-if="resto.length" class="tabla anim-lista">
-        <li
-          v-for="fila in resto"
-          :key="fila.usuarioId"
-          class="fila"
-          :class="{ 'fila--yo': esMio(fila) }"
-        >
-          <span class="fila__puesto">{{ fila.puesto }}</span>
-          <div class="avatar">
-            <img v-if="fila.avatarUrl" :src="fila.avatarUrl" :alt="''" />
-            <Icono v-else-if="fila.avatarIcono" :nombre="fila.avatarIcono" :tamano="20" />
-            <span v-else>{{ inicial(fila) }}</span>
-          </div>
-          <div class="fila__datos">
-            <p class="fila__nombre">{{ fila.nombre }}</p>
-            <p class="fila__usuario">
-              @{{ fila.usuario }} ·
-              <Icono nombre="llama" :tamano="12" /> {{ fila.racha }}
-            </p>
-          </div>
-          <span class="fila__xp">{{ fila.xpSemana }} XP</span>
+        <li>
+          <Icono nombre="usuario" :tamano="18" />
+          <span>Solo van a participar las <strong>cuentas</strong>: los invitados no aparecen.</span>
         </li>
       </ul>
 
-      <!-- Explicacion de las ligas -->
-      <section class="ligas">
-        <h2>Ligas</h2>
-        <p class="texto-secundario">
-          Tu liga depende del XP total que acumulaste desde que empezaste.
-        </p>
-        <ul class="ligas__lista">
-          <li
-            v-for="liga in ligas"
-            :key="liga.codigo"
-            class="liga"
-            :class="{ 'liga--mia': sesion.usuario?.liga?.codigo === liga.codigo }"
-            :style="{ '--color-liga': liga.color }"
-          >
-            <Icono class="liga__icono" :nombre="liga.icono" :tamano="24" :style="{ color: liga.color }" />
-            <div>
-              <p class="liga__nombre">{{ liga.nombre }}</p>
-              <p class="liga__requisito">desde {{ liga.desde }} XP</p>
-            </div>
-          </li>
-        </ul>
-      </section>
-
-      <p v-if="!autenticado" class="invitacion">
-        <BaseBoton :to="{ name: 'ingresar' }">Inicia sesion para competir</BaseBoton>
-      </p>
-    </template>
+      <BaseBoton v-if="conSesion && esInvitado" :to="{ name: 'registro' }">
+        Crear mi cuenta para participar
+      </BaseBoton>
+      <BaseBoton v-else-if="!conSesion" :to="{ name: 'ingresar', query: { volver: '/ranking' } }">
+        Ingresar
+      </BaseBoton>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--e-2);
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: var(--e-4);
-}
-
-.mi-puesto {
-  background: var(--c-verde-suave);
-  border: 2px solid var(--c-verde);
-  color: var(--c-verde-osc);
-  border-radius: var(--r-full);
-  padding: 0.4rem 1rem;
-  font-size: var(--t-sm);
-}
-
-.estado {
-  text-align: center;
-  color: var(--c-gris);
-  padding: var(--e-5) 0;
-}
-
-.estado--vacio {
+.ranking {
   display: grid;
-  justify-items: center;
-  gap: var(--e-2);
+  place-items: start center;
 }
 
-.estado--error {
-  color: var(--c-rojo-osc);
-}
-
-/* --- avatares --- */
-.avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-full);
-  background: var(--c-violeta-suave);
-  color: var(--c-violeta-osc);
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.avatar img {
+.tarjeta {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar--grande {
-  width: 62px;
-  height: 62px;
-  font-size: 1.5rem;
-}
-
-/* --- podio --- */
-.podio {
+  max-width: 520px;
+  background: var(--c-blanco);
+  border: 2px solid var(--c-borde);
+  border-radius: var(--r-xl);
+  padding: var(--e-5) var(--e-3);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--e-2);
-  align-items: end;
-  margin-bottom: var(--e-4);
-  list-style: none;
-}
-
-.podio__puesto {
-  display: grid;
+  gap: var(--e-3);
   justify-items: center;
-  gap: 0.2rem;
-  background: var(--c-blanco);
-  border: 2px solid var(--c-borde);
-  border-radius: var(--r-lg);
-  padding: var(--e-3) var(--e-2);
   text-align: center;
 }
 
-.podio__puesto--1 {
-  order: 2;
-  border-color: var(--c-amarillo);
-  background: linear-gradient(180deg, var(--c-amarillo-suave), var(--c-blanco) 70%);
-  padding-block: var(--e-4);
-}
-.podio__puesto--2 {
-  order: 1;
-}
-.podio__puesto--3 {
-  order: 3;
+.tarjeta h1 {
+  font-size: var(--t-xl);
 }
 
-.podio__puesto--yo {
-  outline: 3px solid var(--c-verde);
-  outline-offset: 2px;
-}
-
-.podio__medalla {
-  font-size: 1.6rem;
-}
-
-.podio__nombre {
-  font-family: var(--f-titulo);
-  font-weight: 800;
-  font-size: var(--t-sm);
-}
-
-.podio__usuario {
-  font-size: var(--t-xs);
-  color: var(--c-gris);
-}
-
-.podio__xp {
-  font-weight: 800;
-  color: var(--c-verde-osc);
-}
-
-/* --- tabla --- */
-.tabla {
+.reglas {
   display: grid;
-  gap: var(--e-1);
-  margin-bottom: var(--e-5);
+  gap: var(--e-2);
+  text-align: left;
+  font-size: var(--t-sm);
+  width: 100%;
 }
 
-.fila {
+.reglas li {
   display: flex;
-  align-items: center;
-  gap: var(--e-2);
-  background: var(--c-blanco);
-  border: 2px solid var(--c-borde);
-  border-radius: var(--r-md);
-  padding: 0.6rem var(--e-2);
+  gap: 0.6rem;
+  align-items: flex-start;
 }
 
-.fila--yo {
-  border-color: var(--c-verde);
-  background: var(--c-verde-suave);
+.reglas :deep(svg) {
+  flex: none;
+  color: var(--c-violeta);
+  margin-top: 0.15rem;
 }
 
-.fila__puesto {
-  width: 26px;
-  text-align: center;
-  font-weight: 800;
-  color: var(--c-gris);
-}
-
-.fila__datos {
-  flex: 1;
-  min-width: 0;
-}
-
-.fila__nombre {
-  font-weight: 700;
-  font-size: var(--t-sm);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fila__usuario {
-  font-size: var(--t-xs);
-  color: var(--c-gris);
-}
-
-.fila__xp {
-  font-weight: 800;
-  color: var(--c-verde-osc);
-  font-size: var(--t-sm);
-}
-
-/* --- ligas --- */
-.ligas__lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--e-2);
-  margin-top: var(--e-2);
-}
-
-.liga {
-  display: flex;
-  align-items: center;
-  gap: var(--e-2);
-  background: var(--c-blanco);
-  border: 2px solid var(--c-borde);
-  border-left: 6px solid var(--color-liga);
-  border-radius: var(--r-md);
-  padding: var(--e-2);
-}
-
-.liga--mia {
-  border-color: var(--color-liga);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-liga) 25%, transparent);
-}
-
-.liga__icono {
-  font-size: 1.5rem;
-}
-
-.liga__nombre {
-  font-weight: 800;
-  font-size: var(--t-sm);
-}
-
-.liga__requisito {
-  font-size: var(--t-xs);
-  color: var(--c-gris);
-}
-
-.invitacion {
-  text-align: center;
-  margin-top: var(--e-4);
-}
-
-@media (max-width: 560px) {
-  .podio {
-    grid-template-columns: 1fr;
-  }
-  .podio__puesto--1,
-  .podio__puesto--2,
-  .podio__puesto--3 {
-    order: 0;
-  }
+code {
+  font-family: var(--f-codigo);
+  background: var(--c-fondo);
+  padding: 0 0.3rem;
+  border-radius: 4px;
 }
 </style>

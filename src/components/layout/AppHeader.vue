@@ -3,13 +3,14 @@ import Icono from '@/components/Icono.vue'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import LogoSintaxia from '@/components/LogoSintaxia.vue'
+import BotonCerrarSesion from '@/components/BotonCerrarSesion.vue'
 import { useAuth } from '@/composables/useAuth.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 
 const route = useRoute()
 const router = useRouter()
-const { estado: sesion, autenticado, salir } = useAuth()
+const { estado: sesion, conSesion, esInvitado, etiqueta } = useAuth()
 const { estado } = useProgreso()
 
 const menuAbierto = ref(false)
@@ -23,23 +24,15 @@ const enlaces = [
   { to: { name: 'ranking' }, texto: 'Ranking' }
 ]
 
-const usuario = computed(() => sesion.usuario)
-const xp = computed(() => usuario.value?.xp ?? estado.xp)
-const racha = computed(() => usuario.value?.racha ?? estado.racha)
-
-const inicial = computed(() => {
-  const texto = usuario.value?.nombre ?? estado.nombre ?? '?'
-  return texto.trim().charAt(0).toUpperCase()
-})
+const avatar = computed(() => sesion.perfil?.avatar ?? 'buho')
 
 function cerrarTodo() {
   menuAbierto.value = false
   menuUsuario.value = false
 }
 
-async function cerrarSesion() {
+function alCerrarSesion() {
   cerrarTodo()
-  await salir()
   router.push({ name: 'inicio' })
 }
 
@@ -86,51 +79,55 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
       </nav>
 
       <ul class="indicadores">
-        <li class="indicador indicador--racha" :title="`Racha de ${racha} dias`">
-          <Icono nombre="llama" :tamano="16" />{{ racha }}
+        <li class="indicador indicador--racha" :title="`Racha de ${estado.racha} dias`">
+          <Icono nombre="llama" :tamano="16" />{{ estado.racha }}
         </li>
-        <li class="indicador indicador--xp" :title="`${xp} puntos de experiencia`">
-          <Icono nombre="rayo" :tamano="16" />{{ xp }}
+        <li class="indicador indicador--xp" :title="`${estado.xp} puntos de experiencia`">
+          <Icono nombre="rayo" :tamano="16" />{{ estado.xp }}
         </li>
       </ul>
 
-      <!-- Sesion iniciada: avatar con menu -->
-      <div v-if="autenticado" ref="contenedorUsuario" class="usuario">
+      <!-- Sesion iniciada (invitado o cuenta): avatar con menu -->
+      <div v-if="conSesion" ref="contenedorUsuario" class="usuario">
         <button
           class="usuario__boton"
+          :class="{ 'usuario__boton--invitado': esInvitado }"
           :aria-expanded="menuUsuario"
           aria-label="Abrir menu de la cuenta"
           @click="menuUsuario = !menuUsuario"
         >
-          <img v-if="usuario.avatarUrl && !usuario.avatarIcono" :src="usuario.avatarUrl" alt="" />
-          <Icono v-else-if="usuario.avatarIcono" :nombre="usuario.avatarIcono" :tamano="21" />
-          <span v-else>{{ inicial }}</span>
+          <Icono :nombre="avatar" :tamano="21" />
         </button>
 
         <div v-if="menuUsuario" class="menu">
-          <p class="menu__nombre">{{ usuario.nombre }}</p>
-          <p class="menu__usuario">@{{ usuario.usuario }}</p>
-          <p v-if="usuario.liga" class="menu__liga" :style="{ '--color-liga': usuario.liga.color }">
-            <Icono :nombre="usuario.liga.icono" :tamano="14" /> Liga {{ usuario.liga.nombre }}
-          </p>
+          <p class="menu__nombre">{{ etiqueta }}</p>
+          <p class="menu__usuario">{{ esInvitado ? 'Invitado' : 'Cuenta' }}</p>
           <hr />
           <router-link :to="{ name: 'perfil' }" class="menu__opcion" @click="cerrarTodo">
             Mi perfil
           </router-link>
+          <router-link
+            v-if="esInvitado"
+            :to="{ name: 'registro' }"
+            class="menu__opcion menu__opcion--destacada"
+            @click="cerrarTodo"
+          >
+            Crear mi cuenta
+          </router-link>
           <router-link :to="{ name: 'ranking' }" class="menu__opcion" @click="cerrarTodo">
             Ranking
           </router-link>
-          <button type="button" class="menu__opcion menu__opcion--salir" @click="cerrarSesion">
-            Cerrar sesion
-          </button>
+          <div class="menu__salir">
+            <BotonCerrarSesion @cerrada="alCerrarSesion" />
+          </div>
         </div>
       </div>
 
-      <!-- Invitado: boton de entrar -->
+      <!-- Sin sesion: boton de entrar -->
       <router-link
         v-else
         class="entrar"
-        :to="{ name: 'ingresar', query: { destino: route.fullPath } }"
+        :to="{ name: 'ingresar', query: { volver: route.fullPath } }"
         @click="cerrarTodo"
       >
         Entrar
@@ -375,5 +372,18 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
   .nav--abierto {
     display: flex;
   }
+}
+
+.usuario__boton--invitado {
+  border-style: dashed;
+}
+
+.menu__opcion--destacada {
+  color: var(--c-verde-osc);
+  font-weight: 800;
+}
+
+.menu__salir {
+  padding: 0.25rem 0.4rem 0.4rem;
 }
 </style>

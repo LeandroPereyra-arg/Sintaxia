@@ -1,59 +1,87 @@
 <script setup>
-import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
-import Icono from '@/components/Icono.vue'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import Icono from '@/components/Icono.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
+import CampoTexto from '@/components/CampoTexto.vue'
+import MensajeEstado from '@/components/MensajeEstado.vue'
+import AvisoDatos from '@/components/AvisoDatos.vue'
 import { useAuth } from '@/composables/useAuth.js'
-import { urlLogin } from '@/api/cliente.js'
+import { motivoCorreoInvalido, rutaSegura } from '@/utils/validaciones.js'
 
+/**
+ * Entrada a la app: ingresar con correo y contrasena, o seguir como invitado.
+ *
+ * Si ya hay una sesion de INVITADO y la persona quiere entrar a una cuenta que ya
+ * existe, se le advierte que su historial de invitado no se va a pasar a esa
+ * cuenta (en esta primera version los historiales no se fusionan) y tiene que
+ * confirmarlo. Para conservar el historial existe otro camino: crear la cuenta
+ * desde el invitado (pantalla "Crear cuenta").
+ */
 const route = useRoute()
 const router = useRouter()
-const { estado: sesion, iniciar, entrarDemo, autenticado } = useAuth()
+const {
+  estado: sesion,
+  conSesion,
+  esInvitado,
+  esCuenta,
+  hayConfig,
+  iniciar,
+  iniciarSesion,
+  entrarComoInvitado
+} = useAuth()
 
-const nombreDemo = ref('Estudiante de prueba')
-const entrando = ref(false)
-const errorDemo = ref('')
+const correo = ref('')
+const clave = ref('')
+const entiendeElCambio = ref(false)
+const enviando = ref(false)
+const error = ref(null)
+const intento = ref(false)
 
-const MENSAJES_ERROR = {
-  cancelado: 'Cancelaste el inicio de sesion.',
-  estado_invalido: 'La solicitud vencio o no se pudo verificar. Proba de nuevo.',
-  sin_codigo: 'El proveedor no devolvio el codigo de autorizacion.',
-  fallo_proveedor: 'No pudimos completar el inicio de sesion. Proba de nuevo en un rato.',
-  proveedor_no_configurado: 'Ese proveedor todavia no esta configurado en el servidor.'
-}
+const volver = computed(() => rutaSegura(route.query.volver, '/perfil'))
+const cargando = computed(() => sesion.estadoCarga === 'cargando')
 
-const errorUrl = computed(() => MENSAJES_ERROR[route.query.error] ?? '')
-const destino = computed(() => (typeof route.query.destino === 'string' ? route.query.destino : '/perfil'))
+const errorCorreo = computed(() => (intento.value ? motivoCorreoInvalido(correo.value) : ''))
+const errorClave = computed(() => (intento.value && !clave.value ? 'Escribi tu contrasena.' : ''))
 
-const proveedoresVisuales = {
-  google: { nombre: 'Google', clase: 'google' },
-  github: { nombre: 'GitHub', clase: 'github' }
-}
-
-const disponibles = computed(() =>
-  sesion.proveedores.filter((p) => p in proveedoresVisuales).map((p) => ({ id: p, ...proveedoresVisuales[p] }))
+// Quien ya tiene una cuenta no necesita esta pantalla.
+watch(
+  () => [sesion.estadoCarga, esCuenta.value],
+  ([carga, cuenta]) => {
+    if (carga === 'listo' && cuenta && !enviando.value) router.replace(volver.value)
+  },
+  { immediate: true }
 )
+iniciar()
 
-const hayDemo = computed(() => sesion.proveedores.includes('demo'))
-const sinApi = computed(() => sesion.estadoCarga === 'sin-api')
+async function entrar() {
+  intento.value = true
+  error.value = null
+  if (motivoCorreoInvalido(correo.value) || !clave.value) return
+  if (esInvitado.value && !entiendeElCambio.value) return
 
-onMounted(async () => {
-  await iniciar()
-  if (autenticado.value) router.replace(destino.value)
-})
-
-async function usarDemo() {
-  entrando.value = true
-  errorDemo.value = ''
+  enviando.value = true
   try {
-    await entrarDemo(nombreDemo.value)
-    router.push(destino.value)
-  } catch (error) {
-    errorDemo.value = error.message
+    await iniciarSesion({ correo: correo.value, clave: clave.value })
+    router.push(volver.value)
+  } catch (e) {
+    error.value = e
   } finally {
-    entrando.value = false
+    enviando.value = false
+  }
+}
+
+async function comoInvitado() {
+  error.value = null
+  enviando.value = true
+  try {
+    if (!conSesion.value) await entrarComoInvitado()
+    router.push(volver.value)
+  } catch (e) {
+    error.value = e
+  } finally {
+    enviando.value = false
   }
 }
 </script>
@@ -61,79 +89,88 @@ async function usarDemo() {
 <template>
   <div class="ingresar seccion contenedor">
     <div class="tarjeta">
-      <SintaxMascota estado="saludando" :alto="130" alt="" />
+      <SintaxMascota estado="saludando" :alto="120" alt="" />
       <h1>Entra a Sintaxia</h1>
       <p class="texto-secundario">
-        Tu progreso, tus medallas y tu racha guardados en tu cuenta, en cualquier dispositivo.
+        Tu progreso, tu racha y tus medallas, guardados y a mano en cualquier dispositivo.
       </p>
 
-      <p v-if="errorUrl" class="aviso aviso--error">{{ errorUrl }}</p>
+      <MensajeEstado v-if="!hayConfig" tipo="alerta">
+        Falta configurar la conexion con Supabase. Copia <code>.env.example</code> a
+        <code>.env</code> y completa las variables.
+      </MensajeEstado>
 
-      <p v-if="sinApi" class="aviso aviso--info">
-        El servidor no responde, asi que no se puede iniciar sesion ahora mismo. Igual podes
-        seguir practicando: tu progreso se guarda en este navegador.
-      </p>
+      <p v-else-if="cargando" class="texto-secundario" role="status">Un momento...</p>
 
-      <!-- Proveedores reales -->
-      <div v-if="disponibles.length" class="proveedores">
-        <a
-          v-for="proveedor in disponibles"
-          :key="proveedor.id"
-          class="proveedor"
-          :class="`proveedor--${proveedor.clase}`"
-          :href="urlLogin(proveedor.id, destino)"
-        >
-          <!-- Logos dibujados a mano para no depender de un CDN -->
-          <svg v-if="proveedor.id === 'google'" class="proveedor__logo" viewBox="0 0 48 48" aria-hidden="true">
-            <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2.5 24 .5 14.6.5 6.5 5.8 2.6 13.6l7.8 6c1.9-5.7 7.2-10.1 13.6-10.1z"/>
-            <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.2-.4-4.7H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.3z"/>
-            <path fill="#FBBC05" d="M10.4 28.4c-.5-1.4-.8-2.9-.8-4.4s.3-3 .8-4.4l-7.8-6C.9 16.7 0 20.2 0 24s.9 7.3 2.6 10.4l7.8-6z"/>
-            <path fill="#34A853" d="M24 47.5c6.2 0 11.5-2 15.4-5.6l-7.5-5.8c-2.1 1.4-4.8 2.2-7.9 2.2-6.4 0-11.7-4.3-13.6-10.1l-7.8 6C6.5 42.2 14.6 47.5 24 47.5z"/>
-          </svg>
-          <svg v-else class="proveedor__logo" viewBox="0 0 16 16" aria-hidden="true">
-            <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
-          </svg>
-          Continuar con {{ proveedor.nombre }}
-        </a>
-      </div>
+      <template v-else>
+        <!-- Ya hay un invitado: se avisa antes de entrar a otra cuenta -->
+        <MensajeEstado v-if="esInvitado" tipo="alerta">
+          <p>
+            <strong>Estas usando Sintaxia como invitado.</strong> Si entras a una cuenta que ya existe,
+            tu progreso de invitado <strong>no se va a pasar</strong> a esa cuenta: los historiales no se
+            fusionan.
+          </p>
+          <p>
+            Si queres conservarlo, <router-link :to="{ name: 'registro', query: route.query }">crea tu
+            cuenta desde aca</router-link> en lugar de entrar a otra.
+          </p>
+        </MensajeEstado>
 
-      <!-- Login de prueba, solo si el servidor lo habilito -->
-      <div v-if="hayDemo" class="demo">
-        <p class="demo__titulo">
-          <Icono nombre="probeta" :tamano="17" /> Entrar sin OAuth (modo de prueba)
-        </p>
-        <p class="demo__texto">
-          El servidor tiene activado el login de prueba. Escribi un nombre y entra directamente,
-          sin configurar credenciales de Google ni de GitHub.
-        </p>
-        <div class="demo__campos">
-          <input
-            v-model="nombreDemo"
-            type="text"
-            maxlength="40"
-            aria-label="Nombre para el usuario de prueba"
-            @keyup.enter="usarDemo"
+        <form class="formulario" novalidate @submit.prevent="entrar">
+          <CampoTexto
+            v-model="correo"
+            etiqueta="Correo"
+            tipo="email"
+            autocomplete="email"
+            placeholder="nombre@correo.com"
+            :error="errorCorreo"
+            :deshabilitado="enviando"
           />
-          <BaseBoton variante="secundario" :deshabilitado="entrando" @click="usarDemo">
-            {{ entrando ? 'Entrando...' : 'Entrar' }}
+          <CampoTexto
+            v-model="clave"
+            etiqueta="Contrasena"
+            tipo="password"
+            autocomplete="current-password"
+            :error="errorClave"
+            :deshabilitado="enviando"
+          />
+
+          <label v-if="esInvitado" class="confirmar">
+            <input v-model="entiendeElCambio" type="checkbox" :disabled="enviando" />
+            <span>
+              Entiendo que mi progreso de invitado no se va a pasar a la cuenta a la que entro.
+            </span>
+          </label>
+
+          <MensajeEstado v-if="error" tipo="error">{{ error.message }}</MensajeEstado>
+
+          <BaseBoton
+            type="submit"
+            tamano="grande"
+            ancho-completo
+            :deshabilitado="enviando || (esInvitado && !entiendeElCambio)"
+          >
+            {{ enviando ? 'Entrando...' : 'Entrar' }}
+          </BaseBoton>
+
+          <p class="enlaces">
+            <router-link :to="{ name: 'recuperar' }">Olvide mi contrasena</router-link>
+          </p>
+        </form>
+
+        <div class="alternativas">
+          <BaseBoton variante="contorno" ancho-completo :to="{ name: 'registro', query: route.query }">
+            {{ esInvitado ? 'Crear mi cuenta y conservar mi progreso' : 'Crear una cuenta' }}
+          </BaseBoton>
+
+          <BaseBoton variante="texto" :deshabilitado="enviando" @click="comoInvitado">
+            {{ esInvitado ? 'Seguir como invitado' : 'Continuar como invitado' }}
+            <Icono nombre="flechaDerecha" :tamano="16" />
           </BaseBoton>
         </div>
-        <p v-if="errorDemo" class="aviso aviso--error">{{ errorDemo }}</p>
-      </div>
 
-      <p v-if="!disponibles.length && !hayDemo && !sinApi" class="aviso aviso--info">
-        Todavia no hay ningun proveedor configurado en el servidor. Carga las credenciales en el
-        archivo <code class="codigo-inline">.env</code> y volve a levantar la API.
-      </p>
-
-      <div class="invitado">
-        <p class="texto-secundario">
-          Tambien podes practicar sin cuenta. Cuando entres, ese progreso se sube solo.
-        </p>
-        <BaseBoton variante="texto" :to="{ name: 'curso', params: { cursoId: CURSO_POR_DEFECTO } }">
-          Seguir como invitado <Icono nombre="flechaDerecha" :tamano="16" />
-        </BaseBoton>
-      </div>
+        <AvisoDatos />
+      </template>
     </div>
   </div>
 </template>
@@ -141,7 +178,7 @@ async function usarDemo() {
 <style scoped>
 .ingresar {
   display: grid;
-  place-items: center;
+  place-items: start center;
 }
 
 .tarjeta {
@@ -153,7 +190,7 @@ async function usarDemo() {
   border-radius: var(--r-xl);
   padding: var(--e-5) var(--e-3);
   display: grid;
-  gap: var(--e-2);
+  gap: var(--e-3);
   justify-items: center;
   text-align: center;
 }
@@ -162,131 +199,50 @@ async function usarDemo() {
   font-size: var(--t-xl);
 }
 
-.proveedores {
+.formulario {
   width: 100%;
   display: grid;
-  gap: var(--e-2);
-  margin-top: var(--e-2);
+  gap: var(--e-3);
 }
 
-.proveedor {
+.confirmar {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  font-family: var(--f-titulo);
-  font-weight: 800;
-  font-size: var(--t-sm);
-  border-radius: var(--r-md);
-  padding: 0.85rem 1.2rem;
-  border: 2px solid var(--c-borde);
-  transition: transform 0.08s ease, filter 0.15s ease;
-}
-
-.proveedor:active {
-  transform: translateY(3px);
-  box-shadow: none;
-}
-
-.proveedor__logo {
-  width: 20px;
-  height: 20px;
-}
-
-.proveedor--google {
-  background: var(--c-blanco);
-  color: var(--c-tinta);
-  box-shadow: 0 4px 0 var(--c-borde);
-}
-
-.proveedor--github {
-  background: #1f2933;
-  color: #ffffff;
-  border-color: #1f2933;
-  box-shadow: 0 4px 0 #0d141b;
-}
-
-.proveedor:hover {
-  filter: brightness(1.04);
-}
-
-.demo {
-  width: 100%;
-  background: var(--c-violeta-suave);
-  border: 2px dashed var(--c-violeta);
-  border-radius: var(--r-md);
-  padding: var(--e-3);
-  display: grid;
-  gap: var(--e-2);
+  gap: 0.6rem;
+  align-items: flex-start;
   text-align: left;
-  margin-top: var(--e-2);
-}
-
-.demo__titulo {
-  font-family: var(--f-titulo);
-  font-weight: 800;
-  color: var(--c-violeta-osc);
-}
-
-.demo__texto {
-  font-size: var(--t-xs);
-  color: var(--c-gris);
-}
-
-.demo__campos {
-  display: flex;
-  gap: var(--e-2);
-  flex-wrap: wrap;
-}
-
-.demo__campos input {
-  flex: 1;
-  min-width: 150px;
-  font-family: inherit;
   font-size: var(--t-sm);
-  border: 2px solid var(--c-borde);
-  border-radius: var(--r-sm);
-  padding: 0.5rem 0.7rem;
-  background: var(--c-blanco);
+  cursor: pointer;
 }
 
-.demo__campos input:focus {
-  outline: 3px solid var(--c-violeta);
-  outline-offset: 1px;
+.confirmar input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 0.1rem;
+  accent-color: var(--c-verde);
 }
 
-.aviso {
-  width: 100%;
+.enlaces {
   font-size: var(--t-sm);
-  border-radius: var(--r-md);
-  padding: var(--e-2);
-  text-align: left;
-}
-
-.aviso--error {
-  background: var(--c-rojo-suave);
-  color: var(--c-rojo-osc);
-  border: 2px solid var(--c-rojo);
   font-weight: 700;
 }
 
-.aviso--info {
-  background: var(--c-amarillo-suave);
-  color: var(--c-amarillo-osc);
-  border: 2px solid var(--c-amarillo);
+.enlaces a,
+.tarjeta :deep(a:not(.boton)) {
+  color: var(--c-azul-osc);
+  text-decoration: underline;
 }
 
-.invitado {
-  border-top: 2px solid var(--c-borde);
-  padding-top: var(--e-3);
-  margin-top: var(--e-2);
+.alternativas {
   width: 100%;
   display: grid;
   gap: var(--e-1);
   justify-items: center;
+  border-top: 2px solid var(--c-borde);
+  padding-top: var(--e-3);
 }
 
-.invitado p {
-  font-size: var(--t-sm);
+code {
+  font-family: var(--f-codigo);
 }
 </style>

@@ -18,7 +18,10 @@
     "supabase:local": "node pruebas/preparar-base-local.mjs",
     "supabase:puente": "node pruebas/servidor-supabase-local.mjs",
     "pruebas:etapa2": "node pruebas/etapa2.mjs",
-    "pruebas:etapa3": "node pruebas/etapa3.mjs"
+    "pruebas:etapa3": "node pruebas/etapa3.mjs",
+    "auth:compilar": "sh pruebas/compilar-auth-local.sh",
+    "pruebas:entorno": "node pruebas/entorno.mjs",
+    "pruebas:etapa4": "node pruebas/etapa4.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

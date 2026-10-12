@@ -12,9 +12,18 @@ const p = await ctx.newPage()
 const errores = []
 p.on('pageerror', e => errores.push(e.message))
 
+/** Desde la etapa 4 las lecciones exigen sesion: se entra como invitado (usuario nuevo y vacio). */
+async function comoInvitado(pagina) {
+  await pagina.goto(base + '/ingresar', { waitUntil: 'networkidle' })
+  await pagina.getByRole('button', { name: /Continuar como invitado/ }).click()
+  await pagina.waitForURL('**/perfil', { timeout: 15000 })
+}
+
 async function limpio(url = ACT) {
   await p.goto(base + '/', { waitUntil: 'domcontentloaded' })
   await p.evaluate(() => { localStorage.clear(); localStorage.setItem('sintaxia:bienvenida-vista','1') })
+  // Borrar el almacenamiento tambien borro la sesion: cada recorrido arranca con un invitado nuevo.
+  await comoInvitado(p)
   await p.goto(url, { waitUntil: 'networkidle' })
   await p.waitForTimeout(500)
 }
@@ -153,6 +162,7 @@ await ctx.close()
   const pm = await m.newPage()
   await pm.goto(base + '/', { waitUntil: 'domcontentloaded' })
   await pm.evaluate(() => localStorage.setItem('sintaxia:bienvenida-vista','1'))
+  await comoInvitado(pm)
   const anchos = []
   for (const r of ['/cursos', '/cursos/javascript', '/cursos/javascript/unidades/js-u1',
                    `/cursos/javascript/lecciones/${LECCION}`, ACT.replace(base,'')]) {
