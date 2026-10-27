@@ -90,7 +90,7 @@ cuando las 14 lecciones estan aprobadas.
 | **Una respuesta por actividad** | Al confirmar, las opciones quedan bloqueadas y el boton de confirmar desaparece. Volver a apretar no suma de nuevo. |
 | **No se puede confirmar sin elegir** | El boton queda deshabilitado hasta que hay una opcion seleccionada. |
 | **No se puede volver atras** | Una vez confirmada una actividad, se avanza a la siguiente; no se puede corregir la anterior. |
-| **Reintentar arranca de cero** | Las respuestas y el puntaje del intento anterior se descartan: vuelve a la actividad 1 con las 3 vidas. |
+| **Reintentar arranca de cero** | El intento nuevo vuelve a la actividad 1 con las 3 vidas. Desde la etapa 5 el intento anterior **no se descarta**: queda en el historial con sus respuestas. |
 | **Se guarda el mejor intento** | Si el segundo intento sale peor que el primero, se conserva el mejor resultado. Reintentar nunca perjudica. |
 | **XP** | La primera vez que se aprueba se gana el XP completo, proporcional a los aciertos. Al repetirla, la mitad, para que repasar sirva sin permitir inflar el puntaje. |
 
@@ -106,6 +106,11 @@ que cambia es donde se guarda el resultado, no como se decide si algo esta
 aprobado.
 
 ---
+
+> **Etapa 5.** Estas mismas reglas las aplica ahora **el servidor**
+> (`supabase/09-funciones-intentos.sql`): corrige y guarda cada respuesta, calcula
+> aciertos, errores y aprobacion, y no deja empezar una leccion bloqueada. La app las
+> repite solo para pintar la pantalla. Ver [14. Intentos, respuestas y progreso](14-intentos-y-progreso.md).
 
 ## 6.7 Donde esta implementado
 

@@ -21,15 +21,19 @@ const props = defineProps({
   vacio: { type: Boolean, default: false },
   textoCargando: { type: String, default: 'Cargando...' },
   tituloVacio: { type: String, default: 'Todavia no hay nada por aca' },
-  textoVacio: { type: String, default: 'Volve en unos dias: estamos preparando el contenido.' }
+  textoVacio: { type: String, default: 'Volve en unos dias: estamos preparando el contenido.' },
+  /** Titulo propio para el error (por ejemplo, "Esta leccion esta bloqueada"). */
+  tituloError: { type: String, default: null }
 })
 
 defineEmits(['reintentar'])
 
 const puedeReintentar = computed(() => props.error?.reintentable === true)
 
-const tituloError = computed(() =>
-  puedeReintentar.value ? 'No pudimos cargar el contenido' : 'No encontramos ese contenido'
+const titulo = computed(
+  () =>
+    props.tituloError ??
+    (puedeReintentar.value ? 'No pudimos cargar el contenido' : 'No encontramos ese contenido')
 )
 </script>
 
@@ -43,7 +47,7 @@ const tituloError = computed(() =>
   <!-- 2. La consulta fallo -->
   <div v-else-if="error" class="estado" role="alert">
     <SintaxMascota estado="confundido" :alto="130" alt="" />
-    <h2>{{ tituloError }}</h2>
+    <h2>{{ titulo }}</h2>
     <p class="texto-secundario estado__mensaje">{{ error.message }}</p>
 
     <div class="estado__acciones">

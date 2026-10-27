@@ -38,6 +38,7 @@ import {
   enlaceDeVerificacion,
   esperarCorreo,
   leerClaves,
+  resolverPorApi,
   reiniciarAuth
 } from './local/ayudas.mjs'
 
@@ -89,7 +90,7 @@ const consulta = async (sql, params = []) => (await bd.query(sql, params)).rows
 // ---------------------------------------------------------------------------
 // Navegador
 // ---------------------------------------------------------------------------
-const navegador = await chromium.launch()
+const navegador = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined })
 
 async function contexto(opciones = {}) {
   const ctx = await navegador.newContext({ viewport: { width: 412, height: 900 }, ...opciones })
@@ -128,7 +129,8 @@ async function resolverLeccion(p, leccionId = 'js-u1-l1') {
       where q.leccion_id = $1 and o.es_correcta order by q.orden`,
     [leccionId]
   )
-  await p.goto(`${URL_APP}/lecciones/${leccionId}/actividades`, { waitUntil: 'networkidle' })
+  // ?nuevo=1: un intento desde cero aunque hubiera otro en curso (etapa 5).
+  await p.goto(`${URL_APP}/lecciones/${leccionId}/actividades?nuevo=1`, { waitUntil: 'networkidle' })
   for (const fila of filas) {
     await p.waitForSelector('.opcion')
     await p.getByRole('button', { name: fila.texto, exact: true }).first().click()
@@ -503,7 +505,7 @@ await caso(
 
     const idAntes = (await leerSesion(p)).user.id
     const [{ n: usuariosAntes }] = await consulta('select count(*)::int as n from auth.users')
-    const [{ n: intentosAntes }] = await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [idAntes])
+    const [{ n: intentosAntes }] = await consulta('select count(*)::int as n from intentos where usuario_id = $1', [idAntes])
     verificar(intentosAntes === 1, `el invitado deberia tener 1 intento, tiene ${intentosAntes}`)
 
     // Convierte desde el formulario de registro.
@@ -530,7 +532,7 @@ await caso(
     const [convertido] = await consulta('select is_anonymous, email from auth.users where id = $1', [idDespues])
     const [perfil] = await consulta('select es_invitado, alias from perfiles where id = $1', [idDespues])
     const [{ n: usuariosDespues }] = await consulta('select count(*)::int as n from auth.users')
-    const [{ n: intentosDespues }] = await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [idDespues])
+    const [{ n: intentosDespues }] = await consulta('select count(*)::int as n from intentos where usuario_id = $1', [idDespues])
 
     verificar(idDespues === idAntes, `el id cambio: ${idAntes} -> ${idDespues}`)
     verificar(convertido.is_anonymous === false && convertido.email === correo, 'no quedo como cuenta')
@@ -582,13 +584,13 @@ await caso(
   async () => {
     const cuenta = await api.cuentaConfirmada({ correo: correoNuevo('destino'), alias: 'Destino' })
     // La cuenta ya tiene 1 intento propio.
-    await api.datos(cuenta.token, 'POST', 'intentos_leccion', { leccion_id: 'js-u1-l1', aciertos: 4, total: 4 })
+    await resolverPorApi(api, bd, cuenta.token, 'js-u1-l1')
 
     const ctx = await contexto()
     const p = await pagina(ctx)
     await entrarComoInvitado(p)
     const idInvitado = (await leerSesion(p)).user.id
-    await api.datos((await leerSesion(p)).access_token, 'POST', 'intentos_leccion', { leccion_id: 'js-u1-l2', aciertos: 3, total: 4 })
+    await resolverPorApi(api, bd, (await leerSesion(p)).access_token, 'js-u1-l1', { aciertos: 3 })
 
     await p.goto(`${URL_APP}/ingresar`, { waitUntil: 'networkidle' })
     await p.getByText(/no se va a pasar/).first().waitFor({ timeout: 5000 })
@@ -605,8 +607,8 @@ await caso(
 
     const etiqueta = await etiquetaDePerfil(p)
     const idAhora = (await leerSesion(p)).user.id
-    const [{ n: deLaCuenta }] = await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [cuenta.id])
-    const [{ n: delInvitado }] = await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [idInvitado])
+    const [{ n: deLaCuenta }] = await consulta('select count(*)::int as n from intentos where usuario_id = $1', [cuenta.id])
+    const [{ n: delInvitado }] = await consulta('select count(*)::int as n from intentos where usuario_id = $1', [idInvitado])
     verificar(idAhora === cuenta.id && /^Destino#/.test(etiqueta), `sesion: ${etiqueta}`)
     verificar(deLaCuenta === 1, `la cuenta recibio historial ajeno: ${deLaCuenta} intentos`)
     verificar(delInvitado === 1, `el historial del invitado se movio: ${delInvitado}`)
@@ -707,8 +709,8 @@ await caso(
 const invitadoA = await api.altaAnonima()
 const invitadoB = await api.altaAnonima()
 const cuentaC = await api.cuentaConfirmada({ correo: correoNuevo('segC'), alias: 'Cecilia' })
-await api.datos(invitadoA.token, 'POST', 'intentos_leccion', { leccion_id: 'js-u1-l1', aciertos: 2, total: 4 })
-await api.datos(invitadoB.token, 'POST', 'intentos_leccion', { leccion_id: 'js-u1-l1', aciertos: 3, total: 4 })
+await resolverPorApi(api, bd, invitadoA.token, 'js-u1-l1', { aciertos: 2 })
+await resolverPorApi(api, bd, invitadoB.token, 'js-u1-l1', { aciertos: 3 })
 
 await caso(
   21,
@@ -717,10 +719,10 @@ await caso(
   async () => {
     const perfilesA = await api.datos(invitadoA.token, 'GET', 'perfiles?select=id')
     const ajeno = await api.datos(invitadoA.token, 'GET', `perfiles?select=id&id=eq.${invitadoB.id}`)
-    const intentosA = await api.datos(invitadoA.token, 'GET', 'intentos_leccion?select=usuario_id')
-    const intentosB = await api.datos(invitadoB.token, 'GET', 'intentos_leccion?select=usuario_id')
+    const intentosA = await api.datos(invitadoA.token, 'GET', 'intentos?select=usuario_id')
+    const intentosB = await api.datos(invitadoB.token, 'GET', 'intentos?select=usuario_id')
     const sinSesionPerfiles = await api.datos(null, 'GET', 'perfiles?select=id')
-    const sinSesionIntentos = await api.datos(null, 'GET', 'intentos_leccion?select=id')
+    const sinSesionIntentos = await api.datos(null, 'GET', 'intentos?select=id')
 
     verificar(perfilesA.datos.length === 1 && perfilesA.datos[0].id === invitadoA.id, 'A ve perfiles ajenos')
     verificar(ajeno.datos.length === 0, 'A pudo leer el perfil de B por id')
@@ -734,14 +736,14 @@ await caso(
 await caso(
   22,
   'Nadie puede modificar datos ajenos ni los campos protegidos',
-  'Modificar o borrar lo de otro no hace nada; tocar es_invitado, codigo o usuario_id esta prohibido',
+  'Modificar o borrar lo de otro no hace nada; tocar es_invitado, codigo o escribir intentos directamente esta prohibido',
   async () => {
     const antesB = (await consulta('select alias, codigo, es_invitado from perfiles where id = $1', [invitadoB.id]))[0]
-    const intentosBAntes = (await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [invitadoB.id]))[0].n
+    const intentosBAntes = (await consulta('select count(*)::int as n from intentos where usuario_id = $1', [invitadoB.id]))[0].n
 
     // Sobre datos de OTRO: la politica no deja ver el renglon, asi que no se modifica nada.
     const cambiarAjeno = await api.datos(invitadoA.token, 'PATCH', `perfiles?id=eq.${invitadoB.id}&select=id`, { avatar: 'robot' }, 'return=representation')
-    const borrarAjeno = await api.datos(invitadoA.token, 'DELETE', `intentos_leccion?usuario_id=eq.${invitadoB.id}&select=id`, undefined, 'return=representation')
+    const borrarAjeno = await api.datos(invitadoA.token, 'DELETE', `intentos?usuario_id=eq.${invitadoB.id}&select=id`, undefined, 'return=representation')
     verificar(cambiarAjeno.datos.length === 0 && borrarAjeno.datos.length === 0, 'se modifico algo ajeno')
 
     // Campos protegidos del PROPIO perfil.
@@ -757,20 +759,20 @@ await caso(
     verificar(sigueInvitado === 'Invitado', `el alias del invitado quedo en ${sigueInvitado}`)
 
     // Insertar a nombre de otro, crear o borrar perfiles.
-    const aNombreDeB = await api.datos(invitadoA.token, 'POST', 'intentos_leccion', { usuario_id: invitadoB.id, leccion_id: 'js-u1-l1', aciertos: 4, total: 4 })
+    const aNombreDeB = await api.datos(invitadoA.token, 'POST', 'intentos', { usuario_id: invitadoB.id, leccion_id: 'js-u1-l1', numero: 9, total_actividades: 4, aciertos: 4 })
     const crearPerfil = await api.datos(invitadoA.token, 'POST', 'perfiles', { id: invitadoA.id, alias: 'Otro', codigo: 5 })
     const borrarPerfil = await api.datos(invitadoA.token, 'DELETE', `perfiles?id=eq.${invitadoA.id}`)
     verificar([aNombreDeB, crearPerfil, borrarPerfil].every((r) => r.estado === 403), `escrituras: ${[aNombreDeB, crearPerfil, borrarPerfil].map((r) => r.estado)}`)
 
-    // Datos invalidos del propio historial.
-    const demasiados = await api.datos(invitadoA.token, 'POST', 'intentos_leccion', { leccion_id: 'js-u1-l1', aciertos: 5, total: 4 })
-    const leccionFalsa = await api.datos(invitadoA.token, 'POST', 'intentos_leccion', { leccion_id: 'no-existe', aciertos: 1, total: 4 })
-    verificar(demasiados.estado === 400 && leccionFalsa.estado === 409, `invalidos: ${demasiados.estado}/${leccionFalsa.estado}`)
+    // Desde la etapa 5 el historial propio tampoco se escribe a mano: solo por las funciones del servidor.
+    const inflarPropio = await api.datos(invitadoA.token, 'POST', 'intentos', { leccion_id: 'js-u1-l1', numero: 9, total_actividades: 4, aciertos: 4 })
+    const leccionFalsa = await api.rpc(invitadoA.token, 'iniciar_intento', { p_intento_id: crypto.randomUUID(), p_leccion_id: 'no-existe' })
+    verificar(inflarPropio.estado === 403 && leccionFalsa.estado === 400 && leccionFalsa.datos?.hint === 'leccion_bloqueada', `invalidos: ${inflarPropio.estado}/${leccionFalsa.estado}`)
 
     const despuesB = (await consulta('select alias, codigo, es_invitado from perfiles where id = $1', [invitadoB.id]))[0]
-    const intentosBDespues = (await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [invitadoB.id]))[0].n
+    const intentosBDespues = (await consulta('select count(*)::int as n from intentos where usuario_id = $1', [invitadoB.id]))[0].n
     verificar(JSON.stringify(antesB) === JSON.stringify(despuesB) && intentosBAntes === intentosBDespues, 'los datos de B cambiaron')
-    return 'sobre B: PATCH 0 filas, DELETE 0 filas · es_invitado/codigo/id: 403 · alias de invitado: 400 (ck_perfiles_invitado) · insertar a nombre de B, crear y borrar perfil: 403 · aciertos>total: 400 · leccion inexistente: 409 · B intacto'
+    return 'sobre B: PATCH 0 filas, DELETE 0 filas · es_invitado/codigo/id: 403 · alias de invitado: 400 (ck_perfiles_invitado) · insertar a nombre de B, crear y borrar perfil: 403 · escribir un intento propio a mano: 403 · leccion inexistente: rechazada · B intacto'
   }
 )
 
@@ -838,26 +840,30 @@ await caso(
 
 await caso(
   25,
-  'Tope de intentos para invitados (politica restrictiva)',
-  'Un invitado puede guardar hasta 200 intentos y el 201 se rechaza; una cuenta permanente no tiene ese tope',
+  'Tope de intentos para invitados',
+  'Un invitado puede tener hasta 200 intentos y el 201 se rechaza; una cuenta permanente no tiene ese tope',
   async () => {
     const invitado = await api.altaAnonima()
     const cuenta = await api.cuentaConfirmada({ correo: correoNuevo('tope'), alias: 'SinTope' })
-    const lote = Array.from({ length: 200 }, () => ({ leccion_id: 'js-u1-l1', aciertos: 1, total: 4 }))
 
-    const lotes = []
+    // 200 intentos viejos cargados directamente (como superusuario) para no hacer 200 peticiones.
+    const resultados = []
     for (const [nombre, persona] of [['invitado', invitado], ['cuenta', cuenta]]) {
-      const primero = await api.datos(persona.token, 'POST', 'intentos_leccion', lote)
-      const siguiente = await api.datos(persona.token, 'POST', 'intentos_leccion', { leccion_id: 'js-u1-l1', aciertos: 1, total: 4 })
-      lotes.push({ nombre, primero: primero.estado, siguiente: siguiente.estado })
+      await consulta(
+        `insert into intentos (usuario_id, leccion_id, numero, estado, total_actividades, finalizado_en)
+         select $1, 'js-u1-l1', n, 'abandonado', 4, now() from generate_series(1, 200) n`,
+        [persona.id]
+      )
+      const siguiente = await api.rpc(persona.token, 'iniciar_intento', { p_intento_id: crypto.randomUUID(), p_leccion_id: 'js-u1-l1' })
+      resultados.push({ nombre, estado: siguiente.estado, hint: siguiente.datos?.hint ?? null })
     }
-    const [i, c] = lotes
-    verificar(i.primero === 201 && i.siguiente === 403, `invitado: ${i.primero}/${i.siguiente}`)
-    verificar(c.primero === 201 && c.siguiente === 201, `cuenta: ${c.primero}/${c.siguiente}`)
+    const [i, c] = resultados
+    verificar(i.estado === 400 && i.hint === 'tope_invitado', `invitado: ${i.estado} ${i.hint}`)
+    verificar(c.estado === 200, `cuenta: ${c.estado}`)
 
-    const [{ n: delInvitado }] = await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [invitado.id])
+    const [{ n: delInvitado }] = await consulta('select count(*)::int as n from intentos where usuario_id = $1', [invitado.id])
     verificar(delInvitado === 200, `el invitado termino con ${delInvitado} intentos`)
-    return `invitado: 200 intentos -> el 201 da HTTP ${i.siguiente} (tiene ${delInvitado}) · cuenta: el 201 da HTTP ${c.siguiente}`
+    return `invitado: con 200 intentos el 201 se rechaza (HTTP ${i.estado}, ${i.hint}) · cuenta: el 201 se crea (HTTP ${c.estado})`
   }
 )
 
@@ -870,15 +876,25 @@ await caso(
     const reciente = await api.altaAnonima()
     const conActividad = await api.altaAnonima()
     const cuentaVieja = await api.cuentaConfirmada({ correo: correoNuevo('vieja'), alias: 'Antigua' })
-    await api.datos(inactivo.token, 'POST', 'intentos_leccion', { leccion_id: 'js-u1-l1', aciertos: 1, total: 4 })
-    await api.datos(conActividad.token, 'POST', 'intentos_leccion', { leccion_id: 'js-u1-l1', aciertos: 1, total: 4 })
+    await resolverPorApi(api, bd, inactivo.token, 'js-u1-l1', { aciertos: 1 })
+    await resolverPorApi(api, bd, conActividad.token, 'js-u1-l1', { aciertos: 1 })
 
     // Se envejecen: el inactivo y la cuenta vieja no tuvieron nada en 60 dias; el "con actividad"
     // se creo hace 60 dias pero tiene un intento de hoy.
     const viejos = [inactivo.id, conActividad.id, cuentaVieja.id]
     await consulta("update auth.users set created_at = now() - interval '60 days' where id = any($1)", [viejos])
     await consulta("update auth.sessions set created_at = now() - interval '60 days', updated_at = now() - interval '60 days' where user_id = any($1)", [viejos])
-    await consulta("update intentos_leccion set creado_en = now() - interval '60 days' where usuario_id = $1", [inactivo.id])
+    await consulta(
+      "update intentos set iniciado_en = now() - interval '60 days', finalizado_en = now() - interval '60 days', actualizado_en = now() - interval '60 days' where usuario_id = $1",
+      [inactivo.id]
+    )
+    // El disparador de actualizacion pisa actualizado_en con now(): se corrige sin disparadores.
+    await consulta('alter table intentos disable trigger tg_intentos_actualizacion')
+    try {
+      await consulta("update intentos set actualizado_en = now() - interval '60 days' where usuario_id = $1", [inactivo.id])
+    } finally {
+      await consulta('alter table intentos enable trigger tg_intentos_actualizacion')
+    }
 
     const comoInvitado = await api.datos(invitadoA.token, 'POST', 'rpc/limpiar_invitados_inactivos', { p_dias: 30 })
     const comoPublico = await api.datos(null, 'POST', 'rpc/limpiar_invitados_inactivos', { p_dias: 30 })
@@ -891,7 +907,7 @@ await caso(
     const existe = async (id) => (await consulta('select count(*)::int as n from auth.users where id = $1', [id]))[0].n === 1
     verificar(!(await existe(inactivo.id)), 'no borro al invitado inactivo')
     const perfilHuerfano = (await consulta('select count(*)::int as n from perfiles where id = $1', [inactivo.id]))[0].n
-    const historialHuerfano = (await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [inactivo.id]))[0].n
+    const historialHuerfano = (await consulta('select count(*)::int as n from intentos where usuario_id = $1', [inactivo.id]))[0].n
     verificar(perfilHuerfano === 0 && historialHuerfano === 0, 'quedaron perfil o historial del borrado')
     verificar(await existe(reciente.id), 'borro a un invitado reciente')
     verificar(await existe(conActividad.id), 'borro a un invitado con actividad reciente')
@@ -903,14 +919,15 @@ await caso(
 await caso(
   34,
   'Volver a correr los scripts no deshace permisos ni datos',
-  'Re-ejecutar 02, 05, 06 y 07 deja igual el contenido, los perfiles, el historial y lo que cada persona puede hacer',
+  'Re-ejecutar 02 y 05 a 10 deja igual el contenido, los perfiles, el historial y lo que cada persona puede hacer',
   async () => {
     const contar = async () =>
       (
         await consulta(
           `select (select count(*) from opciones)::int as opciones,
                   (select count(*) from perfiles)::int as perfiles,
-                  (select count(*) from intentos_leccion)::int as intentos`
+                  (select count(*) from intentos)::int as intentos,
+                  (select count(*) from respuestas)::int as respuestas`
         )
       )[0]
     const antes = await contar()
@@ -918,7 +935,15 @@ await caso(
     verificar(antesA.estado === 200 && antesA.datos.length === 1, 'el invitado no veia su perfil antes de empezar')
 
     const ejecutados = []
-    for (const archivo of ['02-datos-iniciales', '05-perfiles-y-progreso', '06-politicas-rls-etapa4', '07-limpieza-invitados']) {
+    for (const archivo of [
+      '02-datos-iniciales',
+      '05-perfiles-y-progreso',
+      '06-politicas-rls-etapa4',
+      '07-limpieza-invitados',
+      '08-intentos-y-respuestas',
+      '09-funciones-intentos',
+      '10-politicas-rls-etapa5'
+    ]) {
       await bd.query(readFileSync(new URL(`../supabase/${archivo}.sql`, import.meta.url), 'utf8'))
       ejecutados.push(archivo.slice(0, 2))
     }
@@ -927,7 +952,7 @@ await caso(
     verificar(JSON.stringify(antes) === JSON.stringify(despues), `datos: ${JSON.stringify(antes)} -> ${JSON.stringify(despues)}`)
 
     const despuesA = await api.datos(invitadoA.token, 'GET', 'perfiles?select=id')
-    const intentosA = await api.datos(invitadoA.token, 'GET', 'intentos_leccion?select=id')
+    const intentosA = await api.datos(invitadoA.token, 'GET', 'intentos?select=id')
     const sinSesion = await api.datos(null, 'GET', 'perfiles?select=id')
     const protegido = await api.datos(invitadoA.token, 'PATCH', `perfiles?id=eq.${invitadoA.id}`, { es_invitado: false })
     verificar(despuesA.estado === 200 && despuesA.datos.length === 1, `tras re-ejecutar, el invitado ve: ${despuesA.estado}`)
@@ -1050,7 +1075,7 @@ await caso(
 
     const [u] = await consulta('select is_anonymous, email from auth.users where id = $1', [idAntes])
     const [perfil] = await consulta('select es_invitado, alias from perfiles where id = $1', [idAntes])
-    const [{ n: intentos }] = await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [idAntes])
+    const [{ n: intentos }] = await consulta('select count(*)::int as n from intentos where usuario_id = $1', [idAntes])
     verificar(u.is_anonymous === false && u.email === correo, `usuario: ${JSON.stringify(u)}`)
     verificar(perfil.es_invitado === false && perfil.alias === 'Instantanea', `perfil: ${JSON.stringify(perfil)}`)
     verificar(intentos === 1, `historial: ${intentos}`)
@@ -1124,32 +1149,37 @@ await caso(
 
 await caso(
   29,
-  'Falla el guardado al terminar una leccion',
-  'El resultado no se pierde: se muestra con un aviso y, al volver la conexion, se guarda con "Reintentar guardado"',
+  'Falla el guardado de una respuesta',
+  'La respuesta no se da por incorrecta ni por guardada: queda "pendiente" y, al volver la conexion, se guarda una sola vez',
   async () => {
     const ctx = await contexto()
     const p = await pagina(ctx)
     await entrarComoInvitado(p)
     const id = (await leerSesion(p)).user.id
-
-    await p.route('**/rest/v1/intentos_leccion*', (ruta) =>
-      ruta.request().method() === 'POST' ? ruta.abort() : ruta.continue()
+    const [primera] = await consulta(
+      `select o.texto from preguntas q join opciones o on o.pregunta_id = q.id
+        where q.leccion_id = 'js-u1-l1' and o.es_correcta order by q.orden limit 1`
     )
-    await resolverLeccion(p)
-    await p.getByText(/No pudimos guardar este resultado/).waitFor({ timeout: 8000 })
-    await dormir(1200)
-    const marcadores = await texto(p)
-    verificar(/4 Actividades/.test(marcadores) && /4 Correctas/.test(marcadores), 'el resultado no se mostro')
-    const [{ n: antes }] = await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [id])
+
+    await p.goto(`${URL_APP}/lecciones/js-u1-l1/actividades`, { waitUntil: 'networkidle' })
+    await p.waitForSelector('.opcion')
+    await p.route('**/rest/v1/rpc/responder_actividad', (ruta) => ruta.abort())
+    await p.getByRole('button', { name: primera.texto, exact: true }).first().click()
+    await p.getByRole('button', { name: /Comprobar/ }).click()
+    await p.locator('[data-prueba="estado-guardado"][data-estado="pendiente"]').waitFor({ timeout: 8000 })
+    const aviso = await texto(p)
+    verificar(/todavia NO se guardo/.test(aviso), 'no avisa que la respuesta no se guardo')
+    verificar((await p.locator('.feedback').count()) === 0, 'mostro la correccion sin confirmacion del servidor')
+    const [{ n: antes }] = await consulta('select count(*)::int as n from respuestas r join intentos i on i.id = r.intento_id where i.usuario_id = $1', [id])
     verificar(antes === 0, `se guardo pese a la falla: ${antes}`)
 
-    await p.unroute('**/rest/v1/intentos_leccion*')
-    await p.getByRole('button', { name: 'Reintentar guardado' }).click()
-    await p.waitForFunction(() => !document.body.innerText.includes('No pudimos guardar este resultado'), null, { timeout: 8000 })
-    const [{ n: despues }] = await consulta('select count(*)::int as n from intentos_leccion where usuario_id = $1', [id])
+    await p.unroute('**/rest/v1/rpc/responder_actividad')
+    await p.getByRole('button', { name: 'Reintentar' }).click()
+    await p.locator('[data-prueba="estado-guardado"][data-estado="guardado"]').waitFor({ timeout: 8000 })
+    const [{ n: despues }] = await consulta('select count(*)::int as n from respuestas r join intentos i on i.id = r.intento_id where i.usuario_id = $1', [id])
     verificar(despues === 1, `tras reintentar: ${despues}`)
     await ctx.close()
-    return `con la falla: resultado visible + aviso, guardados ${antes} · tras reintentar: guardados ${despues}`
+    return `con la falla: "pendiente", sin correccion, respuestas guardadas ${antes} · tras reintentar: "guardada", respuestas ${despues}`
   }
 )
 

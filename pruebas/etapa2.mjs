@@ -6,7 +6,7 @@ const resultados = []
 const registrar = (n, caso, esperado, obtenido, ok) =>
   resultados.push({ n, caso, esperado, obtenido, estado: ok ? 'PASA' : 'FALLA' })
 
-const b = await chromium.launch()
+const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined })
 const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } })
 const p = await ctx.newPage()
 const errores = []

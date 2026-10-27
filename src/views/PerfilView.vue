@@ -14,6 +14,7 @@ import { ESTADO_UNIDAD } from '@/constantes/estados.js'
 import { useCatalogo, CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 import { useAuth } from '@/composables/useAuth.js'
 import { useProgreso } from '@/composables/useProgreso.js'
+import { ETIQUETA_ESTADO_INTENTO } from '@/servicios/progreso.js'
 import { ALIAS_MAXIMO, motivoAliasInvalido } from '@/utils/validaciones.js'
 
 /**
@@ -23,7 +24,7 @@ import { ALIAS_MAXIMO, motivoAliasInvalido } from '@/utils/validaciones.js'
 const route = useRoute()
 const router = useRouter()
 const { estado: sesion, usuario, esInvitado, esCuenta, etiqueta, actualizarPerfil, recargarPerfil } = useAuth()
-const { estado: catalogo, cargarCurso, leccionesDeUnidad } = useCatalogo()
+const { estado: catalogo, cargarCurso, leccionesDeUnidad, obtenerLeccionCacheada } = useCatalogo()
 const {
   estado,
   progresoCurso,
@@ -33,6 +34,11 @@ const {
   progresoUnidad,
   estadoUnidad,
   leccionesCompletadasDeUnidad,
+  leccionCompletada,
+  leccionAprobada,
+  leccionDisponible,
+  precisionLeccion,
+  intentoEnCurso,
   reiniciarProgreso,
   recargarHistorial
 } = useProgreso()
@@ -61,6 +67,62 @@ const resumenUnidades = computed(() =>
     totales: leccionesDeUnidad(unidad.id).length
   }))
 )
+
+// ---------------------------------------------------------------------------
+// Lecciones: completadas, pendientes y resultados personales
+// ---------------------------------------------------------------------------
+const ESTADO_LECCION = {
+  aprobada: 'Aprobada',
+  completada: 'Completada sin aprobar',
+  en_curso: 'En curso',
+  pendiente: 'Pendiente',
+  bloqueada: 'Bloqueada'
+}
+
+/**
+ * Una fila por leccion. Separa el MEJOR resultado (el que cuenta para avanzar)
+ * del ULTIMO intento (el resumen de la ultima vez, haya terminado como haya
+ * terminado).
+ */
+const misLecciones = computed(() =>
+  catalogo.lecciones.map((leccion) => {
+    let situacion = 'bloqueada'
+    if (leccionAprobada(leccion.id)) situacion = 'aprobada'
+    else if (leccionCompletada(leccion.id)) situacion = 'completada'
+    else if (intentoEnCurso(leccion.id)) situacion = 'en_curso'
+    else if (leccionDisponible(leccion.id)) situacion = 'pendiente'
+    return {
+      ...leccion,
+      situacion,
+      mejor: leccionCompletada(leccion.id) ? precisionLeccion(leccion.id) : null,
+      ultimo: estado.ultimos[leccion.id] ?? null,
+      cantidad: estado.intentos.filter((i) => i.leccionId === leccion.id).length
+    }
+  })
+)
+
+const cantidadPendientes = computed(
+  () => misLecciones.value.filter((l) => l.situacion !== 'aprobada' && l.situacion !== 'completada').length
+)
+
+// ---------------------------------------------------------------------------
+// Historial: TODOS los intentos, del mas nuevo al mas viejo
+// ---------------------------------------------------------------------------
+const MOSTRAR_DE_A = 10
+const mostrarTodo = ref(false)
+const historialVisible = computed(() =>
+  mostrarTodo.value ? estado.intentos : estado.intentos.slice(0, MOSTRAR_DE_A)
+)
+
+const tituloDe = (leccionId) => obtenerLeccionCacheada(leccionId)?.titulo ?? leccionId
+
+const formatoFecha = new Intl.DateTimeFormat('es-AR', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit'
+})
+const fechaCorta = (fecha) => (fecha ? formatoFecha.format(new Date(fecha)) : '')
 
 /** Medallas calculadas a partir del historial. */
 const medallas = computed(() => {
@@ -371,6 +433,89 @@ const animoSintax = computed(() => {
       </ul>
     </section>
 
+    <!-- Lecciones: completadas, pendientes y resultados personales -->
+    <section class="tarjeta" data-prueba="mis-lecciones">
+      <div class="tarjeta__cabecera">
+        <h2>Tus lecciones</h2>
+        <span class="tarjeta__dato">
+          {{ totalLeccionesCompletadas }} completadas · {{ cantidadPendientes }} pendientes
+        </span>
+      </div>
+      <p class="texto-secundario">
+        El <strong>mejor resultado</strong> es el que cuenta para avanzar. El <strong>ultimo
+        intento</strong> es como te fue la ultima vez.
+      </p>
+
+      <ul class="lecciones">
+        <li
+          v-for="leccion in misLecciones"
+          :key="leccion.id"
+          class="leccion-fila"
+          :data-leccion="leccion.id"
+          :data-situacion="leccion.situacion"
+        >
+          <div class="leccion-fila__texto">
+            <router-link :to="{ name: 'leccion', params: { leccionId: leccion.id } }" class="leccion-fila__titulo">
+              {{ leccion.titulo }}
+            </router-link>
+            <p class="leccion-fila__datos">
+              <span v-if="leccion.mejor !== null">Mejor: {{ leccion.mejor }} %</span>
+              <span v-if="leccion.ultimo" data-prueba="ultimo">
+                Ultimo: {{ leccion.ultimo.aciertos }}/{{ leccion.ultimo.total }}
+                ({{ ETIQUETA_ESTADO_INTENTO[leccion.ultimo.estado].toLowerCase() }})
+              </span>
+              <span v-if="leccion.cantidad">
+                {{ leccion.cantidad }} {{ leccion.cantidad === 1 ? 'intento' : 'intentos' }}
+              </span>
+            </p>
+          </div>
+          <span class="situacion" :class="`situacion--${leccion.situacion}`">
+            {{ ESTADO_LECCION[leccion.situacion] }}
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Historial completo de intentos -->
+    <section class="tarjeta" data-prueba="historial">
+      <div class="tarjeta__cabecera">
+        <h2>Historial de intentos</h2>
+        <span class="tarjeta__dato">{{ estado.intentos.length }}</span>
+      </div>
+
+      <p v-if="estado.intentos.length === 0" class="texto-secundario">
+        Todavia no hiciste ninguna leccion. Cada vez que empieces una va a quedar registrada aca.
+      </p>
+
+      <ol v-else class="historial">
+        <li
+          v-for="intento in historialVisible"
+          :key="intento.id"
+          class="historial__fila"
+          :data-intento="intento.id"
+          :data-estado="intento.estado"
+        >
+          <span class="historial__fecha">{{ fechaCorta(intento.fecha) }}</span>
+          <span class="historial__leccion">
+            {{ tituloDe(intento.leccionId) }} <small>· intento {{ intento.numero }}</small>
+          </span>
+          <span class="historial__puntaje">{{ intento.aciertos }}/{{ intento.total }}</span>
+          <span class="historial__estado" :class="`historial__estado--${intento.estado}`">
+            {{ ETIQUETA_ESTADO_INTENTO[intento.estado] }}<template v-if="intento.aprobado"> · aprobado</template>
+          </span>
+          <span v-if="intento.origen === 'etapa4'" class="historial__origen" title="Registrado antes de que el servidor corrigiera los intentos">
+            anterior
+          </span>
+        </li>
+      </ol>
+
+      <div v-if="estado.intentos.length > MOSTRAR_DE_A">
+        <BaseBoton tamano="chico" variante="texto" @click="mostrarTodo = !mostrarTodo">
+          {{ mostrarTodo ? 'Ver menos' : `Ver los ${estado.intentos.length} intentos` }}
+        </BaseBoton>
+      </div>
+    </section>
+
     <!-- Borrar el historial -->
     <section class="tarjeta tarjeta--peligro">
       <h2>Reiniciar progreso</h2>
@@ -645,6 +790,117 @@ const animoSintax = computed(() => {
   margin-bottom: 0.25rem;
 }
 
+.lecciones,
+.historial {
+  display: grid;
+  gap: var(--e-1);
+}
+
+.leccion-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--e-2);
+  border-top: 1px solid var(--c-borde);
+  padding-top: var(--e-1);
+}
+
+.leccion-fila__titulo {
+  font-weight: 800;
+}
+
+.leccion-fila__titulo:hover {
+  color: var(--c-verde-osc);
+  text-decoration: underline;
+}
+
+.leccion-fila__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem var(--e-2);
+  font-size: var(--t-xs);
+  color: var(--c-gris);
+  font-weight: 700;
+}
+
+.situacion {
+  font-size: var(--t-xs);
+  font-weight: 800;
+  border-radius: var(--r-full);
+  padding: 0.2rem 0.7rem;
+  background: var(--c-fondo);
+  color: var(--c-gris);
+  white-space: nowrap;
+}
+
+.situacion--aprobada {
+  background: var(--c-verde-suave);
+  color: var(--c-verde-osc);
+}
+
+.situacion--completada,
+.situacion--en_curso {
+  background: var(--c-amarillo-suave);
+  color: var(--c-amarillo-osc);
+}
+
+.situacion--pendiente {
+  background: var(--c-azul-suave);
+  color: var(--c-azul-osc);
+}
+
+.historial__fila {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) auto auto auto;
+  align-items: baseline;
+  gap: var(--e-2);
+  font-size: var(--t-sm);
+  border-top: 1px solid var(--c-borde);
+  padding-top: var(--e-1);
+}
+
+.historial__fecha {
+  color: var(--c-gris);
+  font-variant-numeric: tabular-nums;
+}
+
+.historial__leccion {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.historial__leccion small {
+  color: var(--c-gris);
+  font-weight: 600;
+}
+
+.historial__puntaje {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.historial__estado {
+  font-size: var(--t-xs);
+  font-weight: 800;
+  color: var(--c-gris);
+}
+
+.historial__estado--completado {
+  color: var(--c-verde-osc);
+}
+
+.historial__estado--sin_vidas {
+  color: var(--c-rojo-osc);
+}
+
+.historial__origen {
+  font-size: var(--t-xs);
+  color: var(--c-gris);
+  border: 1px dashed var(--c-borde);
+  border-radius: var(--r-sm);
+  padding: 0 0.35rem;
+}
+
 @media (max-width: 860px) {
   .cabecera {
     grid-template-columns: auto minmax(0, 1fr);
@@ -657,6 +913,18 @@ const animoSintax = computed(() => {
   }
   .tarjeta--invitacion {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  /* En el celular cada intento ocupa dos renglones: fecha y estado arriba, la
+     leccion y el puntaje abajo. */
+  .historial__fila {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .historial__leccion {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 }
 
