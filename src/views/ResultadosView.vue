@@ -4,23 +4,34 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
-import MedallaCard from '@/components/MedallaCard.vue'
 import SintaxMascota from '@/components/SintaxMascota.vue'
 import EstadoConsulta from '@/components/EstadoConsulta.vue'
+import MensajeEstado from '@/components/MensajeEstado.vue'
 import { useContador } from '@/composables/useContador.js'
 import { obtenerLeccion, obtenerUnidad, listarLecciones } from '@/servicios/contenido.js'
-import { useProgreso, UMBRAL_APROBACION } from '@/composables/useProgreso.js'
-import MensajeEstado from '@/components/MensajeEstado.vue'
-import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
+import { obtenerIntento, ESTADO_INTENTO } from '@/servicios/progreso.js'
+import { useProgreso } from '@/composables/useProgreso.js'
+import { useCatalogo, CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
 
-/** Pantalla de cierre de una leccion: puntaje, XP ganado y que sigue. */
+/**
+ * Pantalla de cierre de un intento: puntaje, XP ganado y que sigue.
+ *
+ * Recibe SOLO el id del intento (?intento=...). Los numeros no viajan en la
+ * direccion: se le piden al servidor, que es quien los calculo. Asi la pantalla
+ * muestra lo que de verdad quedo guardado, se puede recargar y se puede abrir
+ * desde otro dispositivo con la misma cuenta.
+ *
+ * Mientras no hay confirmacion del servidor NO se dice "guardado": se muestra
+ * "confirmando" o, si fallo la consulta, que no se pudo confirmar.
+ */
 const props = defineProps({
   leccionId: { type: String, required: true }
 })
 
 const route = useRoute()
 const router = useRouter()
-const { estado, progresoUnidad, unidadCompletada, ultimoResultado, completarLeccion } = useProgreso()
+const { estado, progresoUnidad, unidadCompletada, anotarIntento } = useProgreso()
+const { cargarCurso } = useCatalogo()
 
 const leccion = ref(null)
 const unidad = ref(null)
@@ -33,63 +44,70 @@ async function cargar() {
     leccion.value = await obtenerLeccion(props.leccionId)
     unidad.value = await obtenerUnidad(leccion.value.unidadId)
     hermanas.value = await listarLecciones(leccion.value.unidadId)
+    // El XP de cada leccion y el progreso de la unidad salen del catalogo.
+    cargarCurso(unidad.value.cursoId)
   } catch (e) {
     leccion.value = null
     errorCarga.value = e
   }
 }
 
-onMounted(cargar)
-watch(() => props.leccionId, cargar)
+// --- El intento, confirmado por el servidor ---------------------------------
+const intentoId = computed(() => String(route.query.intento ?? ''))
+const intento = ref(null)
+/** 'confirmando' | 'confirmado' | 'error' | 'no-encontrado' */
+const confirmacion = ref('confirmando')
+const errorConfirmacion = ref(null)
 
-const total = computed(() => Number(route.query.total ?? 0))
-const aciertos = computed(() => Number(route.query.aciertos ?? 0))
-const xpGanado = computed(() => Number(route.query.xp ?? 0))
-const vidas = computed(() => Number(route.query.vidas ?? 0))
-
-/**
- * La leccion se termino pero el guardado fallo (sin conexion, sesion vencida).
- * El resultado se muestra igual y se puede reintentar sin perderlo.
- */
-const sinGuardar = computed(() => route.query.guardado === '0' && !sinVidas.value)
-const reintentando = ref(false)
-const errorGuardado = ref(null)
-
-async function reintentarGuardado() {
-  reintentando.value = true
-  errorGuardado.value = null
+async function confirmar() {
+  if (!intentoId.value) {
+    confirmacion.value = 'no-encontrado'
+    return
+  }
+  confirmacion.value = 'confirmando'
+  errorConfirmacion.value = null
   try {
-    const resultado = await completarLeccion(props.leccionId, {
-      aciertos: aciertos.value,
-      total: total.value
-    })
-    router.replace({
-      name: 'resultados',
-      params: { leccionId: props.leccionId },
-      query: { ...route.query, guardado: 1, xp: resultado.xpGanado }
-    })
-  } catch (error) {
-    errorGuardado.value = error
-  } finally {
-    reintentando.value = false
+    const leido = await obtenerIntento(intentoId.value)
+    if (!leido || leido.leccionId !== props.leccionId) {
+      intento.value = null
+      confirmacion.value = 'no-encontrado'
+      return
+    }
+    intento.value = leido
+    anotarIntento(leido)
+    confirmacion.value = 'confirmado'
+  } catch (e) {
+    errorConfirmacion.value = e
+    confirmacion.value = 'error'
   }
 }
 
-const incorrectas = computed(() => Math.max(0, total.value - aciertos.value))
-const porcentaje = computed(() =>
-  total.value === 0 ? 0 : Math.round((aciertos.value / total.value) * 100)
-)
+onMounted(() => {
+  cargar()
+  confirmar()
+})
+watch(() => props.leccionId, cargar)
+watch(intentoId, confirmar)
 
-/** Una leccion se aprueba a partir del umbral definido en useProgreso. */
-const aprobada = computed(() => !sinVidas.value && porcentaje.value >= UMBRAL_APROBACION * 100)
+const confirmado = computed(() => confirmacion.value === 'confirmado' && intento.value !== null)
+const total = computed(() => intento.value?.total ?? 0)
+const aciertos = computed(() => intento.value?.aciertos ?? 0)
+const incorrectas = computed(() => intento.value?.errores ?? 0)
+const porcentaje = computed(() => intento.value?.porcentaje ?? 0)
+const xpGanado = computed(() => (intento.value ? (estado.xpPorIntento[intento.value.id] ?? 0) : 0))
 
-const sinVidas = computed(() => vidas.value <= 0)
+const sinVidas = computed(() => intento.value?.estado === ESTADO_INTENTO.SIN_VIDAS)
+const enCurso = computed(() => intento.value?.estado === ESTADO_INTENTO.EN_CURSO)
+const abandonado = computed(() => intento.value?.estado === ESTADO_INTENTO.ABANDONADO)
+/** Aprobada lo decide el servidor al cerrar el intento (60 % o mas). */
+const aprobada = computed(() => intento.value?.aprobado === true)
 
 /** Sintax reacciona segun como te fue. */
 const animoSintax = computed(() => {
+  if (!confirmado.value) return 'pensando'
   if (sinVidas.value) return 'enojado'
   if (porcentaje.value === 100) return 'celebrando'
-  if (porcentaje.value >= 60) return 'normal'
+  if (aprobada.value) return 'normal'
   return 'confundido'
 })
 
@@ -99,10 +117,13 @@ const aciertosAnimados = useContador(aciertos, { duracion: 700 })
 const porcentajeAnimado = useContador(porcentaje, { duracion: 700 })
 
 const mensaje = computed(() => {
-  if (sinVidas.value) return { icono: 'corazonRoto', titulo: 'Te quedaste sin vidas', texto: 'La leccion no quedo completada y no suma XP. Volve a intentarlo: ahora ya sabes las respuestas.' }
+  if (!confirmado.value) return { icono: 'reloj', titulo: 'Tu resultado', texto: '' }
+  if (enCurso.value) return { icono: 'reloj', titulo: 'Este intento sigue en curso', texto: 'Todavia te quedan actividades por responder. Podes retomarlo donde lo dejaste.' }
+  if (abandonado.value) return { icono: 'repetir', titulo: 'Intento abandonado', texto: 'Empezaste otro intento de esta leccion, asi que este quedo en tu historial sin terminar.' }
+  if (sinVidas.value) return { icono: 'corazonRoto', titulo: 'Te quedaste sin vidas', texto: 'La leccion no quedo completada y no suma XP. Volve a intentarlo: tu intento anterior queda en el historial.' }
   if (porcentaje.value === 100) return { icono: 'trofeo', titulo: 'Leccion perfecta!', texto: 'Respondiste todo bien. Asi se aprende a programar.' }
-  if (porcentaje.value >= 60) return { icono: 'chispas', titulo: 'Leccion completada!', texto: 'Muy buen trabajo. Repasa lo que fallaste y segui avanzando.' }
-  return { icono: 'pesa', titulo: 'Leccion terminada', texto: 'Te costo un poco: repetir la leccion es la mejor forma de fijarlo.' }
+  if (aprobada.value) return { icono: 'chispas', titulo: 'Leccion aprobada!', texto: 'Muy buen trabajo. Repasa lo que fallaste y segui avanzando.' }
+  return { icono: 'pesa', titulo: 'Leccion completada, sin aprobar', texto: 'Para aprobar hace falta el 60 % de aciertos. Repetir la leccion es la mejor forma de fijarlo.' }
 })
 
 /** Siguiente leccion de la misma unidad, si queda alguna. */
@@ -114,24 +135,12 @@ const siguienteLeccion = computed(() => {
 
 const unidadTerminada = computed(() => (unidad.value ? unidadCompletada(unidad.value.id) : false))
 
-/** Medallas desbloqueadas justo en esta leccion (las otorga el servidor). */
-const medallasNuevas = computed(() => {
-  const ultimo = ultimoResultado.value
-  if (!ultimo || ultimo.leccionId !== props.leccionId) return []
-  return (ultimo.medallasNuevas ?? []).map((m) => ({
-    codigo: m.codigo,
-    nombre: m.nombre,
-    descripcion: m.descripcion,
-    icono: m.icono,
-    nivel: m.nivel,
-    obtenida: true,
-    obtenidaEn: null,
-    progreso: { actual: 1, objetivo: 1 }
-  }))
-})
-
-/** Reintentar arranca un intento nuevo: las respuestas anteriores no cuentan. */
+/** Repetir = un intento NUEVO. El anterior queda guardado en el historial. */
 function repetir() {
+  router.push({ name: 'actividades', params: { leccionId: props.leccionId }, query: { nuevo: 1 } })
+}
+
+function retomar() {
   router.push({ name: 'actividades', params: { leccionId: props.leccionId } })
 }
 
@@ -153,55 +162,71 @@ function siguiente() {
       <p class="texto-secundario">{{ mensaje.texto }}</p>
       <p class="tarjeta__leccion">{{ leccion.titulo }}</p>
 
-      <MensajeEstado v-if="sinGuardar" tipo="alerta">
-        <p>
-          <strong>No pudimos guardar este resultado.</strong> No lo perdiste: sigue aca. Cuando haya
-          conexion, guardalo para que cuente en tu progreso.
-        </p>
-        <p v-if="errorGuardado">{{ errorGuardado.message }}</p>
-        <BaseBoton tamano="chico" :deshabilitado="reintentando" @click="reintentarGuardado">
-          {{ reintentando ? 'Guardando...' : 'Reintentar guardado' }}
-        </BaseBoton>
-      </MensajeEstado>
-
-      <ul class="marcadores">
-        <li class="marcador marcador--total">
-          <span class="marcador__valor">{{ total }}</span>
-          <span class="marcador__texto">Actividades</span>
-        </li>
-        <li class="marcador marcador--acierto">
-          <span class="marcador__valor">{{ aciertosAnimados }}</span>
-          <span class="marcador__texto">Correctas</span>
-        </li>
-        <li class="marcador marcador--error">
-          <span class="marcador__valor">{{ incorrectasAnimadas }}</span>
-          <span class="marcador__texto">Incorrectas</span>
-        </li>
-        <li class="marcador marcador--precision">
-          <span class="marcador__valor">{{ porcentajeAnimado }} %</span>
-          <span class="marcador__texto">Precision</span>
-        </li>
-      </ul>
-
-      <p class="extras">
-        <span><Icono nombre="rayo" :tamano="15" /> +{{ xpAnimado }} XP</span>
-        <span><Icono nombre="llama" :tamano="15" /> {{ estado.racha }} dias de racha</span>
-        <span class="extras__estado" :class="aprobada ? 'extras__estado--ok' : 'extras__estado--no'">
-          <Icono :nombre="aprobada ? 'checkCirculo' : 'equisCirculo'" :tamano="15" />
-          {{ aprobada ? 'Leccion aprobada' : 'Leccion no aprobada' }}
-        </span>
+      <!-- Estado del guardado: solo se afirma con la confirmacion del servidor -->
+      <p
+        class="confirmacion"
+        :class="`confirmacion--${confirmacion}`"
+        data-prueba="estado-resultado"
+        :data-estado="confirmacion"
+        role="status"
+      >
+        <template v-if="confirmacion === 'confirmando'">
+          <Icono nombre="reloj" :tamano="15" /> Confirmando tu resultado con el servidor...
+        </template>
+        <template v-else-if="confirmado">
+          <Icono nombre="checkCirculo" :tamano="15" />
+          Resultado guardado · intento {{ intento.numero }}
+        </template>
+        <template v-else-if="confirmacion === 'no-encontrado'">
+          <Icono nombre="alerta" :tamano="15" /> No encontramos ese intento entre los tuyos.
+        </template>
+        <template v-else>
+          <Icono nombre="alerta" :tamano="15" /> No pudimos confirmar tu resultado.
+        </template>
       </p>
 
-      <section v-if="medallasNuevas.length" class="medallas-nuevas">
-        <p class="medallas-nuevas__titulo">
-          {{ medallasNuevas.length === 1 ? 'Desbloqueaste una medalla!' : 'Desbloqueaste medallas!' }}
+      <MensajeEstado v-if="confirmacion === 'error'" tipo="alerta">
+        <p>
+          Las respuestas que el servidor ya confirmo estan guardadas, pero ahora no pudimos
+          consultar el resultado. No lo damos por guardado hasta tener respuesta.
         </p>
-        <ul class="medallas-nuevas__lista">
-          <li v-for="medalla in medallasNuevas" :key="medalla.codigo">
-            <MedallaCard :medalla="medalla" nueva />
+        <p v-if="errorConfirmacion">{{ errorConfirmacion.message }}</p>
+        <BaseBoton tamano="chico" @click="confirmar">Reintentar</BaseBoton>
+      </MensajeEstado>
+
+      <template v-if="confirmado">
+        <ul class="marcadores">
+          <li class="marcador marcador--total">
+            <span class="marcador__valor">{{ total }}</span>
+            <span class="marcador__texto">Actividades</span>
+          </li>
+          <li class="marcador marcador--acierto">
+            <span class="marcador__valor" data-prueba="aciertos">{{ aciertosAnimados }}</span>
+            <span class="marcador__texto">Correctas</span>
+          </li>
+          <li class="marcador marcador--error">
+            <span class="marcador__valor">{{ incorrectasAnimadas }}</span>
+            <span class="marcador__texto">Incorrectas</span>
+          </li>
+          <li class="marcador marcador--precision">
+            <span class="marcador__valor">{{ porcentajeAnimado }} %</span>
+            <span class="marcador__texto">Precision</span>
           </li>
         </ul>
-      </section>
+
+        <p class="extras">
+          <span><Icono nombre="rayo" :tamano="15" /> +{{ xpAnimado }} XP</span>
+          <span><Icono nombre="llama" :tamano="15" /> {{ estado.racha }} dias de racha</span>
+          <span
+            class="extras__estado"
+            :class="aprobada ? 'extras__estado--ok' : 'extras__estado--no'"
+            data-prueba="aprobada"
+          >
+            <Icono :nombre="aprobada ? 'checkCirculo' : 'equisCirculo'" :tamano="15" />
+            {{ aprobada ? 'Leccion aprobada' : 'Leccion no aprobada' }}
+          </span>
+        </p>
+      </template>
 
       <div v-if="unidad" class="unidad">
         <p class="unidad__titulo">
@@ -219,7 +244,10 @@ function siguiente() {
       </div>
 
       <div class="acciones">
-        <BaseBoton variante="contorno" @click="repetir">Intentar de nuevo</BaseBoton>
+        <BaseBoton v-if="enCurso" @click="retomar">Continuar el intento</BaseBoton>
+        <BaseBoton variante="contorno" @click="repetir">
+          {{ enCurso ? 'Empezar de nuevo' : 'Intentar de nuevo' }}
+        </BaseBoton>
 
         <BaseBoton
           variante="contorno"
@@ -361,27 +389,27 @@ function siguiente() {
   color: var(--c-rojo-osc);
 }
 
-.medallas-nuevas {
-  width: 100%;
+.confirmacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--t-sm);
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem;
+  background: var(--c-fondo);
+  color: var(--c-gris);
+}
+
+.confirmacion--confirmado {
+  background: var(--c-verde-suave);
+  color: var(--c-verde-osc);
+}
+
+.confirmacion--error,
+.confirmacion--no-encontrado {
   background: var(--c-amarillo-suave);
-  border: 2px solid var(--c-amarillo);
-  border-radius: var(--r-lg);
-  padding: var(--e-3);
-  display: grid;
-  gap: var(--e-2);
-}
-
-.medallas-nuevas__titulo {
-  font-family: var(--f-titulo);
-  font-weight: 900;
   color: var(--c-amarillo-osc);
-}
-
-.medallas-nuevas__lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 170px);
-  justify-content: center;
-  gap: var(--e-2);
 }
 
 .unidad {

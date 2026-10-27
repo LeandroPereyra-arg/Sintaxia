@@ -21,7 +21,8 @@
     "pruebas:etapa3": "node pruebas/etapa3.mjs",
     "auth:compilar": "sh pruebas/compilar-auth-local.sh",
     "pruebas:entorno": "node pruebas/entorno.mjs",
-    "pruebas:etapa4": "node pruebas/etapa4.mjs"
+    "pruebas:etapa4": "node pruebas/etapa4.mjs",
+    "pruebas:etapa5": "node pruebas/etapa5.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

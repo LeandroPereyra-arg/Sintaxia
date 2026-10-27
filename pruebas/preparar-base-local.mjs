@@ -1,7 +1,7 @@
 /**
  * Prepara una base PostgreSQL local equivalente a un proyecto de Supabase, con
  * los mismos scripts que se ejecutan en Supabase. Se usa para las pruebas
- * automaticas (pruebas/etapa3.mjs y pruebas/etapa4.mjs).
+ * automaticas (pruebas/etapa3.mjs a pruebas/etapa5.mjs).
  *
  *   node pruebas/preparar-base-local.mjs
  *
@@ -78,7 +78,10 @@ for (const archivo of [
   '04-funcion-comprobar.sql',
   '05-perfiles-y-progreso.sql',
   '06-politicas-rls-etapa4.sql',
-  '07-limpieza-invitados.sql'
+  '07-limpieza-invitados.sql',
+  '08-intentos-y-respuestas.sql',
+  '09-funciones-intentos.sql',
+  '10-politicas-rls-etapa5.sql'
 ]) {
   psql(['-f', join(raiz, 'supabase', archivo)])
   console.log(`  aplicado ${archivo}`)

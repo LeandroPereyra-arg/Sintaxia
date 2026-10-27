@@ -1,5 +1,5 @@
 -- ===========================================================================
---  Sintaxia - Perfiles de participantes e historial de intentos
+--  Sintaxia - Perfiles de participantes
 --  Etapa 4 - Invitados, registro e inicio de sesion (Supabase Auth)
 -- ---------------------------------------------------------------------------
 --  Supabase Auth guarda las identidades (correo, contrasena, sesiones) en su
@@ -7,15 +7,17 @@
 --  aplicacion y no de la autenticacion:
 --
 --    perfiles          un perfil por participante, con el MISMO id que auth.users
---    intentos_leccion  historial: un renglon por cada vez que se termina una leccion
+--
+--  (Hasta la etapa 4 este script tambien creaba intentos_leccion, el historial
+--  donde el cliente informaba sus aciertos. Desde la etapa 5 el progreso vive en
+--  intentos y respuestas: ver 08-intentos-y-respuestas.sql.)
 --
 --  Reglas que NO se negocian:
 --    · Ninguna tabla propia guarda contrasenas ni correos: eso vive solo en `auth`.
 --    · El perfil se crea solo, con un disparador, cuando Auth crea al usuario.
 --      El cliente nunca inserta perfiles.
 --
---  Este script NO borra datos: se puede volver a correr sin perder perfiles ni
---  historial (a diferencia de 01-esquema.sql, que reconstruye el contenido).
+--  Este script NO borra datos: se puede volver a correr sin perder perfiles (a diferencia de 01-esquema.sql, que reconstruye el contenido).
 --
 --  Se ejecuta despues de los scripts 01 a 04. Las politicas de RLS y los permisos
 --  de estas tablas estan en 06-politicas-rls-etapa4.sql.
@@ -264,34 +266,5 @@ select u.id,
        coalesce(u.is_anonymous, false)
   from auth.users u
  on conflict (id) do nothing;
-
--- ---------------------------------------------------------------------------
--- 7. INTENTOS DE LECCION (historial)
---    Un renglon cada vez que alguien termina una leccion. Con esto se calculan
---    el mejor resultado de cada leccion, el XP, la racha y el calendario. Es el
---    "historial" que una cuenta conserva al convertirse y que un invitado puede
---    perder si cierra sesion.
--- ---------------------------------------------------------------------------
-create table if not exists public.intentos_leccion (
-  id          bigint      generated always as identity primary key,
-  usuario_id  uuid        not null default auth.uid()
-                          references public.perfiles (id) on delete cascade,
-  leccion_id  text        not null
-                          references public.lecciones (id) on delete cascade on update cascade,
-  aciertos    smallint    not null,
-  total       smallint    not null,
-  creado_en   timestamptz not null default now(),
-
-  constraint ck_intentos_total    check (total between 1 and 50),
-  constraint ck_intentos_aciertos check (aciertos between 0 and total)
-);
-
-comment on table  public.intentos_leccion is 'Historial: un renglon por cada leccion terminada. Solo su dueno lo ve (RLS).';
-comment on column public.intentos_leccion.usuario_id is 'Por defecto auth.uid(): el cliente no elige de quien es el intento.';
-
-create index if not exists ix_intentos_usuario on public.intentos_leccion (usuario_id, creado_en desc);
-create index if not exists ix_intentos_leccion on public.intentos_leccion (leccion_id);
-
-alter table public.intentos_leccion enable row level security;
 
 commit;

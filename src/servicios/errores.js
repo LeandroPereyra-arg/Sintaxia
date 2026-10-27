@@ -96,9 +96,7 @@ const RESTRICCIONES = {
   ck_perfiles_alias:
     'Ese alias no esta permitido. Usa de 3 a 20 caracteres: letras sin tilde, numeros y guion bajo.',
   ck_perfiles_meta: 'Esa meta diaria no es valida.',
-  ck_perfiles_avatar: 'Ese avatar no es valido.',
-  ck_intentos_aciertos: 'Los aciertos no pueden ser mas que el total de actividades.',
-  ck_intentos_total: 'La cantidad de actividades no es valida.'
+  ck_perfiles_avatar: 'Ese avatar no es valido.'
 }
 
 /**
@@ -107,10 +105,14 @@ const RESTRICCIONES = {
  */
 export function traducirErrorDeDatos(error, que = 'completar la operacion') {
   if (esErrorDeRed(error)) {
-    return new ErrorDeConsulta(
+    const sinRed = new ErrorDeConsulta(
       'No hay conexion con el servidor. Revisa tu conexion e intenta de nuevo.',
       error
     )
+    // La peticion no llego (o no llego la respuesta): puede quedar pendiente y
+    // reenviarse, a diferencia de un error que devolvio el servidor.
+    sinRed.sinConexion = true
+    return sinRed
   }
 
   const codigo = error?.code ?? ''

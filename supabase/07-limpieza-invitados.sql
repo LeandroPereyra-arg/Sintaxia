@@ -7,8 +7,10 @@
 --  asi que se acumulan: esta funcion los elimina.
 --
 --  Borra los invitados creados hace mas de p_dias dias, que en ese lapso no
---  tuvieron ninguna sesion activa ni terminaron ninguna leccion. Al borrar el
---  usuario de Auth se borran en cascada su perfil y su historial.
+--  tuvieron ninguna sesion activa ni respondieron ninguna actividad. Al borrar
+--  el usuario de Auth se borran en cascada su perfil, sus intentos y sus
+--  respuestas. (La tabla public.intentos se crea en 08-intentos-y-respuestas.sql;
+--  la funcion la usa recien cuando se ejecuta.)
 --
 --  Nunca toca cuentas permanentes ni invitados con actividad reciente.
 --
@@ -46,9 +48,9 @@ begin
             and coalesce(s.updated_at, s.created_at) >= now() - make_interval(days => p_dias)
        )
        and not exists (
-         select 1 from public.intentos_leccion i
+         select 1 from public.intentos i
           where i.usuario_id = u.id
-            and i.creado_en >= now() - make_interval(days => p_dias)
+            and i.actualizado_en >= now() - make_interval(days => p_dias)
        )
     returning 1
   )

@@ -101,7 +101,7 @@ asigna uno nuevo. El codigo lo elige la base, el cliente no puede tocarlo.
 | Correo | Supabase Auth (`auth.users`) | Solo su dueno |
 | Contrasena | Supabase Auth, **cifrada** (nunca en tablas propias) | Nadie, ni nosotros |
 | Alias, codigo, avatar, meta diaria | `perfiles` | Solo su dueno (hoy) |
-| Historial de lecciones | `intentos_leccion` | Solo su dueno |
+| Historial de lecciones | `intentos_leccion` (desde la etapa 5: `intentos` y `respuestas`, ver [doc 14](14-intentos-y-progreso.md)) | Solo su dueno |
 | Invitado | Un identificador anonimo, sin correo | Solo su dueno |
 
 **Hoy no se muestra ningun dato a otras personas.** Cuando exista el ranking se

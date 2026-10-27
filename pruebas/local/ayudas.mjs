@@ -163,5 +163,53 @@ export function crearApi(claves) {
     return { estado: r.status, datos: cuerpoRespuesta }
   }
 
-  return { auth, altaAnonima, cuentaConfirmada, iniciarSesion, datos }
+  /** Llama a una funcion del servidor (POST /rest/v1/rpc/<nombre>). */
+  function rpc(token, nombre, argumentos = {}) {
+    return datos(token, 'POST', `rpc/${nombre}`, argumentos)
+  }
+
+  return { auth, altaAnonima, cuentaConfirmada, iniciarSesion, datos, rpc }
+}
+
+// ---------------------------------------------------------------------------
+// Intentos (etapa 5): resolver una leccion por la API, como lo haria la app
+// ---------------------------------------------------------------------------
+
+/** Para cada actividad de la leccion, una opcion correcta y una incorrecta (en orden). */
+export async function opcionesDeLeccion(base, leccionId) {
+  const { rows } = await base.query(
+    `select p.id as pregunta,
+            max(o.id) filter (where o.es_correcta)     as correcta,
+            min(o.id) filter (where not o.es_correcta) as incorrecta
+       from preguntas p
+       join opciones o on o.pregunta_id = p.id
+      where p.leccion_id = $1 and p.estado = 'publicada'
+      group by p.id, p.orden
+      order by p.orden`,
+    [leccionId]
+  )
+  return rows
+}
+
+/**
+ * Empieza un intento y responde: primero `aciertos` actividades bien y despues
+ * el resto mal, hasta que el intento se cierre. Devuelve el ultimo resumen del
+ * servidor (o el error, si una llamada falla).
+ */
+export async function resolverPorApi(api, base, token, leccionId, { aciertos = Infinity, intentoId = crypto.randomUUID() } = {}) {
+  const inicio = await api.rpc(token, 'iniciar_intento', { p_intento_id: intentoId, p_leccion_id: leccionId })
+  if (inicio.estado !== 200) return { error: inicio, intento: null }
+  let intento = inicio.datos
+  const actividades = await opcionesDeLeccion(base, leccionId)
+  for (const [i, a] of actividades.entries()) {
+    if (intento.estado !== 'en_curso') break
+    const r = await api.rpc(token, 'responder_actividad', {
+      p_intento_id: intentoId,
+      p_pregunta_id: a.pregunta,
+      p_opcion_id: i < aciertos ? a.correcta : a.incorrecta
+    })
+    if (r.estado !== 200) return { error: r, intento }
+    intento = r.datos.intento
+  }
+  return { error: null, intento }
 }

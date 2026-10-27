@@ -20,8 +20,9 @@
 --    contenido (etapa 3)      publico, invitado y cuenta: LEEN lo publicado
 --    perfiles                 invitado y cuenta: ven y editan SOLO el propio;
 --                             el publico no ve nada
---    intentos_leccion         invitado y cuenta: ven, crean y borran SOLO los
---                             propios; el invitado tiene un tope (restrictiva)
+--
+--  (Las politicas del progreso -intentos y respuestas- estan desde la etapa 5 en
+--  10-politicas-rls-etapa5.sql.)
 --
 --  Ninguna politica deja leer, modificar ni borrar datos de otra persona.
 -- ===========================================================================
@@ -34,8 +35,7 @@ begin;
 -- Este script es el unico que maneja los permisos de estas tablas, asi que se
 -- puede volver a correr sin dejar nada abierto.
 -- ---------------------------------------------------------------------------
-revoke all on public.perfiles         from anon, authenticated;
-revoke all on public.intentos_leccion from anon, authenticated;
+revoke all on public.perfiles from anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Ayuda: "esta sesion es de un invitado?"
@@ -55,29 +55,6 @@ comment on function public.es_invitado() is
 
 revoke all on function public.es_invitado() from public;
 grant execute on function public.es_invitado() to anon, authenticated;
-
--- ---------------------------------------------------------------------------
--- Ayuda: cuantos intentos guardo la persona de la sesion actual.
---
--- Hace falta para el tope de los invitados (mas abajo). La politica NO puede
--- hacer ese conteo con una subconsulta a su propia tabla: PostgreSQL lo rechaza
--- con "infinite recursion detected in policy". Una funcion SECURITY DEFINER no
--- pasa por RLS, y como filtra por auth.uid() solo cuenta los intentos propios.
--- ---------------------------------------------------------------------------
-create or replace function public.cantidad_intentos_propios()
-returns integer
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select count(*)::integer
-    from public.intentos_leccion
-   where usuario_id = (select auth.uid());
-$$;
-
-revoke all on function public.cantidad_intentos_propios() from public;
-grant execute on function public.cantidad_intentos_propios() to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- PERFILES
@@ -107,50 +84,5 @@ create policy "perfiles: editar el propio"
 
 -- Sin politicas de insert ni de delete: el perfil lo crea y lo borra Auth
 -- (disparador y on delete cascade), nunca el cliente.
-
--- ---------------------------------------------------------------------------
--- INTENTOS DE LECCION
---   Al insertar, el cliente solo manda leccion, aciertos y total. De quien es
---   el intento (usuario_id) y cuando se hizo (creado_en) lo pone la base.
--- ---------------------------------------------------------------------------
-drop policy if exists "intentos: ver los propios"        on public.intentos_leccion;
-drop policy if exists "intentos: crear los propios"      on public.intentos_leccion;
-drop policy if exists "intentos: borrar los propios"     on public.intentos_leccion;
-drop policy if exists "intentos: tope para invitados"    on public.intentos_leccion;
-
-grant select on public.intentos_leccion to authenticated;
-grant insert (leccion_id, aciertos, total) on public.intentos_leccion to authenticated;
-grant delete on public.intentos_leccion to authenticated;
-
-create policy "intentos: ver los propios"
-  on public.intentos_leccion
-  for select
-  to authenticated
-  using (usuario_id = (select auth.uid()));
-
-create policy "intentos: crear los propios"
-  on public.intentos_leccion
-  for insert
-  to authenticated
-  with check (usuario_id = (select auth.uid()));
-
-create policy "intentos: borrar los propios"
-  on public.intentos_leccion
-  for delete
-  to authenticated
-  using (usuario_id = (select auth.uid()));
-
--- Politica RESTRICTIVA: se suma a las anteriores (todas tienen que cumplirse).
--- Crear sesiones anonimas es gratis, asi que un invitado no puede llenar la
--- tabla sin limite: tiene un tope de 200 intentos. Una cuenta permanente no.
-create policy "intentos: tope para invitados"
-  on public.intentos_leccion
-  as restrictive
-  for insert
-  to authenticated
-  with check (
-    not public.es_invitado()
-    or public.cantidad_intentos_propios() < 200
-  );
 
 commit;

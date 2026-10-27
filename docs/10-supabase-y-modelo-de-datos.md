@@ -14,6 +14,10 @@ Vue consulta el contenido.
 > `progreso_lecciones` y `respuestas` "de una etapa siguiente", ya esta resuelto de otra
 > forma: el acceso es Supabase Auth, y los datos de cada persona estan en `perfiles` e
 > `intentos_leccion`. Ver [12. Acceso y sesiones](12-acceso-y-sesiones.md).
+>
+> **Actualizacion de la etapa 5.** `intentos_leccion` se reemplazo por `intentos` y
+> `respuestas`, que escribe solo el servidor. Ver
+> [14. Intentos, respuestas y progreso](14-intentos-y-progreso.md).
 
 ---
 
