@@ -82,7 +82,9 @@ async function resolverLeccion(pagina, leccionId, { correctas = true } = {}) {
     [leccionId, correctas]
   )
 
-  await pagina.goto(`${BASE}/lecciones/${leccionId}/actividades`, { waitUntil: 'networkidle' })
+  // ?nuevo=1: desde la etapa 5 la pantalla retoma el intento en curso (el caso 7
+  // deja uno empezado). Aca se quiere resolver la leccion entera, desde cero.
+  await pagina.goto(`${BASE}/lecciones/${leccionId}/actividades?nuevo=1`, { waitUntil: 'networkidle' })
 
   for (let i = 0; i < rows.length; i++) {
     await pagina.waitForSelector('.opcion')
@@ -98,7 +100,7 @@ async function resolverLeccion(pagina, leccionId, { correctas = true } = {}) {
 // ===========================================================================
 
 await conexion.connect()
-const navegador = await chromium.launch()
+const navegador = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined })
 
 try {
   // -------------------------------------------------------------------

@@ -24,3 +24,22 @@ recorrerla durante la entrega.
 
 El recorrido automatizado de `npm run pruebas:etapa2` cubre los mismos pasos, asi que
 sirve como ensayo previo a la demostracion.
+
+## Agregado de la etapa 5: intentos y progreso
+
+1. **Empezar la leccion 1 y responder dos actividades** → arriba de cada una aparece
+   "Respuesta guardada": la confirmo el servidor.
+2. **Cerrar la pestana y volver a abrir la leccion** → "Tenes un intento sin terminar:
+   2 de 4 respondidas". "Continuar el intento" retoma en la actividad 3 con las mismas vidas.
+3. **Cortar el wifi y comprobar una respuesta** → "Pendiente: sin conexion": no se corrige
+   ni se cuenta. Al volver el wifi se manda sola y pasa a "Respuesta guardada".
+4. **Terminar** → la pantalla de resultados dice "Resultado guardado · intento 1" recien
+   cuando el servidor lo confirma.
+5. **Intentar de nuevo** con un resultado peor → en el perfil, "Tus lecciones" muestra el
+   mejor (100 %) y el ultimo (por ejemplo 1/4) por separado, y el historial lista los dos
+   intentos.
+6. **Con una cuenta, abrir el perfil en otro dispositivo** → el mismo historial, y una
+   leccion a medias se retoma alla.
+
+`npm run pruebas:etapa5` automatiza estos pasos y los casos de permisos y peticiones
+repetidas (ver [15. Registro de pruebas de la etapa 5](15-registro-de-pruebas-etapa5.md)).

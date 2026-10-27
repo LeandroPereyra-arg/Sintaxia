@@ -25,8 +25,15 @@ const props = defineProps({
 
 const router = useRouter()
 const { estado: catalogo, cargarCurso } = useCatalogo()
-const { leccionDisponible, leccionCompletada, leccionAprobada, precisionLeccion, motivoBloqueo } =
-  useProgreso()
+const {
+  estado: progreso,
+  leccionDisponible,
+  leccionCompletada,
+  leccionAprobada,
+  precisionLeccion,
+  motivoBloqueo,
+  intentoEnCurso
+} = useProgreso()
 
 const leccion = ref(null)
 const unidad = ref(null)
@@ -65,15 +72,37 @@ const completada = computed(() => leccionCompletada(props.leccionId))
 const aprobada = computed(() => leccionAprobada(props.leccionId))
 const ejemplo = computed(() => leccion.value?.teoria?.ejemplo ?? null)
 
+/** Intento que quedo sin terminar (en este u otro dispositivo): se puede retomar. */
+const enCurso = computed(() => intentoEnCurso(props.leccionId))
+/** Ultimo intento cerrado, para el resumen (el mejor se muestra aparte). */
+const ultimo = computed(() => {
+  const intento = progreso.ultimos[props.leccionId]
+  return intento && intento.estado !== 'en_curso' ? intento : null
+})
+
+const ETIQUETA_ULTIMO = {
+  completado: 'completado',
+  sin_vidas: 'sin vidas',
+  abandonado: 'abandonado'
+}
+
 const textoBoton = computed(() => {
+  if (enCurso.value) return 'Continuar el intento'
   if (aprobada.value) return 'Volver a practicar'
   if (completada.value) return 'Intentar de nuevo'
   return 'Comenzar actividades'
 })
 
+/** Sin `nuevo`, la pantalla de actividades retoma el intento en curso si hay uno. */
 function comenzar() {
   if (bloqueada.value || totalActividades.value === 0) return
   router.push({ name: 'actividades', params: { leccionId: props.leccionId } })
+}
+
+/** Empieza de cero: el intento en curso queda abandonado en el historial. */
+function empezarDeNuevo() {
+  if (bloqueada.value || totalActividades.value === 0) return
+  router.push({ name: 'actividades', params: { leccionId: props.leccionId }, query: { nuevo: 1 } })
 }
 </script>
 
@@ -156,7 +185,18 @@ function comenzar() {
               <Icono nombre="check" :tamano="16" />
               Mejor resultado: {{ precisionLeccion(leccionId) }} %
             </li>
+            <li v-if="ultimo" data-prueba="ultimo-intento">
+              <Icono nombre="reloj" :tamano="16" />
+              Ultimo intento: {{ ultimo.aciertos }}/{{ ultimo.total }} ·
+              {{ ETIQUETA_ULTIMO[ultimo.estado] }}
+            </li>
           </ul>
+
+          <p v-if="enCurso && !bloqueada" class="aviso aviso--curso" data-prueba="intento-en-curso">
+            <Icono nombre="reloj" :tamano="16" />
+            Tenes un intento sin terminar: {{ enCurso.respondidas }} de {{ enCurso.total }}
+            respondidas, {{ enCurso.vidas }} vidas. Tus respuestas estan guardadas.
+          </p>
 
           <p v-if="bloqueada" class="aviso">
             <Icono nombre="candado" :tamano="16" /> {{ motivo }}
@@ -172,6 +212,10 @@ function comenzar() {
             @click="comenzar"
           >
             {{ bloqueada ? 'Leccion bloqueada' : totalActividades === 0 ? 'Sin actividades' : textoBoton }}
+          </BaseBoton>
+
+          <BaseBoton v-if="enCurso && !bloqueada" variante="contorno" @click="empezarDeNuevo">
+            Empezar de nuevo
           </BaseBoton>
 
           <BaseBoton
@@ -338,6 +382,12 @@ function comenzar() {
   border-radius: var(--r-md);
   padding: var(--e-2);
   width: 100%;
+}
+
+.aviso--curso {
+  color: var(--c-azul-osc);
+  background: var(--c-azul-suave);
+  border-color: var(--c-azul);
 }
 
 @media (max-width: 640px) {

@@ -54,11 +54,12 @@ PostgreSQL con los mismos scripts de `supabase/` y una imitacion de la API de da
 npm run auth:compilar     # una sola vez; hace falta Go
 npm run supabase:local    # arma la base desde cero
 npm run pruebas:entorno   # Auth + datos + correos de prueba + la app (queda corriendo)
-npm run pruebas:etapa4    # en otra terminal
+npm run pruebas:etapa5    # en otra terminal (o etapa2, etapa3, etapa4)
 ```
 
 Requiere **Node 18+**, **PostgreSQL 14+** y **Go** (solo para compilar Auth). Detalle en
-[docs/13-registro-de-pruebas-etapa4.md](docs/13-registro-de-pruebas-etapa4.md).
+[docs/13-registro-de-pruebas-etapa4.md](docs/13-registro-de-pruebas-etapa4.md) y
+[docs/15-registro-de-pruebas-etapa5.md](docs/15-registro-de-pruebas-etapa5.md).
 
 > El servidor Express con MySQL de la etapa 2 (carpeta `server/`) **ya no lo usa la
 > aplicacion**: queda como referencia. El acceso paso a Supabase Auth.
@@ -78,6 +79,7 @@ Requiere **Node 18+**, **PostgreSQL 14+** y **Go** (solo para compilar Auth). De
 | `npm run pruebas:etapa2` | Recorrido de actividades y resultados |
 | `npm run pruebas:etapa3` | Consultas a la base, permisos y manejo de errores |
 | `npm run pruebas:etapa4` | Invitados, registro, sesion, conversion, recuperacion y RLS |
+| `npm run pruebas:etapa5` | Intentos, respuestas, progreso, desconexion, peticiones repetidas y permisos |
 
 ---
 
@@ -179,6 +181,8 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [11. Registro de pruebas (etapa 3)](docs/11-registro-de-pruebas-etapa3.md) | Los 12 casos probados contra la base, con problemas y correcciones |
 | [12. Acceso y sesiones (etapa 4)](docs/12-acceso-y-sesiones.md) | Invitados, registro, alias, permisos, configuracion de Supabase y decisiones |
 | [13. Registro de pruebas (etapa 4)](docs/13-registro-de-pruebas-etapa4.md) | Los 35 casos, que es real y que simulado, problemas y lo que no se probo |
+| [14. Intentos, respuestas y progreso (etapa 5)](docs/14-intentos-y-progreso.md) | Modelo, correccion en el servidor, duplicados, desconexion, perfil y migracion · [DER](docs/der/sintaxia-der-etapa5.png) |
+| [15. Registro de pruebas (etapa 5)](docs/15-registro-de-pruebas-etapa5.md) | Los 22 casos, problemas encontrados y lo que no se probo |
 
 ---
 
@@ -261,9 +265,12 @@ supabase/
 ├── 02-datos-iniciales.sql    carga inicial del contenido (generado)
 ├── 03-politicas-rls.sql      Row Level Security y permisos por columna
 ├── 04-funcion-comprobar.sql  correccion de respuestas del lado del servidor
-├── 05-perfiles-y-progreso.sql   perfiles ligados a Auth e historial de intentos
+├── 05-perfiles-y-progreso.sql   perfiles ligados a Auth (alias y codigo)
 ├── 06-politicas-rls-etapa4.sql  permisos y RLS: cada persona, solo lo propio
 ├── 07-limpieza-invitados.sql    borra invitados abandonados
+├── 08-intentos-y-respuestas.sql intentos y respuestas (y migracion del historial anterior)
+├── 09-funciones-intentos.sql    iniciar, responder y abandonar: el servidor corrige y calcula
+├── 10-politicas-rls-etapa5.sql  cada persona lee solo su progreso; nadie lo escribe directo
 └── README.md                 datos del proyecto y organizacion de las tablas
 
 src/
@@ -274,7 +281,7 @@ src/
 ├── data/              contenido de prueba: hoy solo alimenta al generador del
 │                      script de carga inicial y a la API de cuentas
 ├── composables/       useAuth.js (sesion) · useProgreso.js · useCatalogo.js (cache)
-├── utils/             verificarRespuesta.js
+├── utils/             estadisticas.js (mejor, ultimo, XP, racha) · respuestaPendiente.js
 ├── components/        BaseBoton, BarraProgreso, BarraFeedback, EstadoConsulta,
 │                      CampoTexto, MensajeEstado, AvisoDatos, BotonCerrarSesion,
 │                      MedallaCard, CalendarioActividad, CursoCard, UnidadCard,
@@ -339,8 +346,12 @@ completar la anterior.
 
 ## Reglas del juego
 
-- **3 vidas por leccion.** Si se pierden las tres, la leccion no se aprueba ni suma XP.
-- **XP por leccion**, proporcional a los aciertos. Al repetirla se gana la mitad.
+- **3 vidas por leccion.** Si se pierden las tres antes de la ultima actividad, el intento
+  se corta: la leccion no se completa ni suma XP.
+- **Se aprueba con el 60 %** de aciertos, y aprobar habilita la leccion siguiente. Lo decide
+  el servidor, que corrige y guarda cada respuesta.
+- **Cada repeticion es un intento nuevo**: los anteriores quedan en el historial. Cuenta el
+  mejor resultado, y repetir solo suma el XP que mejora.
 - **Las unidades se desbloquean de a una**: hay que completar todas las lecciones de la
   anterior.
 - **Racha diaria**: sube si se practico ayer, vuelve a 1 si se corto.
@@ -359,6 +370,7 @@ completar la anterior.
 | Alias | — | `Invitado#codigo` (no lo elige) | el que elija, con codigo |
 | Donde se guarda el historial | — | Supabase, ligado a su sesion | Supabase, ligado a su cuenta |
 | Se pierde al cerrar sesion o cambiar de dispositivo | — | **si** | no |
+| Retomar una leccion a medias | — | en la misma sesion | en cualquier dispositivo |
 | Aparecera en el ranking | no | no | si |
 
 Un invitado que crea su cuenta **sigue siendo el mismo usuario**: conserva su historial, no
@@ -367,6 +379,12 @@ ya existia, los historiales **no se fusionan** y la app lo advierte antes.
 
 Cada persona ve y modifica solo sus datos (RLS). Detalle de los flujos, los permisos y la
 configuracion de Supabase en [docs/12-acceso-y-sesiones.md](docs/12-acceso-y-sesiones.md).
+
+Desde la etapa 5 cada respuesta se corrige y se guarda **en el servidor en el momento**: si
+se cierra la app o se corta la conexion, lo respondido no se pierde y la leccion se retoma
+donde quedo. La app muestra si cada respuesta esta guardada, pendiente o fallo, y nunca
+dice "guardado" sin la confirmacion del servidor. Detalle en
+[docs/14-intentos-y-progreso.md](docs/14-intentos-y-progreso.md).
 
 ---
 

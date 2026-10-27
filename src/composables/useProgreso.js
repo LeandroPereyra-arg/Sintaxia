@@ -1,8 +1,8 @@
-import { computed, effectScope, reactive, ref, watch } from 'vue'
+import { computed, effectScope, reactive, watch } from 'vue'
 import { ESTADO_UNIDAD } from '@/constantes/estados.js'
 import { useCatalogo } from '@/composables/useCatalogo.js'
 import { useAuth } from '@/composables/useAuth.js'
-import { listarMisIntentos, registrarIntento, borrarMiHistorial } from '@/servicios/progreso.js'
+import { listarMisIntentos, borrarMiHistorial } from '@/servicios/progreso.js'
 import { SinSesion } from '@/servicios/errores.js'
 import { calcularEstadisticas } from '@/utils/estadisticas.js'
 
@@ -19,12 +19,15 @@ export const UMBRAL_APROBACION = 0.6
 /**
  * Progreso de la persona que esta usando la app.
  *
- * Desde la etapa 4 sale del HISTORIAL guardado en Supabase (tabla
- * intentos_leccion), que pertenece al usuario de la sesion actual, sea invitado
- * o cuenta. No hay copia en el navegador: al cerrar sesion se descarta.
+ * Sale del HISTORIAL de intentos guardado en Supabase (tabla intentos), que
+ * pertenece al usuario de la sesion actual, sea invitado o cuenta. Desde la
+ * etapa 5 cada intento lo corrige y lo cierra el servidor: aca no se escribe
+ * ningun resultado, solo se lee. No hay copia en el navegador: al cerrar sesion
+ * se descarta, y desde otro dispositivo con la misma cuenta se ve lo mismo.
  *
  * De ese historial se calculan, con una funcion pura (utils/estadisticas.js), el
- * mejor resultado de cada leccion, el XP, la racha y el calendario.
+ * mejor resultado de cada leccion, el ultimo intento, el XP, la racha y el
+ * calendario.
  */
 
 const historial = reactive({
@@ -33,9 +36,6 @@ const historial = reactive({
   cargado: false,
   error: null
 })
-
-/** Resultado de la ultima leccion, para la pantalla de resultados. */
-const ultimoResultado = ref(null)
 
 let idDelHistorial = null
 
@@ -84,7 +84,6 @@ function observarSesion() {
         if (id === idDelHistorial) return
         historial.intentos = []
         historial.cargado = false
-        ultimoResultado.value = null
         cargarHistorial()
       },
       { immediate: true }
@@ -122,8 +121,21 @@ export function useProgreso() {
     xpDeHoy: computed(() => estadisticas.value.xpDeHoy),
     racha: computed(() => estadisticas.value.racha),
     rachaMaxima: computed(() => estadisticas.value.rachaMaxima),
-    /** { [leccionId]: { aciertos, total, fecha, intentos } } con el MEJOR resultado. */
+    /** { [leccionId]: { aciertos, total, aprobada, fecha, intentos } } con el MEJOR completado. */
     lecciones: computed(() => estadisticas.value.lecciones),
+    /** { [leccionId]: intento } el ultimo intento de cada leccion, termine como termine. */
+    ultimos: computed(() => estadisticas.value.ultimos),
+    /** { [intentoId]: xp } lo que sumo cada intento. */
+    xpPorIntento: computed(() => estadisticas.value.xpPorIntento),
+    /**
+     * Todos los intentos, del mas nuevo al mas viejo. Se ordena por fecha (y por
+     * numero ante un empate) porque anotarIntento agrega al final los que actualiza.
+     */
+    intentos: computed(() =>
+      [...historial.intentos].sort(
+        (a, b) => new Date(b.fecha) - new Date(a.fecha) || (b.numero ?? 0) - (a.numero ?? 0)
+      )
+    ),
     /** [{ fecha, xp, lecciones }] por dia, para el calendario. */
     actividad: computed(() => estadisticas.value.actividad),
     cargando: computed(() => historial.cargando),
@@ -140,11 +152,15 @@ export function useProgreso() {
     return Boolean(estado.lecciones[leccionId])
   }
 
-  /** Ademas de terminarla, llego al umbral de aciertos. */
+  /** Ademas de terminarla, llego al umbral de aciertos (lo decidio el servidor). */
   function leccionAprobada(leccionId) {
-    const registro = estado.lecciones[leccionId]
-    if (!registro || !registro.total) return false
-    return registro.aciertos / registro.total >= UMBRAL_APROBACION
+    return Boolean(estado.lecciones[leccionId]?.aprobada)
+  }
+
+  /** Intento en curso de la leccion, si quedo uno sin terminar. */
+  function intentoEnCurso(leccionId) {
+    const ultimo = estado.ultimos[leccionId]
+    return ultimo?.estado === 'en_curso' ? ultimo : null
   }
 
   /** Porcentaje de aciertos del mejor intento, para mostrarlo en pantalla. */
@@ -261,20 +277,14 @@ export function useProgreso() {
   // ---------------------------------------------------------------
 
   /**
-   * Guarda una leccion terminada en el historial de la persona.
-   * Devuelve { xpGanado, medallasNuevas }. Si no se pudo guardar lanza el error:
-   * la pantalla no pierde el resultado y puede ofrecer reintentar.
+   * Agrega o actualiza un intento que devolvio el servidor, sin volver a pedir
+   * todo el historial. Lo usan la pantalla de actividades (cada respuesta trae
+   * el intento recalculado) y la de resultados.
    */
-  async function completarLeccion(leccionId, { aciertos, total }) {
-    if (!usuario.value) throw new SinSesion()
-
-    const xpAntes = estado.xp
-    const intento = await registrarIntento(leccionId, aciertos, total)
-    historial.intentos = [...historial.intentos, intento]
-
-    const resultado = { xpGanado: Math.max(0, estado.xp - xpAntes), medallasNuevas: [] }
-    ultimoResultado.value = { leccionId, ...resultado }
-    return resultado
+  function anotarIntento(intento) {
+    if (!intento?.id) return
+    const otros = historial.intentos.filter((i) => i.id !== intento.id)
+    historial.intentos = [...otros, intento]
   }
 
   /** Borra todo el historial propio. */
@@ -286,12 +296,12 @@ export function useProgreso() {
 
   return {
     estado,
-    ultimoResultado,
     esCuenta,
     // consultas
     leccionCompletada,
     leccionAprobada,
     precisionLeccion,
+    intentoEnCurso,
     motivoBloqueo,
     leccionesCompletadasDeUnidad,
     leccionesAprobadasDeUnidad,
@@ -305,7 +315,7 @@ export function useProgreso() {
     precisionGeneral,
     metaCumplida,
     // acciones
-    completarLeccion,
+    anotarIntento,
     reiniciarProgreso,
     recargarHistorial: cargarHistorial
   }

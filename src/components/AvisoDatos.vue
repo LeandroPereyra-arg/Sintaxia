@@ -28,8 +28,9 @@ defineProps({
           </li>
           <li><strong>Tu alias</strong>, tu avatar y tu meta diaria.</li>
           <li>
-            <strong>Tu historial:</strong> que lecciones terminaste, cuantas actividades acertaste y
-            cuando.
+            <strong>Tu historial:</strong> cada intento de cada leccion (cuando lo hiciste, que opcion
+            elegiste en cada actividad, si fue correcta y como termino). Repetir una leccion no borra
+            los intentos anteriores.
           </li>
           <li>Si entras como <strong>invitado</strong>: solo un identificador anonimo, sin correo.</li>
         </ul>
