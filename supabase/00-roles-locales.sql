@@ -47,3 +47,13 @@ $$;
 grant usage on schema public to anon, authenticated, service_role;
 -- Las politicas de RLS llaman a auth.uid(): los roles tienen que poder entrar al esquema.
 grant usage on schema auth to anon, authenticated, service_role;
+
+-- Supabase trae creada (vacia) la publicacion que lee Realtime. Los scripts del
+-- proyecto le agregan tablas (15-ranking-publico.sql).
+do $$
+begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+end;
+$$;

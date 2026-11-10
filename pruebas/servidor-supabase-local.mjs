@@ -26,6 +26,7 @@ import pg from 'pg'
 import { clavePublicable, claveDeServicio, verificar, JwtInvalido } from './local/jwt.mjs'
 import { correos, iniciarSmtp } from './local/smtp.mjs'
 import * as gotrue from './local/gotrue.mjs'
+import { iniciarRealtime } from './local/realtime.mjs'
 
 const { Pool } = pg
 
@@ -125,7 +126,7 @@ const ROLES_PERMITIDOS = new Set(['anon', 'authenticated', 'service_role'])
 const TABLAS = new Set([
   'cursos', 'unidades', 'lecciones', 'preguntas', 'opciones', 'perfiles', 'intentos', 'respuestas',
   'eventos', 'desafios', 'preguntas_desafio', 'opciones_desafio', 'partidas', 'partida_preguntas',
-  'partida_respuestas'
+  'partida_respuestas', 'resultados_publicos', 'administradores'
 ])
 
 function identificador(nombre) {
@@ -226,6 +227,10 @@ async function conRol(contexto, ejecutar) {
 function contextoDe(req) {
   const autorizacion = req.headers.authorization ?? ''
   const token = autorizacion.startsWith('Bearer ') ? autorizacion.slice(7) : req.headers.apikey
+  return contextoDeToken(token)
+}
+
+function contextoDeToken(token) {
   if (!token) return { rol: 'anon', claims: { role: 'anon' } }
 
   const claims = verificar(token, SECRETO_JWT)
@@ -255,6 +260,17 @@ function responderError(res, error, rol) {
   res.end(JSON.stringify(cuerpo))
 }
 
+const conjuntos = new Map()
+async function esFuncionDeConjunto(funcion) {
+  if (!conjuntos.has(funcion)) {
+    const { rows } = await pool.query(
+      `select bool_or(p.proretset) as conjunto from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'public' and p.proname = $1`, [funcion])
+    conjuntos.set(funcion, Boolean(rows[0]?.conjunto))
+  }
+  return conjuntos.get(funcion)
+}
+
 async function atenderDatos(req, res, url) {
   let contexto
   try {
@@ -272,11 +288,16 @@ async function atenderDatos(req, res, url) {
       const cuerpo = await leerCuerpo(req)
       const nombres = Object.keys(cuerpo).map(identificador)
       const args = nombres.map((n, i) => `${n} => $${i + 1}`).join(', ')
+      // Como PostgREST: una funcion que devuelve un conjunto (returns table / setof)
+      // responde un arreglo de objetos; una escalar, su valor.
+      const devuelveConjunto = await esFuncionDeConjunto(funcion)
       const { rows } = await conRol(contexto, (c) =>
-        c.query(`select public.${funcion}(${args}) as resultado`, nombres.map((n) => cuerpo[n]))
+        devuelveConjunto
+          ? c.query(`select * from public.${funcion}(${args})`, nombres.map((n) => cuerpo[n]))
+          : c.query(`select public.${funcion}(${args}) as resultado`, nombres.map((n) => cuerpo[n]))
       )
       res.writeHead(200, JSON_CORS)
-      res.end(JSON.stringify(rows[0]?.resultado ?? null))
+      res.end(JSON.stringify(devuelveConjunto ? rows : (rows[0]?.resultado ?? null)))
       return
     }
 
@@ -413,6 +434,15 @@ async function atenderControl(req, res, url) {
     return responder(200, { ok: true })
   }
 
+  if (url.pathname === '/__control/realtime-cortar') {
+    realtime.cortar(Number(url.searchParams.get('ms') ?? 5000))
+    return responder(200, realtime.estado())
+  }
+
+  if (url.pathname === '/__control/realtime-estado') {
+    return responder(200, realtime.estado())
+  }
+
   if (url.pathname === '/__control/registro-auth') {
     return responder(200, gotrue.ultimosRegistros(80))
   }
@@ -447,7 +477,16 @@ const servidor = http.createServer(async (req, res) => {
   }
 })
 
+// Realtime simulado (solo Postgres Changes): ver pruebas/local/realtime.mjs.
+const realtime = iniciarRealtime({
+  servidor,
+  pool,
+  conexionListen: { ...conexion, user: process.env.PGUSER ?? 'sintaxia' },
+  contextoDeToken
+})
+
 async function apagar() {
+  await realtime.detener()
   servidor.close()
   await gotrue.detener()
   await pool.end().catch(() => {})
@@ -461,4 +500,5 @@ await arrancarAuth()
 servidor.listen(PUERTOS.gateway, () => {
   console.log(`Supabase local escuchando en http://localhost:${PUERTOS.gateway}`)
   console.log(`  Auth (GoTrue real) en :${PUERTOS.gotrue} · SMTP de pruebas en :${PUERTOS.smtp}`)
+  console.log('  Realtime simulado en ws://localhost:' + PUERTOS.gateway + '/realtime/v1/websocket')
 })

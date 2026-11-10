@@ -80,6 +80,9 @@ function resumenDe(desafio) {
             <h1>{{ evento.nombre }}</h1>
             <p class="texto-secundario">{{ evento.descripcion }}</p>
           </div>
+          <BaseBoton variante="contorno" :to="{ name: 'ranking-expo', params: { eventoId } }">
+            <Icono nombre="trofeo" :tamano="16" /> Ver ranking
+          </BaseBoton>
         </header>
 
         <MensajeEstado v-if="!conSesion" tipo="info">

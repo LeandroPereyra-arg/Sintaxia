@@ -368,12 +368,14 @@ await caso(
     await consulta("update unidades set estado = 'publicada' where id = 'js-u2'")
     await consulta(`insert into lecciones (id, unidad_id, orden, titulo, descripcion, icono, explicacion, estado)
       values ('prueba-u2-l1', 'js-u2', 1, 'Leccion de prueba', 'Solo para la prueba automatica.', 'pieza',
-              'Texto de teoria para la prueba automatica.', 'publicada')`)
+              'Texto de teoria para la prueba automatica.', 'borrador')`)
     await consulta(`insert into preguntas (id, leccion_id, orden, enunciado, explicacion, estado)
       values ('prueba-u2-l1-a1', 'prueba-u2-l1', 1, 'Pregunta de prueba', 'Explicacion de prueba.', 'borrador')`)
     await consulta(`insert into opciones (id, pregunta_id, orden, texto, es_correcta) values
       ('prueba-u2-l1-a1-a', 'prueba-u2-l1-a1', 1, 'Si', true), ('prueba-u2-l1-a1-b', 'prueba-u2-l1-a1', 2, 'No', false)`)
     await consulta("update preguntas set estado = 'publicada' where id = 'prueba-u2-l1-a1'")
+    // Desde la etapa 7 una leccion se publica despues de tener una actividad publicada.
+    await consulta("update lecciones set estado = 'publicada' where id = 'prueba-u2-l1'")
     try {
       pasos.push(['U2 con U1 incompleta', (await intentar('prueba-u2-l1')).datos.hint ?? 'ok'])
       await resolverPorApi(api, bd, yo.token, L2, { aciertos: 4 })

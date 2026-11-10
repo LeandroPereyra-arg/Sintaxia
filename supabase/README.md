@@ -20,6 +20,8 @@ en este orden:
 | 12 | `12-funciones-competencia.sql` | Etapa 6. `iniciar_partida`, `obtener_partida`, `responder_partida` y `finalizar_partida`: el servidor fija preguntas y reglas, mide el tiempo, corrige y calcula el puntaje. |
 | 13 | `13-politicas-rls-etapa6.sql` | Etapa 6. El banco del desafio no se lee desde el cliente; cada persona ve solo sus partidas; nadie escribe puntajes. |
 | 14 | `14-evento-expo.sql` | Etapa 6. Evento de ejemplo `expo-2026` con dos desafios. No pisa nada si se vuelve a correr. |
+| 15 | `15-ranking-publico.sql` | Etapa 7. Tabla `resultados_publicos` (la mejor partida de cada cuenta por desafio, mantenida por disparadores), `ranking_evento`, `mi_posicion` y la publicacion de Realtime. |
+| 16 | `16-administracion.sql` | Etapa 7. Tabla `administradores`, `otorgar_administrador` (solo servidor), validaciones de contenido y funciones `admin_*` del panel. |
 
 `00-roles-locales.sql` **no se ejecuta en Supabase**: solo sirve para crear los
 roles `anon`, `authenticated`, `service_role` y `postgres` y el esquema `auth` cuando se
@@ -27,8 +29,16 @@ reproduce el proyecto en una instalacion comun de PostgreSQL (por ejemplo, para 
 las pruebas automaticas). Ver `npm run supabase:local`.
 
 **Atencion con el orden:** `01-esquema.sql` borra y recrea el contenido, asi que solo se
-corre en un proyecto nuevo. Los scripts `02` y `05` a `14` se pueden volver a correr sin
-perder datos ni permisos (esta probado: caso 34 de la etapa 4, caso 20 de la etapa 5 y caso 15 de la etapa 6).
+corre en un proyecto nuevo. Los scripts `02` y `05` a `16` se pueden volver a correr sin
+perder datos ni permisos (esta probado: caso 34 de la etapa 4, caso 20 de la etapa 5, caso 15 de la etapa 6 y caso 17 de la etapa 7).
+
+**Administradores:** despues de correr el `16`, se da el rol desde el SQL Editor con
+`select public.otorgar_administrador('correo@de.la.cuenta');`.
+
+**Respaldo y recuperacion del contenido:** `respaldo/respaldar-contenido.sh` y
+`respaldo/restaurar-contenido.sh` (la cadena de conexion va en la variable
+`SUPABASE_DB_URL`, nunca en un archivo). Procedimiento completo en
+[docs/18-ranking-y-administracion.md](../docs/18-ranking-y-administracion.md#185-respaldo-y-recuperacion).
 
 **Proyecto que ya tenia la etapa 4:** alcanza con ejecutar `05` a `10` en orden. El `08`
 pasa el historial viejo a la tabla nueva sin perder nada (ver
@@ -101,6 +111,8 @@ cursos
 | `preguntas_desafio` / `opciones_desafio` | Banco propio de cada desafio, con la solucion (sin lectura para el cliente) | 10 / 40 |
 | `partidas` | Un intento de una persona en un desafio: reglas copiadas, tiempo del servidor, puntaje | segun el uso |
 | `partida_preguntas` / `partida_respuestas` | Preguntas fijadas para la partida y una respuesta por pregunta | segun el uso |
+| `resultados_publicos` | Lo unico publico del ranking: la mejor partida valida de cada cuenta por desafio (alias, codigo, puntaje, tiempo). La escriben solo disparadores | segun el uso |
+| `administradores` | Quien administra contenidos y eventos. Sin permisos para el cliente | los que se otorguen |
 
 Dos columnas aparecen en varias tablas y conviene no confundirlas:
 

@@ -54,7 +54,7 @@ PostgreSQL con los mismos scripts de `supabase/` y una imitacion de la API de da
 npm run auth:compilar     # una sola vez; hace falta Go
 npm run supabase:local    # arma la base desde cero
 npm run pruebas:entorno   # Auth + datos + correos de prueba + la app (queda corriendo)
-npm run pruebas:etapa5    # en otra terminal (o etapa2, etapa3, etapa4)
+npm run pruebas:etapa7    # en otra terminal (o etapa2 a etapa6)
 ```
 
 Requiere **Node 18+**, **PostgreSQL 14+** y **Go** (solo para compilar Auth). Detalle en
@@ -81,6 +81,7 @@ Requiere **Node 18+**, **PostgreSQL 14+** y **Go** (solo para compilar Auth). De
 | `npm run pruebas:etapa4` | Invitados, registro, sesion, conversion, recuperacion y RLS |
 | `npm run pruebas:etapa5` | Intentos, respuestas, progreso, desconexion, peticiones repetidas y permisos |
 | `npm run pruebas:etapa6` | Competencia: partidas, tiempo del servidor, envios repetidos, partidas vencidas y puntaje manipulado |
+| `npm run pruebas:etapa7` | Pantalla del ranking con Realtime (tres dispositivos y la pantalla), permisos y panel de administracion |
 
 ---
 
@@ -186,6 +187,8 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [15. Registro de pruebas (etapa 5)](docs/15-registro-de-pruebas-etapa5.md) | Los 22 casos, problemas encontrados y lo que no se probo |
 | [16. Competencia (etapa 6)](docs/16-competencia.md) | Evento de expo, desafios y reglas: puntaje, tiempo, intentos, empates, partidas incompletas · [DER](docs/der/sintaxia-der-etapa6.png) |
 | [17. Registro de pruebas (etapa 6)](docs/17-registro-de-pruebas-etapa6.md) | Los 16 casos, problemas encontrados y lo que no se probo |
+| [18. Ranking publico y administracion (etapa 7)](docs/18-ranking-y-administracion.md) | Pantalla de la expo con Realtime, que se publica, rol de administrador, panel, eventos y versiones, respaldo y recuperacion · [DER](docs/der/sintaxia-der-etapa7.png) |
+| [19. Registro de pruebas (etapa 7)](docs/19-registro-de-pruebas-etapa7.md) | Los 17 casos, problemas encontrados y lo que no se probo |
 
 ---
 
@@ -278,6 +281,9 @@ supabase/
 ├── 12-funciones-competencia.sql iniciar, responder y cerrar partidas: tiempo y puntaje del servidor
 ├── 13-politicas-rls-etapa6.sql  el banco del desafio no se lee; cada uno ve solo sus partidas
 ├── 14-evento-expo.sql           evento de ejemplo con dos desafios
+├── 15-ranking-publico.sql       tabla publica del ranking (la mantiene el servidor) y Realtime
+├── 16-administracion.sql        rol de administrador y funciones admin_* del panel
+├── respaldo/                    respaldar y recuperar el contenido (pg_dump / psql)
 └── README.md                 datos del proyecto y organizacion de las tablas
 
 src/
@@ -377,6 +383,20 @@ mejor partida de cada persona en cada desafio, nunca la suma; a igual puntaje ga
 tiempo. Juegan invitados y cuentas; en el ranking aparecen solo las cuentas, con su alias.
 Detalle en [docs/16-competencia.md](docs/16-competencia.md).
 
+## Ranking de la expo y administracion
+
+La computadora de la expo abre `/expo/<evento>/ranking`, **sin iniciar sesion**: muestra el
+nombre del evento y los primeros puestos de cada desafio (alias con codigo, puntaje y tiempo) y se
+actualiza sola con **Supabase Realtime** cuando alguien termina una partida. Si se corta la red o
+Realtime, lo avisa, sigue consultando cada 15 s y se pone al dia al volver. Se publica solo una
+tabla minima (`resultados_publicos`) que mantiene el servidor; partidas, correos e invitados no.
+
+Los docentes con rol de **administrador** (se otorga desde el servidor, nadie se lo puede dar a si
+mismo) usan `/admin` para crear, publicar y despublicar cursos, unidades, lecciones y preguntas con
+su solucion, y para preparar, abrir y cerrar los eventos y sus desafios. Todos los permisos se
+verifican en Supabase. Detalle, y el procedimiento de respaldo y recuperacion, en
+[docs/18-ranking-y-administracion.md](docs/18-ranking-y-administracion.md).
+
 ## Cuentas y progreso
 
 | | Sin sesion | Invitado | Cuenta |
@@ -387,7 +407,7 @@ Detalle en [docs/16-competencia.md](docs/16-competencia.md).
 | Donde se guarda el historial | — | Supabase, ligado a su sesion | Supabase, ligado a su cuenta |
 | Se pierde al cerrar sesion o cambiar de dispositivo | — | **si** | no |
 | Retomar una leccion a medias | — | en la misma sesion | en cualquier dispositivo |
-| Aparecera en el ranking | no | no | si |
+| Aparece en el ranking de la expo | no | no | si |
 
 Un invitado que crea su cuenta **sigue siendo el mismo usuario**: conserva su historial, no
 se crea otra cuenta ni se copia nada desde el cliente. Si en cambio entra a una cuenta que

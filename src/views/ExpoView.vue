@@ -59,6 +59,9 @@ onMounted(cargar)
             <BaseBoton :to="{ name: 'evento', params: { eventoId: evento.id } }">
               {{ evento.estado === 'abierto' ? 'Ver desafios' : 'Ver resultados' }}
             </BaseBoton>
+            <BaseBoton variante="contorno" :to="{ name: 'ranking-expo', params: { eventoId: evento.id } }">
+              <Icono nombre="trofeo" :tamano="16" /> Ranking
+            </BaseBoton>
           </div>
         </li>
       </ul>

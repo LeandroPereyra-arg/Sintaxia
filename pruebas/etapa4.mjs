@@ -1304,7 +1304,7 @@ await caso(
 await caso(
   33,
   'Se informa que datos se guardan y cuales son publicos',
-  'Al crear la cuenta se puede leer que se guarda (correo cifrado, alias, historial) y que hoy no se muestra nada a otras personas',
+  'Al crear la cuenta se puede leer que se guarda (correo cifrado, alias, historial) y que lo unico publico es el ranking de la expo, solo de cuentas',
   async () => {
     const ctx = await contexto()
     const p = await pagina(ctx)
@@ -1313,14 +1313,14 @@ await caso(
     const cuerpo = await texto(p)
     for (const frase of [
       'la contrasena queda cifrada',
-      'Hoy, nada.',
+      'Solo el ranking de la expo, y solo si tenes una cuenta',
       'Los invitados no aparecen',
       'perdes el acceso a tu historial de invitado'
     ]) {
       verificar(cuerpo.includes(frase), `falta la frase: "${frase}"`)
     }
     await ctx.close()
-    return 'visible junto al formulario: que se guarda, que es publico ("Hoy, nada."), y el riesgo de ser invitado'
+    return 'visible junto al formulario: que se guarda, que es publico (solo el ranking de la expo, de cuentas, con alias y codigo), y el riesgo de ser invitado'
   }
 )
 

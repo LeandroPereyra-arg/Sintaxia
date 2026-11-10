@@ -231,11 +231,14 @@ export async function finalizarPartida(partidaId) {
   return aPartida(data)
 }
 
-/** "1:05" a partir de milisegundos. */
+/**
+ * "1:05.27" a partir de milisegundos. Con centesimas: el tiempo desempata el
+ * ranking, y dos tiempos distintos no deben verse iguales en pantalla.
+ */
 export function formatoTiempo(ms) {
   if (ms == null) return '-'
-  const total = Math.round(ms / 100) / 10
-  const minutos = Math.floor(total / 60)
-  const segundos = total - minutos * 60
-  return `${minutos}:${segundos.toFixed(1).padStart(4, '0')}`
+  const centesimas = Math.round(ms / 10)
+  const minutos = Math.floor(centesimas / 6000)
+  const segundos = (centesimas - minutos * 6000) / 100
+  return `${minutos}:${segundos.toFixed(2).padStart(5, '0')}`
 }

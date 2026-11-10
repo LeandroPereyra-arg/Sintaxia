@@ -103,6 +103,14 @@ const routes = [
     meta: { titulo: 'Partida', ocultarNavegacion: true, requiereSesion: true }
   },
   {
+    // Pantalla grande de la expo: publica, sin la barra de navegacion (etapa 7).
+    path: '/expo/:eventoId/ranking',
+    name: 'ranking-expo',
+    component: () => import('@/views/RankingExpoView.vue'),
+    props: true,
+    meta: { titulo: 'Ranking de la expo', ocultarNavegacion: true }
+  },
+  {
     path: '/expo/:eventoId/partidas/:partidaId',
     name: 'resultado-partida',
     component: () => import('@/views/ResultadoPartidaView.vue'),
@@ -120,6 +128,15 @@ const routes = [
     name: 'ranking',
     component: () => import('@/views/RankingView.vue'),
     meta: { titulo: 'Ranking semanal' }
+  },
+  {
+    // Panel de administracion (etapa 7). La ruta pide una cuenta; el permiso de
+    // administrador lo verifica la base en cada operacion, y la pantalla avisa
+    // si no lo tiene.
+    path: '/admin',
+    name: 'admin',
+    component: () => import('@/views/AdminView.vue'),
+    meta: { titulo: 'Administracion', requiereSesion: true, requiereCuenta: true }
   },
   {
     path: '/bienvenida',

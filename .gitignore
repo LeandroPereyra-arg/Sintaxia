@@ -9,3 +9,6 @@ npm-debug.log*
 # variables de entorno (nunca subir el .env real)
 .env
 .env.local
+
+# Respaldos de la base (tienen soluciones o datos personales)
+respaldo-*.sql
