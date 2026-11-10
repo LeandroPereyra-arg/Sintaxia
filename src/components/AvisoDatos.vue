@@ -38,11 +38,11 @@ defineProps({
 
       <section>
         <h3>Lo que se muestra a otras personas</h3>
-        <p>
-          <strong>Hoy, nada.</strong> Cuando se active el ranking se va a mostrar unicamente tu
-          <strong>alias con un codigo</strong> (por ejemplo <code>Ana#0427</code>) y tu XP de la semana,
-          y solo si tenes una cuenta. Los invitados no aparecen. Tu correo y tu historial nunca se
-          muestran.
+        <p data-prueba="lo-publico">
+          <strong>Solo el ranking de la expo, y solo si tenes una cuenta:</strong> tu
+          <strong>alias con su codigo</strong> (por ejemplo <code>Ana#0427</code>) y el puntaje y el tiempo
+          de tu mejor partida en cada desafio. Los invitados no aparecen. Tu correo, tus respuestas, tus
+          otras partidas y tu historial de practica nunca se muestran.
         </p>
       </section>
 

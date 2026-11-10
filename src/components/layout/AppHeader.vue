@@ -1,12 +1,13 @@
 <script setup>
 import Icono from '@/components/Icono.vue'
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import LogoSintaxia from '@/components/LogoSintaxia.vue'
 import BotonCerrarSesion from '@/components/BotonCerrarSesion.vue'
 import { useAuth } from '@/composables/useAuth.js'
 import { useProgreso } from '@/composables/useProgreso.js'
 import { CURSO_POR_DEFECTO } from '@/composables/useCatalogo.js'
+import { soyAdmin } from '@/servicios/admin.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,10 +22,24 @@ const enlaces = [
   { to: { name: 'inicio' }, texto: 'Inicio' },
   { to: { name: 'cursos' }, texto: 'Cursos' },
   { to: { name: 'curso', params: { cursoId: CURSO_POR_DEFECTO } }, texto: 'JavaScript' },
+  { to: { name: 'expo' }, texto: 'Competencia' },
   { to: { name: 'ranking' }, texto: 'Ranking' }
 ]
 
 const avatar = computed(() => sesion.perfil?.avatar ?? 'buho')
+
+/**
+ * El enlace al panel solo se muestra a administradores. Es comodidad: el permiso
+ * real lo verifica la base en cada operacion (16-administracion.sql).
+ */
+const esAdmin = ref(false)
+watch(
+  () => (esInvitado.value ? null : sesion.sesion?.user?.id ?? null),
+  async (id) => {
+    esAdmin.value = id ? await soyAdmin() : false
+  },
+  { immediate: true }
+)
 
 function cerrarTodo() {
   menuAbierto.value = false
@@ -116,6 +131,9 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
           </router-link>
           <router-link :to="{ name: 'ranking' }" class="menu__opcion" @click="cerrarTodo">
             Ranking
+          </router-link>
+          <router-link v-if="esAdmin" :to="{ name: 'admin' }" class="menu__opcion" data-prueba="enlace-admin" @click="cerrarTodo">
+            Administracion
           </router-link>
           <div class="menu__salir">
             <BotonCerrarSesion @cerrada="alCerrarSesion" />

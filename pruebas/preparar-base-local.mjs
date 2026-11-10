@@ -81,11 +81,21 @@ for (const archivo of [
   '07-limpieza-invitados.sql',
   '08-intentos-y-respuestas.sql',
   '09-funciones-intentos.sql',
-  '10-politicas-rls-etapa5.sql'
+  '10-politicas-rls-etapa5.sql',
+  '11-competencia.sql',
+  '12-funciones-competencia.sql',
+  '13-politicas-rls-etapa6.sql',
+  '14-evento-expo.sql',
+  '15-ranking-publico.sql',
+  '16-administracion.sql'
 ]) {
   psql(['-f', join(raiz, 'supabase', archivo)])
   console.log(`  aplicado ${archivo}`)
 }
+
+// Solo local: imita los avisos de Supabase Realtime para las tablas publicadas.
+psql(['-f', join(raiz, 'pruebas', 'local', 'realtime-local.sql')])
+console.log('  aplicado pruebas/local/realtime-local.sql (Realtime simulado)')
 
 const resumen = psql([
   '-tAc',
