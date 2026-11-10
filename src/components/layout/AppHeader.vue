@@ -21,6 +21,7 @@ const enlaces = [
   { to: { name: 'inicio' }, texto: 'Inicio' },
   { to: { name: 'cursos' }, texto: 'Cursos' },
   { to: { name: 'curso', params: { cursoId: CURSO_POR_DEFECTO } }, texto: 'JavaScript' },
+  { to: { name: 'expo' }, texto: 'Competencia' },
   { to: { name: 'ranking' }, texto: 'Ranking' }
 ]
 

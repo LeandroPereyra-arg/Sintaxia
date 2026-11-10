@@ -213,3 +213,48 @@ export async function resolverPorApi(api, base, token, leccionId, { aciertos = I
   }
   return { error: null, intento }
 }
+
+// ---------------------------------------------------------------------------
+// Competencia (etapa 6): jugar una partida por la API, como lo haria la app
+// ---------------------------------------------------------------------------
+
+/** Opcion correcta e incorrecta de cada pregunta de un desafio (por id de pregunta). */
+export async function opcionesDeDesafio(base, desafioId) {
+  const { rows } = await base.query(
+    `select q.id as pregunta,
+            max(o.id) filter (where o.es_correcta)     as correcta,
+            min(o.id) filter (where not o.es_correcta) as incorrecta
+       from preguntas_desafio q
+       join opciones_desafio o on o.pregunta_id = q.id
+      where q.desafio_id = $1
+      group by q.id`,
+    [desafioId]
+  )
+  return new Map(rows.map((r) => [r.pregunta, r]))
+}
+
+/**
+ * Empieza una partida y responde en el orden que fijo el servidor: las primeras
+ * `aciertos` bien y el resto mal. Con `cerrar: false` deja la partida en curso
+ * despues de `responder` respuestas.
+ */
+export async function jugarPorApi(api, base, token, desafioId, opciones = {}) {
+  const { aciertos = Infinity, responder = Infinity, partidaId = crypto.randomUUID() } = opciones
+  const inicio = await api.rpc(token, 'iniciar_partida', { p_partida_id: partidaId, p_desafio_id: desafioId })
+  if (inicio.estado !== 200) return { error: inicio, partida: null }
+  const soluciones = await opcionesDeDesafio(base, desafioId)
+  let partida = inicio.datos
+  const preguntas = [...inicio.datos.preguntas].sort((a, b) => a.orden - b.orden)
+  for (const [i, q] of preguntas.entries()) {
+    if (i >= responder || partida.estado !== 'en_curso') break
+    const s = soluciones.get(q.id)
+    const r = await api.rpc(token, 'responder_partida', {
+      p_partida_id: inicio.datos.id,
+      p_pregunta_id: q.id,
+      p_opcion_id: i < aciertos ? s.correcta : s.incorrecta
+    })
+    if (r.estado !== 200) return { error: r, partida }
+    partida = r.datos.partida
+  }
+  return { error: null, partida, id: inicio.datos.id, preguntas }
+}

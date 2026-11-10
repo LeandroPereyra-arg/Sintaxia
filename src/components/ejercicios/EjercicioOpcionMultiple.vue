@@ -69,6 +69,9 @@ function clasesDe(opcion) {
   width: 100%;
   text-align: left;
   font-family: var(--f-codigo);
+  /* Sin ligaduras: la fuente de codigo dibuja "<!--" o "=>" como flechas, y en
+     una opcion tiene que verse exactamente lo que se escribe. */
+  font-variant-ligatures: none;
   font-size: var(--t-sm);
   background: var(--c-blanco);
   border: 2px solid var(--c-borde);

@@ -81,7 +81,11 @@ for (const archivo of [
   '07-limpieza-invitados.sql',
   '08-intentos-y-respuestas.sql',
   '09-funciones-intentos.sql',
-  '10-politicas-rls-etapa5.sql'
+  '10-politicas-rls-etapa5.sql',
+  '11-competencia.sql',
+  '12-funciones-competencia.sql',
+  '13-politicas-rls-etapa6.sql',
+  '14-evento-expo.sql'
 ]) {
   psql(['-f', join(raiz, 'supabase', archivo)])
   console.log(`  aplicado ${archivo}`)

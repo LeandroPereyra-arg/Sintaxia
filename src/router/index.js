@@ -80,6 +80,35 @@ const routes = [
     path: '/cursos/:cursoId/lecciones/:leccionId/resultados',
     redirect: (a) => ({ name: 'resultados', params: { leccionId: a.params.leccionId } })
   },
+  // --- Competencia (etapa 6) ---------------------------------------------------
+  {
+    path: '/expo',
+    name: 'expo',
+    component: () => import('@/views/ExpoView.vue'),
+    meta: { titulo: 'Competencia' }
+  },
+  {
+    path: '/expo/:eventoId',
+    name: 'evento',
+    component: () => import('@/views/EventoView.vue'),
+    props: true,
+    meta: { titulo: 'Evento' }
+  },
+  {
+    // La partida, a pantalla completa. ?partida=<id> retoma una que ya existe.
+    path: '/expo/:eventoId/desafios/:desafioId',
+    name: 'partida',
+    component: () => import('@/views/PartidaView.vue'),
+    props: true,
+    meta: { titulo: 'Partida', ocultarNavegacion: true, requiereSesion: true }
+  },
+  {
+    path: '/expo/:eventoId/partidas/:partidaId',
+    name: 'resultado-partida',
+    component: () => import('@/views/ResultadoPartidaView.vue'),
+    props: true,
+    meta: { titulo: 'Tu puntaje', requiereSesion: true }
+  },
   {
     path: '/perfil',
     name: 'perfil',
@@ -161,8 +190,8 @@ const router = createRouter({
  *    si no hay ninguna, se manda a ingresar y se recuerda a donde volver.
  *    Mirar el catalogo de cursos es publico.
  *
- *    Mas adelante, las rutas de competencia van a pedir ademas una CUENTA (no un
- *    invitado): se resuelve con otro meta, `requiereCuenta`, en este mismo lugar.
+ *    La competencia (etapa 6) se juega tambien como invitado: lo que pide una
+ *    cuenta es APARECER en el ranking, y eso lo decide el servidor.
  */
 router.beforeEach(async (to) => {
   if (to.name === 'inicio' && !bienvenidaVista()) {

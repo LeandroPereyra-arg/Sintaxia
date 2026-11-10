@@ -16,6 +16,10 @@ en este orden:
 | 8 | `08-intentos-y-respuestas.sql` | Etapa 5. Tablas `intentos` y `respuestas` con sus restricciones. Si existe el historial de la etapa 4 (`intentos_leccion`) lo copia y despues lo elimina. |
 | 9 | `09-funciones-intentos.sql` | Etapa 5. `iniciar_intento`, `responder_actividad` y `abandonar_intento`: el servidor corrige, guarda y calcula el resultado, y aplica las reglas de aprobacion y desbloqueo. |
 | 10 | `10-politicas-rls-etapa5.sql` | Etapa 5. Cada persona lee (y puede borrar) solo su progreso; nadie lo escribe directo. |
+| 11 | `11-competencia.sql` | Etapa 6. Eventos, desafios, su banco de preguntas propio (separado del de practica), partidas, preguntas asignadas y respuestas. Congelamiento del desafio desde la primera partida. |
+| 12 | `12-funciones-competencia.sql` | Etapa 6. `iniciar_partida`, `obtener_partida`, `responder_partida` y `finalizar_partida`: el servidor fija preguntas y reglas, mide el tiempo, corrige y calcula el puntaje. |
+| 13 | `13-politicas-rls-etapa6.sql` | Etapa 6. El banco del desafio no se lee desde el cliente; cada persona ve solo sus partidas; nadie escribe puntajes. |
+| 14 | `14-evento-expo.sql` | Etapa 6. Evento de ejemplo `expo-2026` con dos desafios. No pisa nada si se vuelve a correr. |
 
 `00-roles-locales.sql` **no se ejecuta en Supabase**: solo sirve para crear los
 roles `anon`, `authenticated`, `service_role` y `postgres` y el esquema `auth` cuando se
@@ -23,8 +27,8 @@ reproduce el proyecto en una instalacion comun de PostgreSQL (por ejemplo, para 
 las pruebas automaticas). Ver `npm run supabase:local`.
 
 **Atencion con el orden:** `01-esquema.sql` borra y recrea el contenido, asi que solo se
-corre en un proyecto nuevo. Los scripts `02` y `05` a `10` se pueden volver a correr sin
-perder datos ni permisos (esta probado: caso 34 de la etapa 4 y caso 20 de la etapa 5).
+corre en un proyecto nuevo. Los scripts `02` y `05` a `14` se pueden volver a correr sin
+perder datos ni permisos (esta probado: caso 34 de la etapa 4, caso 20 de la etapa 5 y caso 15 de la etapa 6).
 
 **Proyecto que ya tenia la etapa 4:** alcanza con ejecutar `05` a `10` en orden. El `08`
 pasa el historial viejo a la tabla nueva sin perder nada (ver
@@ -92,6 +96,11 @@ cursos
 | `perfiles` | Un perfil por participante (mismo id que `auth.users`): alias, codigo, avatar, meta | uno por usuario |
 | `intentos` | Un renglon cada vez que alguien empieza una leccion: estado, aciertos, errores, aprobado, fechas | segun el uso |
 | `respuestas` | Una por actividad e intento: opcion elegida, si fue correcta, orden y hora | segun el uso |
+| `eventos` | Exposiciones (separan los resultados de cada expo) | 1 de ejemplo |
+| `desafios` | Pruebas de un evento con sus reglas (duracion, puntos, intentos, gracia) | 2 de ejemplo |
+| `preguntas_desafio` / `opciones_desafio` | Banco propio de cada desafio, con la solucion (sin lectura para el cliente) | 10 / 40 |
+| `partidas` | Un intento de una persona en un desafio: reglas copiadas, tiempo del servidor, puntaje | segun el uso |
+| `partida_preguntas` / `partida_respuestas` | Preguntas fijadas para la partida y una respuesta por pregunta | segun el uso |
 
 Dos columnas aparecen en varias tablas y conviene no confundirlas:
 

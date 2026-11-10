@@ -123,7 +123,9 @@ function reenviarAAuth(req, res, rutaEnAuth) {
 // ---------------------------------------------------------------------------
 const ROLES_PERMITIDOS = new Set(['anon', 'authenticated', 'service_role'])
 const TABLAS = new Set([
-  'cursos', 'unidades', 'lecciones', 'preguntas', 'opciones', 'perfiles', 'intentos', 'respuestas'
+  'cursos', 'unidades', 'lecciones', 'preguntas', 'opciones', 'perfiles', 'intentos', 'respuestas',
+  'eventos', 'desafios', 'preguntas_desafio', 'opciones_desafio', 'partidas', 'partida_preguntas',
+  'partida_respuestas'
 ])
 
 function identificador(nombre) {

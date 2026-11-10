@@ -80,6 +80,7 @@ Requiere **Node 18+**, **PostgreSQL 14+** y **Go** (solo para compilar Auth). De
 | `npm run pruebas:etapa3` | Consultas a la base, permisos y manejo de errores |
 | `npm run pruebas:etapa4` | Invitados, registro, sesion, conversion, recuperacion y RLS |
 | `npm run pruebas:etapa5` | Intentos, respuestas, progreso, desconexion, peticiones repetidas y permisos |
+| `npm run pruebas:etapa6` | Competencia: partidas, tiempo del servidor, envios repetidos, partidas vencidas y puntaje manipulado |
 
 ---
 
@@ -183,6 +184,8 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [13. Registro de pruebas (etapa 4)](docs/13-registro-de-pruebas-etapa4.md) | Los 35 casos, que es real y que simulado, problemas y lo que no se probo |
 | [14. Intentos, respuestas y progreso (etapa 5)](docs/14-intentos-y-progreso.md) | Modelo, correccion en el servidor, duplicados, desconexion, perfil y migracion · [DER](docs/der/sintaxia-der-etapa5.png) |
 | [15. Registro de pruebas (etapa 5)](docs/15-registro-de-pruebas-etapa5.md) | Los 22 casos, problemas encontrados y lo que no se probo |
+| [16. Competencia (etapa 6)](docs/16-competencia.md) | Evento de expo, desafios y reglas: puntaje, tiempo, intentos, empates, partidas incompletas · [DER](docs/der/sintaxia-der-etapa6.png) |
+| [17. Registro de pruebas (etapa 6)](docs/17-registro-de-pruebas-etapa6.md) | Los 16 casos, problemas encontrados y lo que no se probo |
 
 ---
 
@@ -271,6 +274,10 @@ supabase/
 ├── 08-intentos-y-respuestas.sql intentos y respuestas (y migracion del historial anterior)
 ├── 09-funciones-intentos.sql    iniciar, responder y abandonar: el servidor corrige y calcula
 ├── 10-politicas-rls-etapa5.sql  cada persona lee solo su progreso; nadie lo escribe directo
+├── 11-competencia.sql           eventos, desafios, banco propio, partidas y respuestas
+├── 12-funciones-competencia.sql iniciar, responder y cerrar partidas: tiempo y puntaje del servidor
+├── 13-politicas-rls-etapa6.sql  el banco del desafio no se lee; cada uno ve solo sus partidas
+├── 14-evento-expo.sql           evento de ejemplo con dos desafios
 └── README.md                 datos del proyecto y organizacion de las tablas
 
 src/
@@ -360,6 +367,15 @@ completar la anterior.
   nunca el navegador.
 - **Ranking semanal** por XP, que arranca de cero todos los lunes, y **ligas** segun el XP
   total acumulado.
+
+## Competencia en la expo
+
+En `/expo` se juegan desafios contra reloj desde el celular. El servidor crea cada partida, fija
+sus preguntas (de un banco propio, separado del de practica), mide el tiempo con su reloj, corrige
+y calcula el puntaje: el celular solo manda que pregunta y que opcion. En el ranking cuenta la
+mejor partida de cada persona en cada desafio, nunca la suma; a igual puntaje gana el menor
+tiempo. Juegan invitados y cuentas; en el ranking aparecen solo las cuentas, con su alias.
+Detalle en [docs/16-competencia.md](docs/16-competencia.md).
 
 ## Cuentas y progreso
 
