@@ -444,6 +444,12 @@ await caso(
 
     const p2 = await pagina(ctx)
     await p2.goto(`${URL_APP}/expo/${EVENTO}`, { waitUntil: 'networkidle' })
+    // Desde que la competencia se juega con un alias, el evento se lo pide al invitado.
+    if (await p2.locator('[data-prueba="alias-expo"]').count()) {
+      await p2.getByLabel('Tu alias').fill('Reconecta')
+      await p2.getByRole('button', { name: 'Jugar con este alias' }).click()
+      await p2.locator('[data-prueba="alias-actual"]').waitFor({ timeout: 10000 })
+    }
     await p2.locator(`[data-desafio="${SPRINT}"]`).getByRole('link', { name: 'Retomar partida' }).click()
     await p2.waitForSelector('.opcion')
     const encabezado = await p2.locator('.partida__tipo').innerText()

@@ -14,14 +14,19 @@ servidor, no en el celular.
 
 ## 2. Entrar
 
-Tenes dos opciones en **Entra a Sintaxia**:
+**Para la competencia de la expo no hace falta nada:** entrá a **Competencia**, elegí el
+evento, escribí **tu alias** y tocá **Jugar con este alias**. Aparecés en el ranking
+como `TuAlias#1234`. (Si cerrás sesión o borrás la app, perdés ese alias y tus
+partidas: para conservarlos, creá una cuenta.)
+
+Para practicar las lecciones tenés dos opciones en **Entra a Sintaxia**:
 
 | | Como invitado | Con una cuenta |
 |---|---|---|
 | Que hace falta | Nada: **Continuar como invitado** | Correo y contraseña: **Crear una cuenta** |
 | Tu nombre | `Invitado#1234` | El alias que elijas, con un codigo: `Ana#0427` |
 | Ves tu puntaje al terminar | Si | Si |
-| **Aparecés en el ranking de la pantalla** | **No** | **Si** |
+| **Aparecés en el ranking de la pantalla** | Solo si elegiste un alias en la competencia | **Si** |
 | Si cerras sesion, borras la app o cambias de celular | Perdes tu historial | Lo recuperas ingresando |
 
 **Crear una cuenta:** completa alias, correo y contraseña y toca **Crear mi cuenta**.

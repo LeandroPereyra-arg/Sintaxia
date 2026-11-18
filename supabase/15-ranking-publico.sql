@@ -47,6 +47,22 @@ $$;
 
 comment on column public.perfiles.id_publico is 'Identificador publico para el ranking. No es el id de la cuenta y no da acceso a nada.';
 
+-- Alias de la competencia: en la expo se puede jugar sin iniciar sesion, solo
+-- con un alias. Por detras es un invitado (sesion anonima) que eligio este
+-- alias; con el aparece en el ranking. Un invitado sin alias_expo no aparece.
+alter table public.perfiles add column if not exists alias_expo text;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'ck_perfiles_alias_expo') then
+    alter table public.perfiles add constraint ck_perfiles_alias_expo
+      check (alias_expo is null or public.alias_permitido(alias_expo, false));
+  end if;
+end;
+$$;
+
+comment on column public.perfiles.alias_expo is 'Alias elegido para jugar la competencia sin cuenta. Es el que se muestra en el ranking.';
+
 -- ---------------------------------------------------------------------------
 -- 2. RESULTADOS PUBLICOS
 -- ---------------------------------------------------------------------------
@@ -96,7 +112,8 @@ begin
 
   v_mejor := public.mejor_partida(p_usuario, p_desafio_id);
 
-  if v_perfil.es_invitado or v_mejor.id is null then
+  -- Aparecen las cuentas y los invitados que eligieron un alias para la expo.
+  if (v_perfil.es_invitado and v_perfil.alias_expo is null) or v_mejor.id is null then
     delete from public.resultados_publicos
      where desafio_id = p_desafio_id and participante = v_perfil.id_publico;
     return;
@@ -105,7 +122,8 @@ begin
   insert into public.resultados_publicos
     (evento_id, desafio_id, participante, alias, codigo, puntaje, duracion_ms, logrado_en)
   values
-    (v_mejor.evento_id, p_desafio_id, v_perfil.id_publico, v_perfil.alias, v_perfil.codigo,
+    (v_mejor.evento_id, p_desafio_id, v_perfil.id_publico,
+     case when v_perfil.es_invitado then v_perfil.alias_expo else v_perfil.alias end, v_perfil.codigo,
      v_mejor.puntaje, v_mejor.duracion_ms, v_mejor.finalizada_en)
   on conflict (desafio_id, participante) do update
      set alias = excluded.alias,
@@ -163,9 +181,9 @@ $$;
 
 drop trigger if exists tg_perfiles_ranking on public.perfiles;
 create trigger tg_perfiles_ranking
-  after update of alias, codigo, es_invitado on public.perfiles
+  after update of alias, codigo, es_invitado, alias_expo on public.perfiles
   for each row
-  when ((old.alias, old.codigo, old.es_invitado) is distinct from (new.alias, new.codigo, new.es_invitado))
+  when ((old.alias, old.codigo, old.es_invitado, old.alias_expo) is distinct from (new.alias, new.codigo, new.es_invitado, new.alias_expo))
   execute function public.fn_perfil_al_ranking();
 
 revoke all on function public.actualizar_resultado_publico(uuid, text) from public, anon, authenticated;
@@ -236,7 +254,7 @@ security definer
 set search_path = public
 as $$
   with yo as (
-    select id_publico, es_invitado from public.perfiles where id = auth.uid()
+    select id_publico, es_invitado and alias_expo is null as es_invitado from public.perfiles where id = auth.uid()
   ), tabla as (
     select participante, puntaje,
            rank() over (order by puntaje desc, duracion_ms asc) as posicion
@@ -253,6 +271,42 @@ $$;
 
 revoke all on function public.mi_posicion(text) from public, anon;
 grant execute on function public.mi_posicion(text) to authenticated;
+
+-- Elegir (o cambiar) el alias para jugar la competencia sin cuenta. Con p_alias
+-- null solo devuelve el actual. Para una cuenta no cambia nada: usa su alias.
+create or replace function public.elegir_alias_expo(p_alias text default null)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_perfil public.perfiles;
+  v_alias  text := nullif(btrim(p_alias), '');
+begin
+  perform public.exigir_sesion();
+  select * into v_perfil from public.perfiles where id = auth.uid();
+  if v_perfil.id is null then
+    raise exception 'No encontramos tu perfil.' using errcode = 'P0002', hint = 'sin_perfil';
+  end if;
+  if v_alias is not null and v_perfil.es_invitado then
+    if not public.alias_permitido(v_alias, false) then
+      raise exception 'Ese alias no se puede usar: de 3 a 20 letras sin tilde, numeros o guion bajo.'
+        using errcode = '22023', hint = 'alias_invalido';
+    end if;
+    update public.perfiles set alias_expo = v_alias where id = v_perfil.id returning * into v_perfil;
+  end if;
+  return jsonb_build_object(
+    'alias',    case when v_perfil.es_invitado then v_perfil.alias_expo else v_perfil.alias end,
+    'codigo',   v_perfil.codigo,
+    'invitado', v_perfil.es_invitado,
+    'en_ranking', not v_perfil.es_invitado or v_perfil.alias_expo is not null
+  );
+end;
+$$;
+
+revoke all on function public.elegir_alias_expo(text) from public, anon;
+grant execute on function public.elegir_alias_expo(text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 5. Permisos: cualquiera (incluso sin sesion) lee los resultados de los

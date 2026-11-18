@@ -23,7 +23,7 @@ Corrida completa desde una base nueva, con todas las etapas:
 
 | Script | Casos | Fallan |
 |---|---|---|
-| `npm run pruebas:etapa9` | 8 | 0 |
+| `npm run pruebas:etapa9` | 9 | 0 |
 | `npm run pruebas:etapa8` | 8 | 0 |
 | `npm run pruebas:etapa7` | 17 | 0 |
 | `npm run pruebas:etapa6` | 16 | 0 |
@@ -44,6 +44,7 @@ Ninguna excepción no atrapada en la página.
 | 6 | Puntaje total: suma la mejor partida de cada desafio | A = sprint 300 + minijuego 40 = 340; B = sprint 500; repetir peor no baja el total; un invitado no aparece; la pantalla muestra el total primero y se actualiza sola | A: 300 + 40 = 340 (2 desafios) · B: 500, primero · repetir peor no cambia · invitado: no figura · pantalla: "Puntaje total" primero; al mejorar A el minijuego (80) pasa a 380 sin recargar · el minijuego tiene su propio tablero | PASA |
 | 7 | Jugar el minijuego en la pantalla | Desde el evento se ve como minijuego (3 vidas) y se abre; Sintax se mueve con el dedo y atrapa fichas; el puntaje y las vidas que se ven son los del servidor; al terminar muestra el puntaje final igual al de la base | tarjeta: Minijuego, 3 vidas · consigna "Atrapá operadores de comparación" · 8 atrapadas buenas y 3 malas · en juego se vio 160 pts · final 160 pts = 160 en la base | PASA |
 | 8 | La app escribe con ñ | Ingresar, recuperar y la portada dicen contraseña y español con ñ; no queda "contrasena" | campo "Contraseña" · "Recuperar mi contraseña" · "en español" · sin "contrasena" ni "espanol" en inicio, ingresar, registro y recuperar | PASA |
+| 9 | Jugar la competencia sin iniciar sesion, solo con un alias | Sin sesion el evento pide un alias (rechaza uno invalido); con el alias se juega y la partida aparece en el ranking con ese alias; abrir un desafio sin sesion lleva al evento | desafio sin sesion -> el evento pide alias · "a": "El alias necesita al menos 3 caracteres...." · con Juan_Expo: sesion de invitado, "Jugás como Juan_Expo#9339" · juega y aparece en el ranking como Juan_Expo (200 pts) | PASA |
 
 Además: el respaldo y la recuperación del contenido (sección 18.5) incluyen ahora el
 banco del minijuego; la ida y vuelta dejó las nueve tablas idénticas.

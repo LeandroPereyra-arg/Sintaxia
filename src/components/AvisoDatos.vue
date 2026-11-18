@@ -39,10 +39,10 @@ defineProps({
       <section>
         <h3>Lo que se muestra a otras personas</h3>
         <p data-prueba="lo-publico">
-          <strong>Solo el ranking de la expo, y solo si tenes una cuenta:</strong> tu
-          <strong>alias con su codigo</strong> (por ejemplo <code>Ana#0427</code>) y el puntaje y el tiempo
-          de tu mejor partida en cada desafio. Los invitados no aparecen. Tu correo, tus respuestas, tus
-          otras partidas y tu historial de practica nunca se muestran.
+          <strong>Solo el ranking de la expo:</strong> tu <strong>alias con su codigo</strong> (por ejemplo
+          <code>Ana#0427</code>) y el puntaje y el tiempo de tu mejor partida en cada desafio. Aparecen las
+          cuentas y quienes juegan la competencia con un alias; los invitados que no eligen alias no aparecen.
+          Tu correo, tus respuestas, tus otras partidas y tu historial de practica nunca se muestran.
         </p>
       </section>
 

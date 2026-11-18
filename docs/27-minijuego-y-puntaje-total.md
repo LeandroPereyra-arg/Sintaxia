@@ -89,7 +89,23 @@ acumula: solo mejorar. A igual total, gana quien sumó menos tiempo.
 La pantalla del ranking lo muestra **primero**, destacado, y se actualiza sola con el
 mismo aviso de Realtime que los demás tableros. Los invitados tampoco aparecen.
 
-## 27.4 Dónde está implementado
+## 27.4 Jugar la competencia solo con un alias
+
+En la pantalla del evento, quien no inició sesión ve **"Elegí tu alias para jugar"**: escribe
+un alias y toca **Jugar con este alias**. Por detrás:
+
+1. Se abre una sesión de invitado (anónima), como "Continuar como invitado".
+2. `elegir_alias_expo(alias)` guarda el alias en `perfiles.alias_expo` (mismas reglas que
+   el alias de una cuenta: 3 a 20 letras sin tilde, números o guion bajo).
+3. Con ese alias el invitado **aparece en el ranking** (`AnaDev#0427`). Los invitados
+   que no eligen alias siguen sin aparecer.
+
+Si alguien abre un desafío sin sesión, la app lo lleva al evento para que elija su
+alias. Si después crea una cuenta, sus partidas pasan a figurar con el alias de la
+cuenta. Implementado en `supabase/15-ranking-publico.sql` y `src/views/EventoView.vue`;
+prueba: caso 9 de `pruebas/etapa9.mjs`.
+
+## 27.5 Dónde está implementado
 
 | Qué | Archivo |
 |---|---|

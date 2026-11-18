@@ -1313,8 +1313,8 @@ await caso(
     const cuerpo = await texto(p)
     for (const frase of [
       'la contraseña queda cifrada',
-      'Solo el ranking de la expo, y solo si tenes una cuenta',
-      'Los invitados no aparecen',
+      'Solo el ranking de la expo',
+      'los invitados que no eligen alias no aparecen',
       'perdes el acceso a tu historial de invitado'
     ]) {
       verificar(cuerpo.includes(frase), `falta la frase: "${frase}"`)

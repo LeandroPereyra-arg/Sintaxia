@@ -5,9 +5,11 @@ import BaseBoton from '@/components/BaseBoton.vue'
 import EstadoConsulta from '@/components/EstadoConsulta.vue'
 import MensajeEstado from '@/components/MensajeEstado.vue'
 import { useAuth } from '@/composables/useAuth.js'
+import { motivoAliasInvalido } from '@/utils/validaciones.js'
 import {
   obtenerEvento,
   listarMisPartidas,
+  elegirAliasExpo,
   formatoTiempo,
   ETIQUETA_DIFICULTAD,
   ESTADO_PARTIDA
@@ -21,23 +23,57 @@ const props = defineProps({
   eventoId: { type: String, required: true }
 })
 
-const { conSesion, esInvitado } = useAuth()
+const { conSesion, esInvitado, entrarComoInvitado } = useAuth()
+
+// --- Jugar solo con un alias (sin iniciar sesion) ---------------------------------
+// Por detras se abre una sesion de invitado y se le pone el alias elegido: con el
+// aparece en el ranking (15-ranking-publico.sql, elegir_alias_expo).
+const aliasExpo = ref(null) // { alias, codigo, enRanking } o null
+const aliasNuevo = ref('')
+const aliasIntento = ref(false)
+const aliasGuardando = ref(false)
+const aliasError = ref('')
+const motivoAlias = computed(() => (aliasIntento.value ? motivoAliasInvalido(aliasNuevo.value) : ''))
+const necesitaAlias = computed(() => !conSesion.value || (esInvitado.value && !aliasExpo.value?.enRanking))
+
+async function jugarConAlias() {
+  aliasIntento.value = true
+  aliasError.value = ''
+  if (motivoAlias.value) return
+  aliasGuardando.value = true
+  try {
+    if (!conSesion.value) await entrarComoInvitado()
+    await elegirAliasExpo(aliasNuevo.value.trim())
+    await cargar()
+  } catch (e) {
+    aliasError.value = e?.message ?? 'No pudimos guardar tu alias.'
+  } finally {
+    aliasGuardando.value = false
+  }
+}
 
 const evento = ref(null)
 const partidas = ref([])
 const cargando = ref(true)
 const error = ref(null)
 
+let pedido = 0
 async function cargar() {
+  const mio = ++pedido // si llega otra carga despues, vale la ultima
   cargando.value = true
   error.value = null
   try {
-    evento.value = await obtenerEvento(props.eventoId)
-    partidas.value = conSesion.value ? await listarMisPartidas(props.eventoId) : []
+    const ev = await obtenerEvento(props.eventoId)
+    const mias = conSesion.value ? await listarMisPartidas(props.eventoId) : []
+    const alias = esInvitado.value ? await elegirAliasExpo().catch(() => null) : null
+    if (mio !== pedido) return
+    evento.value = ev
+    partidas.value = mias
+    aliasExpo.value = alias
   } catch (e) {
-    error.value = e
+    if (mio === pedido) error.value = e
   } finally {
-    cargando.value = false
+    if (mio === pedido) cargando.value = false
   }
 }
 
@@ -85,17 +121,31 @@ function resumenDe(desafio) {
           </BaseBoton>
         </header>
 
-        <MensajeEstado v-if="!conSesion" tipo="info">
-          <p>Para jugar necesitas ingresar, aunque sea como invitado.</p>
-          <BaseBoton tamano="chico" :to="{ name: 'ingresar', query: { volver: `/expo/${eventoId}` } }">Ingresar</BaseBoton>
-        </MensajeEstado>
-        <MensajeEstado v-else-if="esInvitado" tipo="alerta" data-prueba="aviso-invitado-expo">
-          <p>
-            Como invitado podes jugar y ver tu puntaje, pero <strong>no apareces en el ranking</strong>:
-            solo figuran las cuentas, con su alias. Si creas tu cuenta, tus partidas pasan a contar.
+        <!-- Sin cuenta: se juega solo con un alias -->
+        <form v-if="necesitaAlias" class="alias-expo" novalidate data-prueba="alias-expo" @submit.prevent="jugarConAlias">
+          <h2>Elegí tu alias para jugar</h2>
+          <p class="texto-secundario">No hace falta crear una cuenta. Vas a aparecer en el ranking con este alias y un número.</p>
+          <label for="alias-expo">Tu alias</label>
+          <input
+            id="alias-expo"
+            v-model="aliasNuevo"
+            name="alias-expo"
+            autocomplete="nickname"
+            maxlength="20"
+            placeholder="Por ejemplo Ana_Dev"
+            :aria-invalid="Boolean(motivoAlias)"
+          />
+          <p v-if="motivoAlias || aliasError" class="alias-expo__error" role="alert">{{ motivoAlias || aliasError }}</p>
+          <BaseBoton type="submit" tamano="grande" ancho-completo :deshabilitado="aliasGuardando">
+            {{ aliasGuardando ? 'Preparando...' : 'Jugar con este alias' }}
+          </BaseBoton>
+          <p class="texto-secundario alias-expo__cuenta">
+            ¿Tenés cuenta? <router-link :to="{ name: 'ingresar', query: { volver: `/expo/${eventoId}` } }">Ingresá</router-link>
           </p>
-          <BaseBoton tamano="chico" :to="{ name: 'registro' }">Crear mi cuenta</BaseBoton>
-        </MensajeEstado>
+        </form>
+        <p v-else-if="esInvitado && aliasExpo" class="alias-expo__actual" data-prueba="alias-actual">
+          <Icono nombre="usuario" :tamano="16" /> Jugás como <strong>{{ aliasExpo.alias }}#{{ String(aliasExpo.codigo).padStart(4, '0') }}</strong>
+        </p>
 
         <ul class="desafios">
           <li v-for="desafio in evento.desafios" :key="desafio.id" class="desafio" :data-desafio="desafio.id">
@@ -114,7 +164,7 @@ function resumenDe(desafio) {
               </ul>
             </div>
 
-            <div v-if="conSesion" class="desafio__mio">
+            <div v-if="conSesion && !necesitaAlias" class="desafio__mio">
               <p class="desafio__intentos" data-prueba="intentos">
                 {{ resumenDe(desafio).usadas }} de {{ desafio.intentosPermitidos }} intentos usados
               </p>
@@ -257,5 +307,48 @@ function resumenDe(desafio) {
     justify-items: start;
     text-align: left;
   }
+}
+.alias-expo {
+  display: grid;
+  gap: var(--e-2);
+  background: var(--c-blanco);
+  border: 2px solid var(--c-violeta);
+  border-radius: var(--r-lg);
+  padding: var(--e-3);
+  margin-bottom: var(--e-3);
+}
+
+.alias-expo label {
+  font-weight: 800;
+}
+
+.alias-expo input {
+  font: inherit;
+  font-size: var(--t-lg);
+  border: 2px solid var(--c-borde);
+  border-radius: var(--r-md);
+  padding: 0.6rem 0.8rem;
+  min-width: 0;
+}
+
+.alias-expo input[aria-invalid='true'] {
+  border-color: var(--c-rojo);
+}
+
+.alias-expo__error {
+  color: var(--c-rojo-osc);
+  font-weight: 700;
+  font-size: var(--t-sm);
+}
+
+.alias-expo__cuenta {
+  text-align: center;
+}
+
+.alias-expo__actual {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: var(--e-3);
 }
 </style>

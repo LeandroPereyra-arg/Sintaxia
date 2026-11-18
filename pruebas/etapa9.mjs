@@ -452,6 +452,45 @@ await caso(
 )
 
 // ===========================================================================
+//  F. JUGAR SOLO CON UN ALIAS
+// ===========================================================================
+
+await caso(
+  9,
+  'Jugar la competencia sin iniciar sesion, solo con un alias',
+  'Sin sesion el evento pide un alias (rechaza uno invalido); con el alias se juega y la partida aparece en el ranking con ese alias; abrir un desafio sin sesion lleva al evento',
+  async () => {
+    const ctx = await contexto()
+    const p = await pagina(ctx)
+    await p.goto(`${URL_APP}/expo/${EVENTO}/desafios/${SPRINT}`, { waitUntil: 'networkidle' })
+    await p.waitForURL(`**/expo/${EVENTO}`)
+    await p.locator('[data-prueba="alias-expo"]').waitFor({ timeout: 10000 })
+    const jugarAntes = await p.locator(`[data-desafio="${SPRINT}"]`).getByRole('link', { name: 'Jugar' }).count()
+    await p.getByLabel('Tu alias').fill('a')
+    await p.getByRole('button', { name: 'Jugar con este alias' }).click()
+    const invalido = normalizar(await p.locator('.alias-expo__error').innerText())
+    await p.getByLabel('Tu alias').fill('Juan_Expo')
+    await p.getByRole('button', { name: 'Jugar con este alias' }).click()
+    await p.locator('[data-prueba="alias-actual"]').waitFor({ timeout: 15000 })
+    const actual = normalizar(await p.locator('[data-prueba="alias-actual"]').innerText())
+    await p.locator(`[data-desafio="${SPRINT}"]`).getByRole('link', { name: 'Jugar' }).waitFor({ timeout: 10000 })
+    const token = await p.evaluate(() => JSON.parse(localStorage.getItem('sintaxia:sesion'))?.access_token)
+    await ctx.close()
+
+    const { datos: yo } = await api.auth('/user', undefined, { token, metodo: 'GET' })
+    verificar(yo?.is_anonymous === true, 'no es una sesion de invitado')
+    const { partida } = await jugarPorApi(api, bd, token, SPRINT, { aciertos: 2 })
+    verificar(partida?.estado === 'finalizada', `partida: ${partida?.estado}`)
+    const { datos: ranking } = await api.rpc(null, 'ranking_evento', { p_evento_id: EVENTO, p_limite: 100 })
+    const fila = ranking.find((f) => f.alias === 'Juan_Expo' && f.desafio_id === SPRINT)
+    verificar(jugarAntes === 0 && /alias/i.test(invalido), `antes: jugar ${jugarAntes}, error "${invalido}"`)
+    verificar(/Juan_Expo#\d{4}/.test(actual), `alias actual: ${actual}`)
+    verificar(fila?.puntaje === 200, `en el ranking: ${JSON.stringify(fila)}`)
+    return `desafio sin sesion -> el evento pide alias · "a": "${invalido.slice(0, 40)}..." · con Juan_Expo: sesion de invitado, "${actual}" · juega y aparece en el ranking como Juan_Expo (200 pts)`
+  }
+)
+
+// ===========================================================================
 //  Resumen
 // ===========================================================================
 await navegador.close()
