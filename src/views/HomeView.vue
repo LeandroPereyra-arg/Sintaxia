@@ -83,7 +83,7 @@ function comenzar() {
           </h1>
           <p class="portada__bajada">
             Sintaxia convierte el estudio de la programacion en lecciones cortas, ejercicios
-            interactivos y rachas diarias. Gratis, en espanol y desde cero.
+            interactivos y rachas diarias. Gratis, en español y desde cero.
           </p>
 
           <div class="portada__acciones">

@@ -22,6 +22,7 @@ en este orden:
 | 14 | `14-evento-expo.sql` | Etapa 6. Evento de ejemplo `expo-2026` con dos desafios. No pisa nada si se vuelve a correr. |
 | 15 | `15-ranking-publico.sql` | Etapa 7. Tabla `resultados_publicos` (la mejor partida de cada cuenta por desafio, mantenida por disparadores), `ranking_evento`, `mi_posicion` y la publicacion de Realtime. |
 | 16 | `16-administracion.sql` | Etapa 7. Tabla `administradores`, `otorgar_administrador` (solo servidor), validaciones de contenido y funciones `admin_*` del panel. |
+| 17 | `17-juego-de-la-expo.sql` | Minijuego *Sintax atrapa el código* (fichas armadas y validadas por el servidor), `ranking_total` y desafios que no muestran la correccion mientras se juegan (`mis_partidas`). |
 
 `00-roles-locales.sql` **no se ejecuta en Supabase**: solo sirve para crear los
 roles `anon`, `authenticated`, `service_role` y `postgres` y el esquema `auth` cuando se
@@ -29,7 +30,7 @@ reproduce el proyecto en una instalacion comun de PostgreSQL (por ejemplo, para 
 las pruebas automaticas). Ver `npm run supabase:local`.
 
 **Atencion con el orden:** `01-esquema.sql` borra y recrea el contenido, asi que solo se
-corre en un proyecto nuevo. Los scripts `02` y `05` a `16` se pueden volver a correr sin
+corre en un proyecto nuevo. Los scripts `02` y `05` a `17` se pueden volver a correr sin
 perder datos ni permisos (esta probado: caso 34 de la etapa 4, caso 20 de la etapa 5, caso 15 de la etapa 6 y caso 17 de la etapa 7).
 
 **Administradores:** despues de correr el `16`, se da el rol desde el SQL Editor con

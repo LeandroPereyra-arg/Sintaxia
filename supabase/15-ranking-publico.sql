@@ -12,7 +12,7 @@
 --      + participante: un identificador publico hecho para esto (no es el id
 --        de la cuenta) que sirve para resaltar la fila propia
 --
---  Lo que NO se publica: correos, contrasenas, ids de cuenta, partidas,
+--  Lo que NO se publica: correos, contraseñas, ids de cuenta, partidas,
 --  respuestas individuales, intentos fallidos ni invitados.
 --
 --  La tabla la mantiene el servidor con disparadores: cuando una partida queda

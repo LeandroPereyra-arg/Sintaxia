@@ -100,12 +100,16 @@ function resumenDe(desafio) {
         <ul class="desafios">
           <li v-for="desafio in evento.desafios" :key="desafio.id" class="desafio" :data-desafio="desafio.id">
             <div class="desafio__texto">
-              <p class="desafio__dificultad">{{ ETIQUETA_DIFICULTAD[desafio.dificultad] }}</p>
+              <p class="desafio__dificultad">
+                <template v-if="desafio.tipo === 'minijuego'"><Icono nombre="joystick" :tamano="14" /> Minijuego · </template>{{ ETIQUETA_DIFICULTAD[desafio.dificultad] }}
+              </p>
               <h2>{{ desafio.nombre }}</h2>
               <p class="texto-secundario">{{ desafio.descripcion }}</p>
               <ul class="reglas">
                 <li><Icono nombre="reloj" :tamano="15" /> {{ desafio.duracionSegundos }} segundos</li>
-                <li><Icono nombre="rayo" :tamano="15" /> {{ desafio.puntosPorAcierto }} puntos por acierto</li>
+                <li v-if="desafio.tipo === 'minijuego'"><Icono nombre="rayo" :tamano="15" /> {{ desafio.puntosPorAcierto }} puntos por ficha</li>
+                <li v-if="desafio.tipo === 'minijuego'"><Icono nombre="corazon" :tamano="15" /> 3 vidas</li>
+                <li v-else><Icono nombre="rayo" :tamano="15" /> {{ desafio.puntosPorAcierto }} puntos por acierto</li>
                 <li><Icono nombre="repetir" :tamano="15" /> {{ desafio.intentosPermitidos }} intentos</li>
               </ul>
             </div>
@@ -119,7 +123,13 @@ function resumenDe(desafio) {
                 en {{ formatoTiempo(resumenDe(desafio).mejor.duracionMs) }}
               </p>
               <BaseBoton
-                v-if="abierto && resumenDe(desafio).enCurso"
+                v-if="abierto && desafio.tipo === 'minijuego' && desafio.estado === 'publicado' && resumenDe(desafio).quedan > 0"
+                :to="{ name: 'minijuego', params: { eventoId, desafioId: desafio.id } }"
+              >
+                Jugar
+              </BaseBoton>
+              <BaseBoton
+                v-else-if="abierto && desafio.tipo !== 'minijuego' && resumenDe(desafio).enCurso"
                 :to="{ name: 'partida', params: { eventoId, desafioId: desafio.id }, query: { partida: resumenDe(desafio).enCurso.id } }"
               >
                 Retomar partida
@@ -140,7 +150,9 @@ function resumenDe(desafio) {
           <ul>
             <li>El tiempo lo mide el servidor desde que empezas. Si se corta la conexion, segui: el reloj no se detiene.</li>
             <li>Para que la partida cuente, respondela entera o toca <strong>Terminar</strong> antes de que se acabe el tiempo. Si se acaba sin cerrarla, queda incompleta y no entra al ranking.</li>
-            <li>En el ranking cuenta tu <strong>mejor</strong> partida, no la suma. A igual puntaje gana quien tardo menos; si tambien empatan en tiempo, comparten el puesto.</li>
+            <li>Mientras jugas un desafio de preguntas no se muestra si cada respuesta estuvo bien: tu puntaje aparece al terminar.</li>
+            <li>En el ranking de cada desafio cuenta tu <strong>mejor</strong> partida, no la suma. A igual puntaje gana quien tardo menos; si tambien empatan en tiempo, comparten el puesto.</li>
+            <li>El <strong>puntaje total</strong> suma tu mejor partida de cada desafio, incluido el minijuego: jugar todos te hace subir.</li>
           </ul>
         </section>
       </template>

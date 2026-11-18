@@ -9,15 +9,15 @@ import { useAuth } from '@/composables/useAuth.js'
 import { CLAVE_MINIMA, motivoClaveInvalida } from '@/utils/validaciones.js'
 
 /**
- * Elegir una contrasena nueva. A esta pantalla se llega desde el enlace del correo
- * de "olvide mi contrasena".
+ * Elegir una contraseña nueva. A esta pantalla se llega desde el enlace del correo
+ * de "olvide mi contraseña".
  *
  * Hay tres situaciones:
  *   · SIN SESION: el enlace no sirvio (vencio, ya se uso, o se abrio en otro
  *     dispositivo, donde el codigo de un solo uso no vale). Se explica y se ofrece
  *     pedir otro.
- *   · INVITADO: los invitados no tienen contrasena. Se les ofrece crear la cuenta.
- *   · CUENTA: se elige la contrasena nueva.
+ *   · INVITADO: los invitados no tienen contraseña. Se les ofrece crear la cuenta.
+ *   · CUENTA: se elige la contraseña nueva.
  */
 const router = useRouter()
 const { estado: sesion, conSesion, esInvitado, iniciar, cambiarClave } = useAuth()
@@ -32,7 +32,7 @@ const listo = ref(false)
 const cargando = computed(() => sesion.estadoCarga === 'cargando')
 const errorClave = computed(() => (intento.value ? motivoClaveInvalida(clave.value) : ''))
 const errorRepetida = computed(() =>
-  intento.value && clave.value !== repetida.value ? 'Las dos contrasenas tienen que ser iguales.' : ''
+  intento.value && clave.value !== repetida.value ? 'Las dos contraseñas tienen que ser iguales.' : ''
 )
 
 onMounted(iniciar)
@@ -62,8 +62,8 @@ async function guardar() {
       <!-- Listo -->
       <template v-else-if="listo">
         <SintaxMascota estado="celebrando" :alto="110" alt="" />
-        <h1>Contrasena cambiada</h1>
-        <MensajeEstado tipo="exito">Listo: ya podes ingresar con tu contrasena nueva.</MensajeEstado>
+        <h1>Contraseña cambiada</h1>
+        <MensajeEstado tipo="exito">Listo: ya podes ingresar con tu contraseña nueva.</MensajeEstado>
         <BaseBoton tamano="grande" ancho-completo @click="router.push({ name: 'perfil' })">
           Ir a mi perfil
         </BaseBoton>
@@ -84,25 +84,25 @@ async function guardar() {
         <BaseBoton variante="texto" :to="{ name: 'ingresar' }">Volver a ingresar</BaseBoton>
       </template>
 
-      <!-- Un invitado no tiene contrasena -->
+      <!-- Un invitado no tiene contraseña -->
       <template v-else-if="esInvitado">
         <SintaxMascota estado="pensando" :alto="110" alt="" />
-        <h1>Los invitados no tienen contrasena</h1>
+        <h1>Los invitados no tienen contraseña</h1>
         <p class="texto-secundario">
-          Para tener una contrasena primero hay que crear una cuenta. Tu progreso se conserva.
+          Para tener una contraseña primero hay que crear una cuenta. Tu progreso se conserva.
         </p>
         <BaseBoton tamano="grande" ancho-completo :to="{ name: 'registro' }">Crear mi cuenta</BaseBoton>
       </template>
 
-      <!-- Elegir la contrasena -->
+      <!-- Elegir la contraseña -->
       <template v-else>
         <SintaxMascota estado="normal" :alto="110" alt="" />
-        <h1>{{ sesion.enRecuperacion ? 'Elegi tu contrasena nueva' : 'Cambiar mi contrasena' }}</h1>
+        <h1>{{ sesion.enRecuperacion ? 'Elegi tu contraseña nueva' : 'Cambiar mi contraseña' }}</h1>
 
         <form class="formulario" novalidate @submit.prevent="guardar">
           <CampoTexto
             v-model="clave"
-            etiqueta="Contrasena nueva"
+            etiqueta="Contraseña nueva"
             tipo="password"
             autocomplete="new-password"
             :ayuda="`Al menos ${CLAVE_MINIMA} caracteres.`"
@@ -121,7 +121,7 @@ async function guardar() {
           <MensajeEstado v-if="error" tipo="error">{{ error.message }}</MensajeEstado>
 
           <BaseBoton type="submit" tamano="grande" ancho-completo :deshabilitado="enviando">
-            {{ enviando ? 'Guardando...' : 'Guardar contrasena' }}
+            {{ enviando ? 'Guardando...' : 'Guardar contraseña' }}
           </BaseBoton>
         </form>
       </template>

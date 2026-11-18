@@ -73,12 +73,12 @@ esta en Google Fonts y tiene soporte completo de castellano. Cumple el mismo pap
 tipografia redondeada de Duolingo, que es la que le da el aire de juego.
 
 **Por que JetBrains Mono.** El codigo tiene que verse como codigo. Es monoespaciada, fue
-disenada especificamente para leer codigo durante horas, tiene una altura de x grande y
+diseñada especificamente para leer codigo durante horas, tiene una altura de x grande y
 distingue con claridad los caracteres que se confunden (`0` y `O`, `1`, `l` e `I`, llaves y
 parentesis), que es justo lo que un principiante necesita al copiar sintaxis.
 
 **Por que solo dos familias.** Una para interfaz y otra para codigo alcanza: mas fuentes
-agregan peso de descarga y ruido visual. La jerarquia se resuelve con tamanio y peso.
+agregan peso de descarga y ruido visual. La jerarquia se resuelve con tamaño y peso.
 
 ### Escala tipografica
 
@@ -92,7 +92,7 @@ agregan peso de descarga y ruido visual. La jerarquia se resuelve con tamanio y 
 --t-2xl   2.75rem   titulo de la portada
 ```
 
-Los tres tamanios mas grandes se achican automaticamente por debajo de 640 px.
+Los tres tamaños mas grandes se achican automaticamente por debajo de 640 px.
 
 ---
 
@@ -119,7 +119,7 @@ inmediata.
 | `peligro` | Rojo | Borrar progreso, continuar tras un error |
 | `texto` | Sin fondo | Acciones menores (salir, cancelar) |
 
-Ademas: tres tamanios (`chico`, `medio`, `grande`), modo ancho completo, estado deshabilitado
+Ademas: tres tamaños (`chico`, `medio`, `grande`), modo ancho completo, estado deshabilitado
 en gris plano (sin sombra, para que se vea "apagado") y `outline` azul de 3 px al navegar con
 teclado. Los botones van en mayusculas con `letter-spacing` levemente abierto: son ordenes
 cortas y asi se distinguen del texto comun de un vistazo.
@@ -170,7 +170,7 @@ Por que un set propio y no emojis:
   🎯 se ve de una forma en Windows, de otra en Android y de otra en iPhone. La interfaz
   terminaba cambiando de aspecto segun quien la abriera.
 - **No se les puede cambiar el color.** Un emoji viene con sus colores puestos, asi que no
-  podia acompaniar al color del estado (verde cuando esta completo, gris cuando esta
+  podia acompañar al color del estado (verde cuando esta completo, gris cuando esta
   bloqueado).
 - **No combinan con el trazo del resto.** Los emojis son ilustraciones a color; el resto de
   la interfaz es de lineas limpias.
@@ -191,9 +191,9 @@ una `etiqueta` que el lector de pantalla si anuncia.
 animo** (`public/sintax/`): normal, saludando, sorprendido, pensando, celebrando, confundido,
 enojado y dormido.
 
-Las ocho comparten **el mismo encuadre**: igual tamanio de lienzo y el personaje apoyado
+Las ocho comparten **el mismo encuadre**: igual tamaño de lienzo y el personaje apoyado
 sobre la misma linea de piso. Eso es lo que hace que al cambiar de estado no salte de lugar
-ni cambie de tamanio, que es lo que arruina este tipo de mascotas.
+ni cambie de tamaño, que es lo que arruina este tipo de mascotas.
 
 Van en WebP, que pesa unas cinco veces menos que el PNG con la misma calidad: 44 KB contra
 218 KB por imagen. Con el celular en datos moviles, esa diferencia es la que decide si el
@@ -229,7 +229,7 @@ duraciones fija para que todo se mueva al mismo ritmo:
 
 ```css
 --anim-rapida: 0.18s;   --anim-media: 0.32s;   --anim-lenta: 0.6s;
---anim-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);   /* con un pequenio rebote */
+--anim-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);   /* con un pequeño rebote */
 --anim-suave:  cubic-bezier(0.22, 1, 0.36, 1);      /* desacelera al final */
 ```
 
@@ -261,7 +261,7 @@ que saltan directo al valor final.
 | Verde como color de accion | Es el color de "correcto": apretar el boton ya se siente como avanzar. |
 | Violeta como secundario | Contrasta con el verde, identifica al codigo y continua el color del ejercicio original del repo. |
 | Nunito | Redondeada y amigable, legible en pantalla, llega a peso 900 y es gratuita. |
-| JetBrains Mono | Disenada para leer codigo; distingue 0/O y 1/l/I, clave para un principiante. |
+| JetBrains Mono | Diseñada para leer codigo; distingue 0/O y 1/l/I, clave para un principiante. |
 | Botones con borde inferior 3D | Devolucion tactil inmediata; es el gesto que hace que la app se sienta un juego. |
 | Emojis en vez de libreria de iconos | Cero peso, cero dependencias, tono amable y accesibles. |
 | Estado indicado por color + texto + icono | No depender del color hace la app usable para personas daltonicas. |

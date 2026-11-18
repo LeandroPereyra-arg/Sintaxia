@@ -5,7 +5,7 @@ import { computed, ref, useId } from 'vue'
  * Campo de formulario reutilizable: etiqueta, ayuda y mensaje de error.
  *
  * El error se asocia al campo con aria-describedby y aria-invalid, asi que un
- * lector de pantalla lo anuncia al entrar. Los campos de contrasena traen un
+ * lector de pantalla lo anuncia al entrar. Los campos de contraseña traen un
  * boton para mostrarla, util en el celular donde se tipea mal.
  */
 const props = defineProps({

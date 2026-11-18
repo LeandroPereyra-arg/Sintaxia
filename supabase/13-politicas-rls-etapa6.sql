@@ -56,11 +56,13 @@ create policy "desafios visibles"
 
 grant select on public.partidas to authenticated;
 
+-- Una partida de preguntas en curso no se ve: ni su puntaje ni sus respuestas
+-- (la correccion se ve al terminar). La app usa mis_partidas().
 create policy "partidas: ver las propias"
   on public.partidas
   for select
   to authenticated
-  using (usuario_id = (select auth.uid()));
+  using (usuario_id = (select auth.uid()) and not (estado = 'en_curso' and tipo = 'preguntas'));
 
 grant select on public.partida_respuestas to authenticated;
 
@@ -70,7 +72,9 @@ create policy "partida_respuestas: propias"
   to authenticated
   using (exists (
     select 1 from public.partidas p
-     where p.id = partida_respuestas.partida_id and p.usuario_id = (select auth.uid())
+     where p.id = partida_respuestas.partida_id
+       and p.usuario_id = (select auth.uid())
+       and p.estado <> 'en_curso'
   ));
 
 commit;

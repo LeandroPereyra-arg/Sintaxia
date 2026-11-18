@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import Icono from '@/components/Icono.vue'
 import BaseBoton from '@/components/BaseBoton.vue'
 import BarraProgreso from '@/components/BarraProgreso.vue'
-import BarraFeedback from '@/components/BarraFeedback.vue'
 import EstadoConsulta from '@/components/EstadoConsulta.vue'
 import EjercicioOpcionMultiple from '@/components/ejercicios/EjercicioOpcionMultiple.vue'
 import {
@@ -22,6 +21,10 @@ import { nuevoIdDeIntento } from '@/servicios/progreso.js'
  * El SERVIDOR crea la partida, fija sus preguntas, mide el tiempo, corrige y
  * suma los puntos (supabase/12-funciones-competencia.sql). Esta pantalla solo
  * manda que pregunta y que opcion, y muestra lo que el servidor confirmo.
+ *
+ * Mientras se juega NO se muestra si cada respuesta estuvo bien ni el puntaje
+ * (el servidor tampoco lo manda: 17-juego-de-la-expo.sql). Se ve solo el
+ * puntaje final, en la pantalla de resultado.
  *
  * El tiempo: el servidor dice cuantos segundos quedan en cada respuesta, y aca
  * se cuenta hacia atras desde ese dato con el reloj monotono del navegador
@@ -160,9 +163,7 @@ async function enviar() {
     respuesta.value = r.opcionId
     resultado.value = r
     envio.value = 'guardado'
-    const actual = preguntas.value.map((q) =>
-      q.id === r.preguntaId ? { ...q, respuesta: { opcionId: r.opcionId, correcta: r.correcta, puntos: r.puntos } } : q
-    )
+    const actual = preguntas.value.map((q) => (q.id === r.preguntaId ? { ...q, respuesta: { opcionId: r.opcionId } } : q))
     partida.value = { ...r.partida, preguntas: actual }
     sincronizarTiempo(r.partida)
   } catch (e) {
@@ -257,7 +258,7 @@ const tituloError = computed(
         <p class="tiempo" :class="{ 'tiempo--poco': poco }" data-prueba="tiempo" role="timer" aria-live="off">
           <Icono nombre="reloj" :tamano="17" /> {{ textoTiempo }}
         </p>
-        <p class="puntaje" data-prueba="puntaje">{{ partida.puntaje }} pts</p>
+        <p class="puntaje" data-prueba="respondidas">{{ partida.respondidas }}/{{ partida.total }}</p>
       </div>
     </header>
 
@@ -272,7 +273,6 @@ const tituloError = computed(
         v-model="respuesta"
         :ejercicio="pregunta"
         :bloqueado="comprobado || envio === 'enviando'"
-        :id-correcto="resultado?.correcta ? resultado.opcionId : null"
       />
 
       <p
@@ -292,13 +292,15 @@ const tituloError = computed(
       </p>
     </section>
 
-    <BarraFeedback
-      v-if="comprobado"
-      :correcta="resultado.correcta"
-      :explicacion="resultado.correcta ? `+${resultado.puntos} puntos` : 'No suma puntos.'"
-      :texto-boton="partida.estado === 'en_curso' ? 'Siguiente' : 'Ver mi puntaje'"
-      @continuar="continuar"
-    />
+    <!-- Registrada: sin decir si estuvo bien. El puntaje se ve al final. -->
+    <footer v-if="comprobado" class="partida__pie partida__pie--registrada" data-prueba="registrada">
+      <div class="contenedor partida__pie-interior">
+        <p class="registrada__texto"><Icono nombre="check" :tamano="18" /> Respuesta registrada</p>
+        <BaseBoton tamano="grande" @click="continuar">
+          {{ partida.estado === 'en_curso' ? 'Siguiente' : 'Ver mi puntaje' }}
+        </BaseBoton>
+      </div>
+    </footer>
 
     <footer v-else class="partida__pie">
       <div class="contenedor partida__pie-interior">
@@ -432,5 +434,19 @@ const tituloError = computed(
   align-items: center;
   justify-content: space-between;
   gap: var(--e-2);
+}
+
+/* Registrada: neutra, sin verde ni rojo (no dice si estuvo bien). */
+.partida__pie--registrada {
+  background: var(--c-violeta-suave);
+  border-top-color: var(--c-violeta);
+}
+
+.registrada__texto {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 800;
+  color: var(--c-violeta-osc);
 }
 </style>

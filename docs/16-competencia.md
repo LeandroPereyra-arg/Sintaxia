@@ -42,7 +42,7 @@ Todas las preguntas son de opcion multiple con una sola respuesta correcta.
 | Preguntas | `preguntas` / `opciones` | `preguntas_desafio` / `opciones_desafio` (banco propio de cada desafio) |
 | Lectura desde la app | Las preguntas publicadas, sin solucion | **Nada**: las preguntas llegan solo dentro de una partida propia |
 | Correccion | `comprobar_respuesta`, `responder_actividad` | `responder_partida` |
-| Que devuelve al responder | Si acerto, cual era la correcta y la explicacion | Si acerto y los puntos. **No** cual era la correcta ni la explicacion |
+| Que devuelve al responder | Si acerto, cual era la correcta y la explicacion | Que quedo registrada. **No** si acerto, ni cual era la correcta, ni la explicacion (desde el script 17: ver [27](27-minijuego-y-puntaje-total.md)) |
 | Resultado | Progreso personal | Puntaje oficial para el ranking |
 
 Por que no se puede averiguar una solucion del desafio con la practica:
@@ -73,7 +73,7 @@ sesion. Ninguna recibe un puntaje, una cantidad de aciertos ni un tiempo.
 
 | Columna de `partidas` | Para que |
 |---|---|
-| `usuario_id` | El dueno, tomado de `auth.uid()`. |
+| `usuario_id` | El dueño, tomado de `auth.uid()`. |
 | `version_desafio`, `puntos_por_acierto`, `duracion_segundos`, `gracia_segundos` | Copia de las reglas: la partida se juega con las reglas que habia al empezar. |
 | `total_preguntas` + filas en `partida_preguntas` | Las preguntas de esa partida y su orden. |
 | `iniciada_en`, `vence_en` | Inicio y cierre, con el reloj del servidor. |
@@ -89,7 +89,7 @@ otra cosa, se crea otro desafio (otra version). Se puede cambiar el estado
 
 **Puntaje.** `puntos_por_acierto` por cada respuesta correcta, cero por una
 incorrecta. No hay puntos negativos. La base lo garantiza con una restriccion:
-`puntaje = aciertos x puntos_por_acierto` (ni siquiera el dueno de la base puede
+`puntaje = aciertos x puntos_por_acierto` (ni siquiera el dueño de la base puede
 guardar otro numero: caso 10).
 
 **Tiempo, medido en el servidor.**

@@ -10,11 +10,11 @@
  *
  *   · INVITADO     sesion anonima de Supabase: cada invitado recibe un usuario
  *                  propio con su propio id (nunca una cuenta compartida).
- *   · CUENTA       usuario con correo y contrasena.
- *   · CONVERSION   un invitado agrega correo y contrasena y sigue siendo el MISMO
+ *   · CUENTA       usuario con correo y contraseña.
+ *   · CONVERSION   un invitado agrega correo y contraseña y sigue siendo el MISMO
  *                  usuario: conserva su id y, por lo tanto, su historial.
  *
- * Las contrasenas no pasan por ninguna tabla propia: Auth las guarda con hash.
+ * Las contraseñas no pasan por ninguna tabla propia: Auth las guarda con hash.
  */
 import { supabase, hayConfiguracion, urlDeRetorno } from '@/servicios/supabase.js'
 import { ErrorDeAuth, SinConfiguracion, esErrorDeRed } from '@/servicios/errores.js'
@@ -31,22 +31,22 @@ const MENSAJES = {
     'Se hicieron demasiados intentos desde esta conexion. Espera unos minutos y volve a probar.',
   over_email_send_rate_limit:
     'Se enviaron demasiados correos en poco tiempo. Espera un rato antes de pedir otro.',
-  invalid_credentials: 'El correo o la contrasena no son correctos.',
+  invalid_credentials: 'El correo o la contraseña no son correctos.',
   email_not_confirmed:
     'Todavia no confirmaste tu correo. Abri el enlace que te mandamos (fijate tambien en el spam).',
-  user_already_exists: 'Ese correo ya tiene una cuenta. Inicia sesion o recupera tu contrasena.',
-  email_exists: 'Ese correo ya tiene una cuenta. Inicia sesion o recupera tu contrasena.',
-  weak_password: `La contrasena es demasiado debil: usa al menos ${CLAVE_MINIMA} caracteres.`,
-  same_password: 'La contrasena nueva tiene que ser distinta de la anterior.',
+  user_already_exists: 'Ese correo ya tiene una cuenta. Inicia sesion o recupera tu contraseña.',
+  email_exists: 'Ese correo ya tiene una cuenta. Inicia sesion o recupera tu contraseña.',
+  weak_password: `La contraseña es demasiado debil: usa al menos ${CLAVE_MINIMA} caracteres.`,
+  same_password: 'La contraseña nueva tiene que ser distinta de la anterior.',
   signup_disabled: 'El registro esta cerrado por ahora.',
   email_address_invalid: 'El correo no parece valido. Revisalo e intenta de nuevo.',
   validation_failed: 'Los datos no son validos. Revisalos e intenta de nuevo.',
   otp_expired: 'El enlace vencio o ya se uso. Pedi uno nuevo.',
   flow_state_not_found:
-    'Este enlace hay que abrirlo en el mismo dispositivo y navegador donde lo pediste. Si no, ingresa con tu contrasena.',
+    'Este enlace hay que abrirlo en el mismo dispositivo y navegador donde lo pediste. Si no, ingresa con tu contraseña.',
   flow_state_expired: 'El enlace vencio. Pedi uno nuevo.',
   bad_code_verifier:
-    'Este enlace hay que abrirlo en el mismo dispositivo y navegador donde lo pediste. Si no, ingresa con tu contrasena.',
+    'Este enlace hay que abrirlo en el mismo dispositivo y navegador donde lo pediste. Si no, ingresa con tu contraseña.',
   session_not_found: 'Tu sesion vencio. Volve a ingresar.',
   refresh_token_not_found: 'Tu sesion vencio. Volve a ingresar.',
   refresh_token_already_used: 'Tu sesion vencio. Volve a ingresar.',
@@ -150,7 +150,7 @@ export async function entrarComoInvitado() {
 // ---------------------------------------------------------------------------
 
 /**
- * Registra una cuenta nueva con correo y contrasena.
+ * Registra una cuenta nueva con correo y contraseña.
  * Devuelve { sesion, confirmacionPendiente }:
  *   · con la confirmacion de correo ACTIVADA en Supabase no hay sesion todavia:
  *     hay que abrir el enlace que llega por correo;
@@ -181,7 +181,7 @@ export async function registrarCuenta({ correo, clave, alias }) {
  * Es updateUser, NO signUp: el usuario sigue siendo el mismo (mismo id), asi que
  * conserva su historial sin copiar nada desde el cliente ni crear otra cuenta.
  *
- *   · Con la confirmacion de correo activada, la contrasena queda guardada de
+ *   · Con la confirmacion de correo activada, la contraseña queda guardada de
  *     inmediato pero el usuario sigue siendo "invitado" hasta que abre el enlace
  *     que llega al correo; ahi pasa a ser cuenta y toma el alias elegido.
  *   · Con la confirmacion desactivada la conversion es inmediata.
@@ -241,7 +241,7 @@ export async function cerrarSesion() {
 // ---------------------------------------------------------------------------
 
 /**
- * Manda el correo para elegir una contrasena nueva. No dice si el correo tiene
+ * Manda el correo para elegir una contraseña nueva. No dice si el correo tiene
  * cuenta o no: responde igual en los dos casos, para no revelar quien esta registrado.
  */
 export async function pedirRecuperacion(correo) {
@@ -250,7 +250,7 @@ export async function pedirRecuperacion(correo) {
   )
 }
 
-/** Cambia la contrasena de la sesion actual (la de recuperacion o la normal). */
+/** Cambia la contraseña de la sesion actual (la de recuperacion o la normal). */
 export async function cambiarClave(clave) {
   await llamar((auth) => auth.updateUser({ password: clave }))
 }

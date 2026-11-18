@@ -11,7 +11,7 @@ import { useAuth } from '@/composables/useAuth.js'
 import { motivoCorreoInvalido, rutaSegura } from '@/utils/validaciones.js'
 
 /**
- * Entrada a la app: ingresar con correo y contrasena, o seguir como invitado.
+ * Entrada a la app: ingresar con correo y contraseña, o seguir como invitado.
  *
  * Si ya hay una sesion de INVITADO y la persona quiere entrar a una cuenta que ya
  * existe, se le advierte que su historial de invitado no se va a pasar a esa
@@ -43,7 +43,7 @@ const volver = computed(() => rutaSegura(route.query.volver, '/perfil'))
 const cargando = computed(() => sesion.estadoCarga === 'cargando')
 
 const errorCorreo = computed(() => (intento.value ? motivoCorreoInvalido(correo.value) : ''))
-const errorClave = computed(() => (intento.value && !clave.value ? 'Escribi tu contrasena.' : ''))
+const errorClave = computed(() => (intento.value && !clave.value ? 'Escribi tu contraseña.' : ''))
 
 // Quien ya tiene una cuenta no necesita esta pantalla.
 watch(
@@ -128,7 +128,7 @@ async function comoInvitado() {
           />
           <CampoTexto
             v-model="clave"
-            etiqueta="Contrasena"
+            etiqueta="Contraseña"
             tipo="password"
             autocomplete="current-password"
             :error="errorClave"
@@ -154,7 +154,7 @@ async function comoInvitado() {
           </BaseBoton>
 
           <p class="enlaces">
-            <router-link :to="{ name: 'recuperar' }">Olvide mi contrasena</router-link>
+            <router-link :to="{ name: 'recuperar' }">Olvide mi contraseña</router-link>
           </p>
         </form>
 

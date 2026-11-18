@@ -33,6 +33,8 @@ pg_dump "$SUPABASE_DB_URL" \
   --table=public.desafios \
   --table=public.preguntas_desafio \
   --table=public.opciones_desafio \
+  --table=public.minijuego_categorias \
+  --table=public.minijuego_fichas \
   --file="$archivo"
 
 echo "Respaldo guardado en $archivo"

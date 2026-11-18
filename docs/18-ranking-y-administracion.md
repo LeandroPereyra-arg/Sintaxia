@@ -149,13 +149,13 @@ llama no es administrador. Ocultar el enlace "Administracion" del menu y la ruta
 
 ## 18.4 El panel de administracion (`/admin`)
 
-Dos pestanas: **Contenido** y **Eventos de expo**.
+Dos pestañas: **Contenido** y **Eventos de expo**.
 
 ### Contenido
 
 Cursos -> unidades -> lecciones -> preguntas con opciones. Se listan por su
 `orden` y se filtran por curso, unidad, leccion y estado (borrador, publicado,
-todos). La pestana y los filtros se recuerdan al recargar.
+todos). La pestaña y los filtros se recuerdan al recargar.
 
 | Accion | Como |
 |---|---|
@@ -239,6 +239,7 @@ Orden en un proyecto nuevo de Supabase (SQL Editor):
 14-evento-expo.sql
 15-ranking-publico.sql
 16-administracion.sql
+17-juego-de-la-expo.sql
 ```
 
 (`00-roles-locales.sql` es solo para la base local de pruebas: Supabase ya trae
@@ -249,7 +250,7 @@ esos roles y la publicacion `supabase_realtime`.)
 Lo que se carga desde el panel no esta en los scripts. Se respalda con
 `pg_dump` (viene con PostgreSQL) usando la cadena de conexion de la base, que
 esta en el panel de Supabase (**Connect** -> cadena de conexion). Esa cadena
-**incluye la contrasena de la base**: se pasa por una variable de entorno en la
+**incluye la contraseña de la base**: se pasa por una variable de entorno en la
 terminal y **nunca se escribe en un archivo del repositorio** ni en este manual.
 
 ```bash
@@ -284,7 +285,7 @@ script de contenido no se usa sobre un proyecto con historial.
 
 1. Crear el proyecto y configurar Auth como en
    [12. Acceso y sesiones](12-acceso-y-sesiones.md).
-2. Correr los scripts `01` a `16` en orden.
+2. Correr los scripts `01` a `17` en orden.
 3. Cargar el contenido:
    ```bash
    export SUPABASE_DB_URL='<cadena de conexion del proyecto nuevo>'

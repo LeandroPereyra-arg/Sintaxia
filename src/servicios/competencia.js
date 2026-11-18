@@ -34,11 +34,7 @@ export const ETIQUETA_DIFICULTAD = Object.freeze({ facil: 'Facil', media: 'Media
 const COLUMNAS_EVENTO = 'id, nombre, descripcion, lugar, estado, abre_en, cierra_en'
 const COLUMNAS_DESAFIO =
   'id, evento_id, orden, nombre, descripcion, dificultad, duracion_segundos, puntos_por_acierto, ' +
-  'intentos_permitidos, estado, version'
-const COLUMNAS_PARTIDA =
-  'id, desafio_id, evento_id, numero, estado, total_preguntas, aciertos, errores, puntaje, ' +
-  'puntos_por_acierto, duracion_segundos, iniciada_en, vence_en, finalizada_en, duracion_ms'
-
+  'intentos_permitidos, estado, version, tipo'
 function cliente() {
   if (!hayConfiguracion || !supabase) throw new SinConfiguracion()
   return supabase
@@ -68,30 +64,36 @@ function aDesafio(f) {
     puntosPorAcierto: f.puntos_por_acierto,
     intentosPermitidos: f.intentos_permitidos,
     estado: f.estado,
-    version: f.version
+    version: f.version,
+    /** 'preguntas' o 'minijuego' */
+    tipo: f.tipo ?? 'preguntas'
   }
 }
 
 /** Partida (fila o resumen del servidor) en el vocabulario de la app. */
 export function aPartida(f) {
-  const aciertos = f.aciertos ?? 0
-  const errores = f.errores ?? 0
+  // Mientras se juega un desafio de preguntas el servidor NO manda aciertos,
+  // errores ni puntaje (llegan en null): solo cuantas se respondieron.
   return {
     id: f.id,
     desafioId: f.desafio_id,
     eventoId: f.evento_id,
+    tipo: f.tipo ?? 'preguntas',
     numero: f.numero,
     estado: f.estado,
     valida: f.estado === ESTADO_PARTIDA.FINALIZADA,
     total: f.total_preguntas,
-    respondidas: aciertos + errores,
-    aciertos,
-    errores,
-    puntaje: f.puntaje ?? 0,
-    puntajeMaximo: f.puntaje_maximo ?? f.total_preguntas * f.puntos_por_acierto,
+    respondidas: f.respondidas ?? (f.aciertos ?? 0) + (f.errores ?? 0),
+    aciertos: f.aciertos ?? null,
+    errores: f.errores ?? null,
+    puntaje: f.puntaje ?? null,
+    vidas: f.vidas ?? null,
+    puntajeMaximo: f.puntaje_maximo ?? null,
     puntosPorAcierto: f.puntos_por_acierto,
     duracionSegundos: f.duracion_segundos,
     iniciadaEn: f.iniciada_en,
+    /** Hora del servidor al responder (para medir el tiempo sin el reloj del celular). */
+    ahora: f.ahora ?? null,
     venceEn: f.vence_en,
     finalizadaEn: f.finalizada_en ?? null,
     duracionMs: f.duracion_ms ?? null,
@@ -103,9 +105,7 @@ export function aPartida(f) {
       enunciado: q.enunciado,
       codigo: q.codigo,
       opciones: q.opciones ?? [],
-      respuesta: q.respuesta
-        ? { opcionId: q.respuesta.opcion_id, correcta: q.respuesta.correcta, puntos: q.respuesta.puntos }
-        : null
+      respuesta: q.respuesta ? { opcionId: q.respuesta.opcion_id } : null
     })),
     retomada: Boolean(f.retomada),
     repetida: Boolean(f.repetida)
@@ -125,7 +125,10 @@ const MOTIVOS = {
   partida_vencida: 'Se termino el tiempo de esta partida.',
   pregunta_ajena: 'Esa pregunta no es de esta partida.',
   opcion_no_encontrada: 'Esa opcion no pertenece a la pregunta.',
-  datos_incompletos: 'Faltan datos para enviar la respuesta.'
+  datos_incompletos: 'Faltan datos para enviar la respuesta.',
+  tipo_incorrecto: 'Esa partida es de otro tipo de juego.',
+  ficha_ajena: 'Esa ficha no es de esta partida.',
+  ficha_fuera_de_tiempo: 'Esa ficha ya no estaba cayendo.'
 }
 
 function traducir(error, que) {
@@ -167,11 +170,9 @@ export async function obtenerEvento(eventoId) {
 
 /** Partidas propias de un evento (RLS: solo las de la sesion actual). */
 export async function listarMisPartidas(eventoId) {
-  const { data, error } = await cliente()
-    .from('partidas')
-    .select(COLUMNAS_PARTIDA)
-    .eq('evento_id', eventoId)
-    .order('iniciada_en', { ascending: false })
+  // Por funcion y no leyendo la tabla: una partida de preguntas en curso no
+  // muestra su puntaje (supabase/17-juego-de-la-expo.sql).
+  const { data, error } = await cliente().rpc('mis_partidas', { p_evento_id: eventoId })
   if (error) throw traducirErrorDeDatos(error, 'cargar tus partidas')
   return (data ?? []).map(aPartida)
 }
@@ -202,7 +203,8 @@ export async function obtenerPartida(partidaId) {
 }
 
 /**
- * Manda la opcion elegida. Devuelve { correcta, puntos, opcionId, repetida, partida }.
+ * Manda la opcion elegida. Devuelve { opcionId, repetida, partida }: el servidor
+ * confirma que quedo registrada, pero no dice si estuvo bien (eso se ve al final).
  * Un envio repetido devuelve lo que ya estaba guardado, sin sumar de nuevo.
  */
 export async function responderPartida(partidaId, preguntaId, opcionId) {
@@ -216,11 +218,50 @@ export async function responderPartida(partidaId, preguntaId, opcionId) {
   return {
     preguntaId: data.pregunta_id,
     opcionId: data.opcion_id,
-    correcta: Boolean(data.correcta),
-    puntos: data.puntos ?? 0,
     repetida: Boolean(data.repetida),
     partida: aPartida(data.partida)
   }
+}
+
+// ---------------------------------------------------------------------------
+// Minijuego "Sintax atrapa el codigo" (supabase/17-juego-de-la-expo.sql)
+// ---------------------------------------------------------------------------
+
+/** Partida del minijuego: la partida, las rondas con su consigna y las fichas. */
+export function aMinijuego(f) {
+  return {
+    ...aPartida(f),
+    rondas: (f.rondas ?? []).map((r) => ({ ronda: r.ronda, desdeMs: r.desde_ms, consigna: r.consigna })),
+    // Las fichas llegan SIN saber si son validas: eso lo sabe solo el servidor.
+    fichas: (f.fichas ?? []).map((x) => ({
+      n: x.n,
+      ronda: x.ronda,
+      texto: x.texto,
+      apareceMs: x.aparece_ms,
+      caidaMs: x.caida_ms,
+      columna: x.columna,
+      atrapada: Boolean(x.atrapada),
+      valida: x.valida ?? null
+    }))
+  }
+}
+
+/** Empieza una partida del minijuego. El id lo genera el cliente: repetir no crea otra. */
+export async function iniciarMinijuego(desafioId, partidaId) {
+  const { data, error } = await cliente().rpc('iniciar_minijuego', { p_partida_id: partidaId, p_desafio_id: desafioId })
+  if (error) throw traducir(error, 'empezar el minijuego')
+  if (!data) throw new ErrorDeConsulta('El servidor no devolvio la partida.')
+  return aMinijuego(data)
+}
+
+/**
+ * Avisa que Sintax atrapo la ficha n. El servidor dice si era valida y devuelve
+ * la partida actualizada (puntaje, vidas, estado). Repetirla no suma de nuevo.
+ */
+export async function atraparFicha(partidaId, n) {
+  const { data, error } = await cliente().rpc('atrapar_ficha', { p_partida_id: partidaId, p_n: n })
+  if (error) throw traducir(error, 'registrar la ficha')
+  return { n: data.n, valida: Boolean(data.valida), repetida: Boolean(data.repetida), partida: aPartida(data.partida) }
 }
 
 /** Cierra la partida. Repetirlo devuelve el resultado ya guardado. */

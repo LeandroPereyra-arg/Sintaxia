@@ -40,7 +40,7 @@ Las lecciones de la unidad desarrollada tienen 4 actividades. Con el 60 %:
 
 Aprobar exige acertar la mayoria, pero un error no bloquea a nadie. Un umbral
 mas alto (por ejemplo 75 %) obligaria a hacer todo perfecto en lecciones de tres
-actividades, y eso frustra mas de lo que ensenia.
+actividades, y eso frustra mas de lo que enseña.
 
 ### Un caso aparte: quedarse sin vidas
 

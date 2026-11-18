@@ -180,7 +180,7 @@ eso no hay un "guardar resultado" que se pueda perder.
 | Situacion | Que pasa |
 |---|---|
 | **Salir** de la leccion (boton Salir o la X) | El intento queda `en_curso` con lo respondido. La pantalla de la leccion avisa "Tenes un intento sin terminar: 2 de 4 respondidas, 2 vidas" y ofrece **Continuar el intento** o **Empezar de nuevo** (el anterior queda `abandonado`). |
-| **Cerrar la app** o la pestana | Igual que salir: al volver se retoma en la primera actividad sin responder, con las vidas que tenia. Con cuenta, tambien desde **otro dispositivo**. |
+| **Cerrar la app** o la pestaña | Igual que salir: al volver se retoma en la primera actividad sin responder, con las vidas que tenia. Con cuenta, tambien desde **otro dispositivo**. |
 | **Sin conexion al comprobar** | La respuesta **no se corrige ni se cuenta**: queda "Pendiente: sin conexion" con el aviso "tu respuesta todavia NO se guardo". Se anota en el dispositivo y se reenvia sola cuando vuelve la conexion (evento `online`), o con **Reintentar**, o al volver a abrir la leccion. |
 | **Llego la peticion pero no la respuesta** | La app la muestra pendiente; al reintentar el servidor devuelve la respuesta guardada sin sumarla de nuevo. |
 | **El servidor la rechaza** (intento cerrado, actividad despublicada) | Estado "No se guardo", con el motivo. |

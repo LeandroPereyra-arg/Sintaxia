@@ -118,7 +118,7 @@ const hayImagen = ref(true)
 }
 
 /* El respaldo es solo un marcador de posicion mientras falta el PNG:
-   se acota para que no domine la pantalla en los tamanios grandes. */
+   se acota para que no domine la pantalla en los tamaños grandes. */
 .logo__respaldo {
   max-width: 64px;
   max-height: 64px;

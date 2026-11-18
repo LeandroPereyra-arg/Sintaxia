@@ -19,14 +19,40 @@ function cliente() {
   return supabase
 }
 
+/** Identificador del tablero del puntaje total. */
+export const TOTAL = 'total'
+
 /**
- * Ranking del evento agrupado por desafio, en el orden de los desafios.
+ * Ranking del evento agrupado por desafio, en el orden de los desafios, con el
+ * puntaje total adelante.
  * Devuelve [{ desafioId, desafio, filas: [{ posicion, alias, codigo, puntaje, duracionMs, logradoEn, participante }] }].
  */
 export async function obtenerRanking(eventoId, limite = 10) {
-  const { data, error } = await cliente().rpc('ranking_evento', { p_evento_id: eventoId, p_limite: limite })
+  const [porDesafio, total] = await Promise.all([
+    cliente().rpc('ranking_evento', { p_evento_id: eventoId, p_limite: limite }),
+    cliente().rpc('ranking_total', { p_evento_id: eventoId, p_limite: limite })
+  ])
+  const { data, error } = porDesafio
   if (error) throw traducirErrorDeDatos(error, 'cargar el ranking')
   const grupos = new Map()
+  // Primero el total: la suma de la mejor partida de cada desafio (17-juego-de-la-expo.sql).
+  // Si la funcion no esta (base sin el script 17) se muestra lo demas igual.
+  if (!total.error && total.data?.length) {
+    grupos.set(TOTAL, {
+      desafioId: TOTAL,
+      desafio: 'Puntaje total',
+      esTotal: true,
+      filas: total.data.map((f) => ({
+        posicion: f.posicion,
+        alias: f.alias,
+        codigo: f.codigo,
+        puntaje: f.puntaje,
+        duracionMs: f.duracion_ms,
+        desafios: f.desafios,
+        participante: f.participante
+      }))
+    })
+  }
   for (const f of data ?? []) {
     if (!grupos.has(f.desafio_id)) grupos.set(f.desafio_id, { desafioId: f.desafio_id, desafio: f.desafio, filas: [] })
     grupos.get(f.desafio_id).filas.push({

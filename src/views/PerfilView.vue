@@ -219,7 +219,7 @@ const fechaRegistro = computed(() => {
   return new Date(perfil.value.creadoEn).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
 })
 
-/** Sintax acompania segun como venga el estudiante. */
+/** Sintax acompaña segun como venga el estudiante. */
 const animoSintax = computed(() => {
   if (totalLeccionesCompletadas.value === 0) return 'dormido'
   if (estado.racha >= 3) return 'celebrando'
@@ -346,9 +346,9 @@ const animoSintax = computed(() => {
     <!-- Seguridad de la cuenta -->
     <section v-if="esCuenta" class="tarjeta">
       <h2>Seguridad</h2>
-      <p class="texto-secundario">Tu contrasena esta guardada de forma cifrada: nadie puede verla, ni nosotros.</p>
+      <p class="texto-secundario">Tu contraseña esta guardada de forma cifrada: nadie puede verla, ni nosotros.</p>
       <div>
-        <BaseBoton variante="contorno" tamano="chico" :to="{ name: 'nueva-clave' }">Cambiar mi contrasena</BaseBoton>
+        <BaseBoton variante="contorno" tamano="chico" :to="{ name: 'nueva-clave' }">Cambiar mi contraseña</BaseBoton>
       </div>
     </section>
 

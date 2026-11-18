@@ -12,7 +12,7 @@ export const pasosBienvenida = [
     icono: 'cohete',
     titulo: 'Hola, soy Sintax',
     texto:
-      'Te voy a acompaniar a aprender a programar de verdad, con lecciones de cinco minutos que podes hacer en el colectivo.',
+      'Te voy a acompañar a aprender a programar de verdad, con lecciones de cinco minutos que podes hacer en el colectivo.',
     color: 'var(--c-verde)'
   },
   {

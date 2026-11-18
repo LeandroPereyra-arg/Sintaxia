@@ -2,7 +2,7 @@
 
 Como entra la gente a Sintaxia, que datos se guardan, quien puede ver que, y que
 hay que configurar en Supabase para que funcione. Todo se apoya en **Supabase
-Auth**: ninguna contrasena pasa por una tabla propia.
+Auth**: ninguna contraseña pasa por una tabla propia.
 
 - Diagrama entidad-relacion: [`der/sintaxia-der-etapa4.drawio`](der/sintaxia-der-etapa4.drawio)
   (vista previa en [`der/sintaxia-der-etapa4.png`](der/sintaxia-der-etapa4.png))
@@ -17,7 +17,7 @@ Auth**: ninguna contrasena pasa por una tabla propia.
 
 | | Sin sesion | Invitado | Cuenta |
 |---|---|---|---|
-| Que es | Nadie ingreso | Sesion anonima de Supabase: un usuario propio, sin correo ni contrasena | Usuario con correo y contrasena |
+| Que es | Nadie ingreso | Sesion anonima de Supabase: un usuario propio, sin correo ni contraseña | Usuario con correo y contraseña |
 | Ve el catalogo de cursos | si | si | si |
 | Hace lecciones y guarda progreso | no (se le pide ingresar) | si | si |
 | Tiene perfil | no | si, alias **Invitado#codigo** | si, con el alias que eligio |
@@ -37,19 +37,19 @@ base le crea el perfil `Invitado#codigo` → entra. Si ya habia una sesion, **se
 reutiliza**: reabrir o recargar la app no crea otro invitado.
 
 ### Registro con correo
-`Crear cuenta` (alias, correo, contrasena) → con la **confirmacion de correo
+`Crear cuenta` (alias, correo, contraseña) → con la **confirmacion de correo
 activada** llega un enlace; al abrirlo se confirma la cuenta y se abre la sesion.
 Con la confirmacion desactivada la sesion se abre al instante. La app funciona
 con las dos configuraciones.
 
 ### Inicio y cierre de sesion
-Ingresar con correo y contrasena. Cerrar sesion termina solo la sesion **de ese
+Ingresar con correo y contraseña. Cerrar sesion termina solo la sesion **de ese
 dispositivo**. Una cuenta sale sin avisos (su historial queda guardado). Un
 **invitado recibe una advertencia** antes de salir: perderia el historial para
 siempre, y se le ofrece crear la cuenta.
 
 ### Recuperar el acceso
-`Olvide mi contrasena` → correo → enlace → elegir contrasena nueva. La respuesta
+`Olvide mi contraseña` → correo → enlace → elegir contraseña nueva. La respuesta
 es **la misma exista o no la cuenta** (no revela quien esta registrado).
 
 ### Convertir un invitado en cuenta
@@ -57,8 +57,8 @@ Es `updateUser`, **no** `signUp`: el usuario sigue siendo el mismo, con el mismo
 identificador, por lo que su historial es suyo sin copiar nada desde el cliente y
 sin crear otra cuenta.
 
-1. El invitado completa alias, correo y contrasena.
-2. Con confirmacion activada: Auth deja la contrasena guardada y manda el enlace.
+1. El invitado completa alias, correo y contraseña.
+2. Con confirmacion activada: Auth deja la contraseña guardada y manda el enlace.
    **Hasta abrirlo sigue siendo invitado** (la app se lo dice).
 3. Al abrir el enlace, `is_anonymous` pasa a `false` y un disparador de la base
    actualiza el perfil: `es_invitado = false` y toma el alias elegido, que viajo en
@@ -98,11 +98,11 @@ asigna uno nuevo. El codigo lo elige la base, el cliente no puede tocarlo.
 
 | Dato | Donde vive | Quien lo ve |
 |---|---|---|
-| Correo | Supabase Auth (`auth.users`) | Solo su dueno |
-| Contrasena | Supabase Auth, **cifrada** (nunca en tablas propias) | Nadie, ni nosotros |
-| Alias, codigo, avatar, meta diaria | `perfiles` | Solo su dueno (hoy) |
-| Historial de lecciones | `intentos_leccion` (desde la etapa 5: `intentos` y `respuestas`, ver [doc 14](14-intentos-y-progreso.md)) | Solo su dueno |
-| Invitado | Un identificador anonimo, sin correo | Solo su dueno |
+| Correo | Supabase Auth (`auth.users`) | Solo su dueño |
+| Contraseña | Supabase Auth, **cifrada** (nunca en tablas propias) | Nadie, ni nosotros |
+| Alias, codigo, avatar, meta diaria | `perfiles` | Solo su dueño (hoy) |
+| Historial de lecciones | `intentos_leccion` (desde la etapa 5: `intentos` y `respuestas`, ver [doc 14](14-intentos-y-progreso.md)) | Solo su dueño |
+| Invitado | Un identificador anonimo, sin correo | Solo su dueño |
 
 **Hoy no se muestra ningun dato a otras personas.** Cuando exista el ranking se
 publicara unicamente **alias con codigo y XP de la semana**, solo de cuentas (no de
@@ -188,7 +188,7 @@ lo pidio** (flujo PKCE, el que Supabase recomienda para apps moviles; no deja
 tokens a la vista en la direccion). Consecuencia, probada: abrir el enlace de
 recuperacion en **otro dispositivo** no sirve, y la app lo explica y ofrece pedir
 uno nuevo. Abrir el de confirmacion en otro dispositivo confirma el correo pero
-no abre la sesion alli: se ingresa con la contrasena.
+no abre la sesion alli: se ingresa con la contraseña.
 
 ## 12.6 Que hay que configurar en el proyecto de Supabase
 
@@ -222,7 +222,7 @@ Lo hace una persona del equipo en el panel; no se puede hacer desde el codigo.
 - No se hizo con Quasar: Capacitor se agrego directo al proyecto de Vite (ver 20.2).
 
 **Probado** con Auth real y el puente de Android simulado (etapa 8, casos 3 a 5):
-confirmar la cuenta con la app abierta, recuperar la contrasena con la app cerrada y
+confirmar la cuenta con la app abierta, recuperar la contraseña con la app cerrada y
 enlaces vencidos o ajenos. **Falta** repetirlo en celulares fisicos
 ([21.4](21-registro-de-pruebas-etapa8.md)).
 
@@ -265,7 +265,7 @@ La limpieza se programa con `pg_cron` (instrucciones en el propio script);
 - **Un invitado no elige alias.** Se llama `Invitado#codigo` hasta crear la cuenta.
   Evita moderar nombres de sesiones gratuitas; el alias se elige al crear la cuenta.
 - **Registro: avisa si el correo ya existe.** Es mas claro para la persona, pero
-  permite averiguar si un correo esta registrado. La recuperacion de contrasena,
+  permite averiguar si un correo esta registrado. La recuperacion de contraseña,
   en cambio, responde siempre igual. Si mas adelante se prefiere no revelarlo, se
   cambia el mensaje del registro por uno neutro.
 - **PKCE** (ver 12.5): mas seguro y apto para movil, a costa de que ciertos enlaces

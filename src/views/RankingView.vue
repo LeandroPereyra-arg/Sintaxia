@@ -47,6 +47,13 @@ onMounted(async () => {
           <Icono nombre="usuario" :tamano="18" />
           <span>Solo aparecen las <strong>cuentas</strong>: los invitados juegan y ven su puntaje, pero no figuran.</span>
         </li>
+        <li>
+          <Icono nombre="trofeo" :tamano="18" />
+          <span>
+            El <strong>puntaje total</strong> suma tu mejor partida de cada desafio, incluido el minijuego
+            <em>Sintax atrapa el código</em>.
+          </span>
+        </li>
       </ul>
 
       <BaseBoton v-if="conSesion && esInvitado" :to="{ name: 'registro' }">

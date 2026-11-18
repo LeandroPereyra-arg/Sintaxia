@@ -103,6 +103,14 @@ const routes = [
     meta: { titulo: 'Partida', ocultarNavegacion: true, requiereSesion: true }
   },
   {
+    // Minijuego "Sintax atrapa el codigo" (17-juego-de-la-expo.sql)
+    path: '/expo/:eventoId/minijuego/:desafioId',
+    name: 'minijuego',
+    component: () => import('@/views/MinijuegoView.vue'),
+    props: true,
+    meta: { titulo: 'Sintax atrapa el código', ocultarNavegacion: true, requiereSesion: true }
+  },
+  {
     // Pantalla grande de la expo: publica, sin la barra de navegacion (etapa 7).
     path: '/expo/:eventoId/ranking',
     name: 'ranking-expo',
@@ -160,7 +168,7 @@ const routes = [
     path: '/recuperar',
     name: 'recuperar',
     component: () => import('@/views/RecuperarView.vue'),
-    meta: { titulo: 'Recuperar contrasena' }
+    meta: { titulo: 'Recuperar contraseña' }
   },
   {
     // A donde vuelven los enlaces de los correos (confirmar cuenta, cambiar correo).
@@ -170,13 +178,13 @@ const routes = [
     meta: { titulo: 'Confirmando', ocultarNavegacion: true }
   },
   {
-    // A donde vuelve el enlace de "olvide mi contrasena". No exige sesion a proposito:
+    // A donde vuelve el enlace de "olvide mi contraseña". No exige sesion a proposito:
     // si el enlace se abrio en otro dispositivo no hay sesion, y la pantalla explica
     // que hacer en lugar de mandar a ingresar sin decir por que.
     path: '/auth/nueva-clave',
     name: 'nueva-clave',
     component: () => import('@/views/NuevaClaveView.vue'),
-    meta: { titulo: 'Nueva contrasena', ocultarNavegacion: true }
+    meta: { titulo: 'Nueva contraseña', ocultarNavegacion: true }
   },
   {
     path: '/:rutaInexistente(.*)*',

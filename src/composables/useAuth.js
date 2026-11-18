@@ -13,10 +13,10 @@ import { ErrorDeServicio } from '@/servicios/errores.js'
  *
  *   SIN SESION  no ingreso nadie. Puede mirar los cursos, pero para hacer una
  *               leccion tiene que ingresar (aunque sea como invitado).
- *   INVITADO    sesion anonima: tiene un usuario propio, sin correo ni contrasena.
+ *   INVITADO    sesion anonima: tiene un usuario propio, sin correo ni contraseña.
  *               Si cierra sesion, borra los datos del navegador o cambia de
  *               dispositivo, pierde el acceso a su historial.
- *   CUENTA      usuario con correo y contrasena. Su historial lo acompana a
+ *   CUENTA      usuario con correo y contraseña. Su historial lo acompaña a
  *               cualquier dispositivo.
  *
  * `estadoCarga`:
@@ -29,7 +29,7 @@ const estado = reactive({
   sesion: null,
   perfil: null,
   errorPerfil: null,
-  /** true despues de abrir el enlace de "olvide mi contrasena", hasta elegir la nueva. */
+  /** true despues de abrir el enlace de "olvide mi contraseña", hasta elegir la nueva. */
   enRecuperacion: false,
   error: null
 })

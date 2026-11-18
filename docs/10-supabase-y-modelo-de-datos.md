@@ -150,7 +150,7 @@ Actividades de una leccion. En esta etapa todas son de opcion multiple.
 | `orden` | `smallint` | si | U | Numero de actividad dentro de la leccion. `UNIQUE (leccion_id, orden)` |
 | `tipo` | `text` | si | | `CHECK`: opcion-multiple, verdadero-falso, completar, ordenar. Por defecto `opcion-multiple` |
 | `enunciado` | `text` | si | | Entre 5 y 400 caracteres |
-| `codigo` | `text` | no | | Fragmento de codigo que acompania la consigna |
+| `codigo` | `text` | no | | Fragmento de codigo que acompaña la consigna |
 | `explicacion` | `text` | si | | **Solucion**: por que la respuesta correcta lo es. `CHECK`: al menos 10 caracteres. El rol `anon` no tiene permiso de lectura sobre esta columna |
 | `estado` | `text` | si | | `CHECK`: borrador o publicada |
 | `creado_en` / `actualizado_en` | `timestamptz` | si | | |

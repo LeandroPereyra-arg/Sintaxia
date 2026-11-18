@@ -225,7 +225,7 @@ await caso(
     await p.goto(`${URL_APK}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Alias', { exact: true }).fill('Celu_Uno')
     await p.getByLabel('Correo', { exact: true }).fill(correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.getByRole('heading', { name: 'Revisa tu correo' }).waitFor({ timeout: 10000 })
 
@@ -246,8 +246,8 @@ await caso(
 
 await caso(
   4,
-  'Recuperar la contrasena desde el correo, con la app cerrada',
-  'El enlace abre la app en "Nueva contrasena" (llega como direccion de inicio), se guarda la nueva, la vieja deja de servir y no hay recargas en bucle',
+  'Recuperar la contraseña desde el correo, con la app cerrada',
+  'El enlace abre la app en "Nueva contraseña" (llega como direccion de inicio), se guarda la nueva, la vieja deja de servir y no hay recargas en bucle',
   async () => {
     const cuenta = await api.cuentaConfirmada({ correo: correoNuevo('apk-olvido'), clave: 'clave-vieja-123', alias: 'Celu_Dos' })
     const primera = await apk()
@@ -272,11 +272,11 @@ await caso(
       }
     }, almacen)
     await p.goto(`${URL_APK}/`)
-    await p.getByRole('heading', { name: 'Elegi tu contrasena nueva' }).waitFor({ timeout: 15000 })
-    await p.getByLabel('Contrasena nueva', { exact: true }).fill('clave-nueva-456')
+    await p.getByRole('heading', { name: 'Elegi tu contraseña nueva' }).waitFor({ timeout: 15000 })
+    await p.getByLabel('Contraseña nueva', { exact: true }).fill('clave-nueva-456')
     await p.getByLabel('Repetila', { exact: true }).fill('clave-nueva-456')
-    await p.getByRole('button', { name: 'Guardar contrasena' }).click()
-    await p.getByRole('heading', { name: 'Contrasena cambiada' }).waitFor({ timeout: 10000 })
+    await p.getByRole('button', { name: 'Guardar contraseña' }).click()
+    await p.getByRole('heading', { name: 'Contraseña cambiada' }).waitFor({ timeout: 10000 })
     await dormir(800)
     const cargas = await p.evaluate(() => Number(sessionStorage.getItem('prueba:cargas')))
     await ctx.close()
@@ -285,7 +285,7 @@ await caso(
     const nueva = await api.iniciarSesion(cuenta.correo, 'clave-nueva-456')
     verificar(vieja.estado === 400 && nueva.estado === 200, `vieja ${vieja.estado}, nueva ${nueva.estado}`)
     verificar(cargas === 2, `la app se cargo ${cargas} veces (bucle de recargas)`)
-    return `redirect_to = sintaxia://auth/auth/nueva-clave · la app arranca con el enlace y muestra "Elegi tu contrasena nueva" · contrasena cambiada · vieja 400, nueva 200 · 2 cargas (sin bucle)`
+    return `redirect_to = sintaxia://auth/auth/nueva-clave · la app arranca con el enlace y muestra "Elegi tu contraseña nueva" · contraseña cambiada · vieja 400, nueva 200 · 2 cargas (sin bucle)`
   }
 )
 
@@ -380,14 +380,14 @@ await caso(
 await caso(
   8,
   'La clave de firma no esta en el repositorio',
-  'Ningun .jks, .keystore ni firma*.properties versionado o sin ignorar; build.gradle sin contrasenas; si hay release firmada, apksigner la verifica con un certificado que no es el de depuracion',
+  'Ningun .jks, .keystore ni firma*.properties versionado o sin ignorar; build.gradle sin contraseñas; si hay release firmada, apksigner la verifica con un certificado que no es el de depuracion',
   async () => {
     const versionados = execFileSync('git', ['ls-files'], { cwd: raiz, encoding: 'utf8' }).split('\n')
     const sinIgnorar = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], { cwd: raiz, encoding: 'utf8' }).split('\n')
     const claveVisible = [...versionados, ...sinIgnorar].filter((f) => /\.(jks|keystore)$|firma.*\.properties$/.test(f))
     verificar(claveVisible.length === 0, `archivos de firma en el repo: ${claveVisible.join(', ')}`)
     const gradle = readFileSync(join(raiz, 'android/app/build.gradle'), 'utf8')
-    verificar(!/storePassword\s+["']/.test(gradle) && !/keyPassword\s+["']/.test(gradle), 'build.gradle tiene una contrasena escrita')
+    verificar(!/storePassword\s+["']/.test(gradle) && !/keyPassword\s+["']/.test(gradle), 'build.gradle tiene una contraseña escrita')
     const prueba = execFileSync('git', ['check-ignore', 'x.jks', 'x.keystore', 'firma.properties'], { cwd: raiz, encoding: 'utf8' })
     verificar(prueba.split('\n').filter(Boolean).length === 3, 'el .gitignore no cubre los archivos de firma')
 

@@ -8,7 +8,7 @@
  *   · Boton Atras de Android: vuelve a la pantalla anterior, como el boton del
  *     navegador. En el inicio (o sin historial) minimiza la app en lugar de
  *     cerrarla, asi al volver sigue donde estaba y con la sesion abierta.
- *   · Enlaces de los correos: confirmar la cuenta y recuperar la contrasena
+ *   · Enlaces de los correos: confirmar la cuenta y recuperar la contraseña
  *     vuelven a sintaxia://auth/... (VITE_URL_RETORNO_AUTH). Android abre la app
  *     con esa direccion; aca se pasa a la ruta equivalente de la app
  *     (/auth/callback o /auth/nueva-clave) recargando la vista, para que el

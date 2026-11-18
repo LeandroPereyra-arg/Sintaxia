@@ -177,7 +177,7 @@ await ctx.close()
     return pre ? pre.scrollWidth > pre.clientWidth : false
   })
   const sinDesborde = anchos.every(a => a <= 412)
-  registrar(9, 'Usar la aplicacion en pantalla de tamanio movil (412 px)',
+  registrar(9, 'Usar la aplicacion en pantalla de tamaño movil (412 px)',
     'Ninguna pantalla desborda a lo ancho y el codigo se desplaza dentro de su caja',
     `Anchos: ${anchos.join(', ')} · el ejemplo de codigo ${codigoDesborda ? 'se desplaza dentro de su caja' : 'entra completo'}`,
     sinDesborde)

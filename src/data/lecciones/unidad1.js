@@ -102,7 +102,7 @@ export const leccionesUnidad1 = [
         respuesta: 'b',
         explicacion:
           'Son lenguajes diferentes, con sintaxis y usos distintos. Comparten parte del nombre ' +
-          'por razones historicas y de marketing de los anios noventa, nada mas.'
+          'por razones historicas y de marketing de los años noventa, nada mas.'
       }
     ]
   },

@@ -2,7 +2,7 @@
 --  Sintaxia - Perfiles de participantes
 --  Etapa 4 - Invitados, registro e inicio de sesion (Supabase Auth)
 -- ---------------------------------------------------------------------------
---  Supabase Auth guarda las identidades (correo, contrasena, sesiones) en su
+--  Supabase Auth guarda las identidades (correo, contraseña, sesiones) en su
 --  propio esquema `auth`. Esta etapa agrega, en `public`, lo que es de la
 --  aplicacion y no de la autenticacion:
 --
@@ -13,7 +13,7 @@
 --  intentos y respuestas: ver 08-intentos-y-respuestas.sql.)
 --
 --  Reglas que NO se negocian:
---    · Ninguna tabla propia guarda contrasenas ni correos: eso vive solo en `auth`.
+--    · Ninguna tabla propia guarda contraseñas ni correos: eso vive solo en `auth`.
 --    · El perfil se crea solo, con un disparador, cuando Auth crea al usuario.
 --      El cliente nunca inserta perfiles.
 --
@@ -80,7 +80,7 @@ create table if not exists public.perfiles (
   constraint uq_perfiles_alias_codigo unique (alias_normalizado, codigo)
 );
 
-comment on table  public.perfiles is 'Perfil de cada participante. Mismo id que auth.users; no guarda contrasenas ni correos.';
+comment on table  public.perfiles is 'Perfil de cada participante. Mismo id que auth.users; no guarda contraseñas ni correos.';
 comment on column public.perfiles.alias is 'Nombre visible. Reglas en public.alias_permitido().';
 comment on column public.perfiles.codigo is 'Codigo de 4 cifras que distingue a participantes con el mismo alias: se muestra como Ana#0427.';
 comment on column public.perfiles.es_invitado is 'Espejo de auth.users.is_anonymous. Lo mantiene un disparador; el cliente no lo puede cambiar.';
@@ -206,7 +206,7 @@ create trigger tg_auth_crear_perfil
 -- ---------------------------------------------------------------------------
 -- 5. Conversion de invitado a cuenta permanente
 --
---    Cuando un invitado agrega correo y contrasena, Auth conserva SU MISMO id y
+--    Cuando un invitado agrega correo y contraseña, Auth conserva SU MISMO id y
 --    recien al confirmar el correo pone is_anonymous = false. En ese momento
 --    el perfil pasa a ser de una cuenta y toma el alias elegido, que viajo en
 --    user_metadata.alias. Como el id no cambia, el historial sigue siendo suyo:

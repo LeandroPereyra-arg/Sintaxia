@@ -36,9 +36,9 @@ esta, prueba `<estado>.png`. Asi que alcanza con dejar el archivo en la carpeta.
 
 ### Si se reemplaza alguna
 
-Van todas con **fondo transparente** y **el mismo encuadre**: mismo tamanio de lienzo y
+Van todas con **fondo transparente** y **el mismo encuadre**: mismo tamaño de lienzo y
 el personaje apoyado sobre la misma linea de piso. Eso es lo que hace que al cambiar de
-estado el personaje no salte de lugar ni cambie de tamanio.
+estado el personaje no salte de lugar ni cambie de tamaño.
 
 Las actuales miden 391 x 447 px.
 

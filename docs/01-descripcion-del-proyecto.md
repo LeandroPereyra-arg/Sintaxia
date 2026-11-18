@@ -36,13 +36,13 @@ dia funciona, aprender JavaScript de la misma forma tambien deberia funcionar.
 
 | Perfil | Situacion | Que espera de Sintaxia |
 |---|---|---|
-| **Principiante absoluto** (14-25 anios) | Nunca programo. Quiere probar si le gusta antes de anotarse en algo largo. | Empezar sin instalar nada y entender los conceptos basicos sin frustrarse. |
+| **Principiante absoluto** (14-25 años) | Nunca programo. Quiere probar si le gusta antes de anotarse en algo largo. | Empezar sin instalar nada y entender los conceptos basicos sin frustrarse. |
 | **Estudiante de secundaria o terciario** | Cursa programacion y necesita practicar lo que ve en clase. | Ejercitacion guiada y repaso de temas puntuales (bucles, funciones, arrays). |
-| **Persona en reconversion laboral** (25-40 anios) | Trabaja de otra cosa y estudia en los ratos libres. | Sesiones cortas que entren en el colectivo o en la pausa del almuerzo. |
+| **Persona en reconversion laboral** (25-40 años) | Trabaja de otra cosa y estudia en los ratos libres. | Sesiones cortas que entren en el colectivo o en la pausa del almuerzo. |
 | **Programador de un solo lenguaje** | Ya sabe programar y quiere sumar otro lenguaje. | Comparar sintaxis rapido, sin volver a explicaciones de "que es una variable". |
 
 Perfil principal: **principiante hispanohablante, sin conocimientos previos y con poco tiempo
-libre**. Toda la interfaz esta en espanol y no requiere instalar ningun programa.
+libre**. Toda la interfaz esta en español y no requiere instalar ningun programa.
 
 ## Funcionalidades principales
 

@@ -176,7 +176,7 @@ mostrar la aplicacion. **Se ignora automaticamente si `NODE_ENV=produccion`**,
 asi que no puede quedar abierto por error.
 
 > Sign in with Apple no se incluyo: requiere una cuenta de Apple Developer paga
-> (99 USD al anio) para poder emitir el client secret.
+> (99 USD al año) para poder emitir el client secret.
 
 ---
 

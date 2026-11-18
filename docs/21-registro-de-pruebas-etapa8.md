@@ -38,11 +38,11 @@ Ninguna excepcion no atrapada en la pagina.
 | 1 | En el navegador la integracion nativa no hace nada | Sin el puente de Android, Capacitor dice "web", no se registra ningun oyente y la app anda como siempre | plataforma: web · sin oyentes nativos · /cursos carga normal ("Cursos") | PASA |
 | 2 | Boton Atras de Android | Vuelve a la pantalla anterior; sin historial va al inicio; en el inicio (o en la bienvenida) minimiza la app en lugar de cerrarla | /ingresar -> /cursos -> / -> minimiza · abierta sin historial: Atras -> / · en la bienvenida: minimiza | PASA |
 | 3 | Confirmar la cuenta desde el correo, con la app abierta | El correo pide volver a sintaxia://auth/auth/callback; Android abre la app con ese enlace y la app canjea el codigo (PKCE): la cuenta queda confirmada y con sesion | redirect_to = sintaxia://auth/auth/callback · Auth vuelve con ?code=... · la app lo abre y dice "tu cuenta esta confirmada" · una sola recarga | PASA |
-| 4 | Recuperar la contrasena desde el correo, con la app cerrada | El enlace abre la app en "Nueva contrasena" (llega como direccion de inicio), se guarda la nueva, la vieja deja de servir y no hay recargas en bucle | redirect_to = sintaxia://auth/auth/nueva-clave · la app arranca con el enlace y muestra "Elegi tu contrasena nueva" · contrasena cambiada · vieja 400, nueva 200 · 2 cargas (sin bucle) | PASA |
+| 4 | Recuperar la contraseña desde el correo, con la app cerrada | El enlace abre la app en "Nueva contraseña" (llega como direccion de inicio), se guarda la nueva, la vieja deja de servir y no hay recargas en bucle | redirect_to = sintaxia://auth/auth/nueva-clave · la app arranca con el enlace y muestra "Elegi tu contraseña nueva" · contraseña cambiada · vieja 400, nueva 200 · 2 cargas (sin bucle) | PASA |
 | 5 | Enlaces vencidos y enlaces ajenos | Un enlace vencido muestra el motivo; direcciones que no son sintaxia://auth/(auth/callback/auth/nueva-clave) se ignoran | 4 enlaces ajenos: ignorados (sigue en /cursos) · enlace vencido: "El enlace vencio o ya se uso. Pedi uno nuevo." · rutaDesdeEnlace: 4 de 4 | PASA |
 | 6 | Pantalla chica y teclado dentro del "APK" | A 320 px nada desborda; con el teclado (vista mas baja) el boton Entrar se puede alcanzar | sin desborde a 320 px en /, /cursos, /ingresar, /registro y /expo · con la vista a 300 px de alto el boton Entrar se alcanza | PASA |
 | 7 | El APK debug lleva la app adentro y no depende de la computadora | Version = package.json; identificador com.sintaxia.app; trae index.html y los recursos compilados; capacitor.config.json sin server.url; enlace sintaxia://auth declarado; sin direcciones de la red local | com.sintaxia.app 1.0.0 · index.html y recursos adentro · sin server.url · sintaxia://auth declarado · allowBackup=false · sin direcciones locales · Supabase: SIN CONFIGURAR (falta .env al compilar) | PASA |
-| 8 | La clave de firma no esta en el repositorio | Ningun .jks, .keystore ni firma*.properties versionado o sin ignorar; build.gradle sin contrasenas; si hay release firmada, apksigner la verifica con un certificado que no es el de depuracion | sin archivos de firma en el repo · .gitignore los cubre · build.gradle lee la firma de variables de entorno · release verificada por apksigner (CN=Sintaxia prueba, O=Sintaxia, C=AR) | PASA |
+| 8 | La clave de firma no esta en el repositorio | Ningun .jks, .keystore ni firma*.properties versionado o sin ignorar; build.gradle sin contraseñas; si hay release firmada, apksigner la verifica con un certificado que no es el de depuracion | sin archivos de firma en el repo · .gitignore los cubre · build.gradle lee la firma de variables de entorno · release verificada por apksigner (CN=Sintaxia prueba, O=Sintaxia, C=AR) | PASA |
 
 Ademas, desde la terminal:
 
@@ -65,19 +65,19 @@ el inicio. **Correccion:** en pantallas de hasta 420 px se corre solo 4 px.
 
 ### P2 · El boton Atras no hacia nada en la bienvenida
 
-Visto al disenar el caso 2: la primera vez, el inicio redirige a la bienvenida. Sin
+Visto al diseñar el caso 2: la primera vez, el inicio redirige a la bienvenida. Sin
 historial, "volver al inicio" volvia a la misma pantalla y el boton quedaba sin efecto.
 **Correccion:** si volver al inicio no cambia la pantalla, la app se minimiza.
 
 ### P3 · Recargas en bucle al abrir la app desde un enlace
 
-Visto al disenar el caso 4: con la app cerrada, Android la abre con el enlace como
+Visto al diseñar el caso 4: con la app cerrada, Android la abre con el enlace como
 direccion de inicio. Despues de pasar a la pantalla del enlace (recargando la vista),
 `getLaunchUrl()` devuelve otra vez el mismo enlace. **Correccion:** se recuerda el
 ultimo enlace abierto en la sesion de la vista; el caso 4 verifica que haya una sola
 recarga.
 
-### P4 · El titulo de la pestana del ranking decia "Ranking semanal"
+### P4 · El titulo de la pestaña del ranking decia "Ranking semanal"
 
 La pagina `/ranking` cambio en la etapa 7 (ahora lista los eventos) pero el titulo
 seguia siendo el de la etapa 2. **Correccion:** "Ranking".
@@ -92,7 +92,7 @@ anotar que paso.
 |---|---|---|
 | Modelo | | |
 | Version de Android | | |
-| Tamano de pantalla | | |
+| Tamaño de pantalla | | |
 | Instalacion del APK (origen desconocido) | | |
 
 | # | Prueba | Como | Celular 1 | Celular 2 |
@@ -109,8 +109,8 @@ anotar que paso.
 | 10 | Pantalla chica | En el celular mas chico nada se corta ni aparece scroll horizontal | | |
 | 11 | Cierre y reapertura | Cerrar desde recientes en mitad de una partida; al volver, **Retomar partida** con el tiempo real | | |
 | 12 | Sin conexion | Modo avion a mitad de partida: la respuesta queda pendiente y se manda al volver | | |
-| 13 | Recuperacion | **Olvide mi contrasena**; el enlace abre la app en "Nueva contrasena" | | |
-| 14 | Enlace en otro dispositivo | Abrir el enlace de confirmacion en la computadora: confirma, pero en el celular hay que ingresar con la contrasena (esperado por PKCE) | | |
+| 13 | Recuperacion | **Olvide mi contraseña**; el enlace abre la app en "Nueva contraseña" | | |
+| 14 | Enlace en otro dispositivo | Abrir el enlace de confirmacion en la computadora: confirma, pero en el celular hay que ingresar con la contraseña (esperado por PKCE) | | |
 | 15 | Release | Desinstalar el debug e instalar `app-release.apk`; abre y funciona igual | | |
 
 Problemas encontrados en estas pruebas: anotarlos aca y, si quedan para la proxima

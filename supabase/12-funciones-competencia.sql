@@ -12,6 +12,12 @@
 --    responder_partida(id, pregunta,       corrige, guarda y suma puntos
 --                      opcion)
 --    finalizar_partida(id)                 la cierra (repetirlo no cambia nada)
+--    mis_partidas(evento)                  las partidas propias del evento
+--
+--  CORRECCION OCULTA (juego de la expo): mientras una partida de PREGUNTAS esta
+--  en curso nadie ve si cada respuesta estuvo bien ni el puntaje: responder no
+--  lo dice, el resumen lo trae en null y las tablas no muestran la partida
+--  (13-politicas). Se ve al terminar. El minijuego (17) si muestra su puntaje.
 --
 --  REGLAS (detalle en docs/16-competencia.md):
 --    · Puntaje: puntos_por_acierto por cada respuesta correcta. No hay puntos
@@ -40,6 +46,14 @@ begin;
 -- ---------------------------------------------------------------------------
 -- 1. Resumen de una partida (igual para todas las funciones)
 -- ---------------------------------------------------------------------------
+-- Mientras se juega una partida de PREGUNTAS no se muestra si cada respuesta
+-- estuvo bien ni el puntaje: solo al terminar (el minijuego si los muestra).
+create or replace function public.oculta_resultado(p public.partidas)
+returns boolean
+language sql
+immutable
+as $$ select p.estado = 'en_curso' and p.tipo = 'preguntas' $$;
+
 create or replace function public.resumen_partida(p public.partidas)
 returns jsonb
 language sql
@@ -50,15 +64,19 @@ as $$
     'id',                 p.id,
     'desafio_id',         p.desafio_id,
     'evento_id',          p.evento_id,
+    'tipo',               p.tipo,
     'numero',             p.numero,
     'estado',             p.estado,
     'valida',             p.estado = 'finalizada',
     'total_preguntas',    p.total_preguntas,
-    'respondidas',        p.aciertos + p.errores,
-    'aciertos',           p.aciertos,
-    'errores',            p.errores,
-    'puntaje',            p.puntaje,
-    'puntaje_maximo',     p.total_preguntas * p.puntos_por_acierto,
+    'respondidas',        case when p.tipo = 'preguntas'
+                               then (select count(*) from public.partida_respuestas r where r.partida_id = p.id)
+                               else p.aciertos + p.errores end,
+    'aciertos',           case when public.oculta_resultado(p) then null else p.aciertos end,
+    'errores',            case when public.oculta_resultado(p) then null else p.errores end,
+    'puntaje',            case when public.oculta_resultado(p) then null else p.puntaje end,
+    'vidas',              case when p.tipo = 'minijuego' then greatest(0, 3 - p.errores) end,
+    'puntaje_maximo',     case when p.tipo = 'preguntas' then p.total_preguntas * p.puntos_por_acierto end,
     'puntos_por_acierto', p.puntos_por_acierto,
     'duracion_segundos',  p.duracion_segundos,
     'iniciada_en',        p.iniciada_en,
@@ -83,7 +101,7 @@ language sql
 set search_path = public
 as $$
   update public.partidas
-     set estado = 'vencida',
+     set estado = case when tipo = 'minijuego' then 'finalizada' else 'vencida' end,
          finalizada_en = vence_en,
          duracion_ms = duracion_segundos * 1000
    where usuario_id = p_usuario
@@ -129,7 +147,10 @@ as $$
                'codigo',    q.codigo,
                'opciones',  (select jsonb_agg(jsonb_build_object('id', o.id, 'texto', o.texto) order by o.orden)
                                from public.opciones_desafio o where o.pregunta_id = q.id),
-               'respuesta', (select jsonb_build_object('opcion_id', r.opcion_id, 'correcta', r.es_correcta, 'puntos', r.puntos)
+               -- Mientras se juega solo se sabe que opcion se eligio, no si estuvo bien.
+               'respuesta', (select case when public.oculta_resultado(p)
+                                         then jsonb_build_object('opcion_id', r.opcion_id)
+                                         else jsonb_build_object('opcion_id', r.opcion_id, 'correcta', r.es_correcta, 'puntos', r.puntos) end
                                from public.partida_respuestas r
                               where r.partida_id = pp.partida_id and r.pregunta_id = q.id)
              ) order by pp.orden)
@@ -180,7 +201,7 @@ begin
       using errcode = '22023', hint = 'datos_incompletos';
   end if;
 
-  -- Las peticiones de una persona se atienden de a una (dos pestanas, reintentos).
+  -- Las peticiones de una persona se atienden de a una (dos pestañas, reintentos).
   perform pg_advisory_xact_lock(hashtextextended('partidas:' || v_usuario::text, 0));
 
   -- Peticion repetida: el mismo id devuelve la misma partida.
@@ -300,24 +321,25 @@ declare
   v_repetida  boolean := false;
 begin
   if p_partida_id is null or p_pregunta_id is null or p_opcion_id is null then
-    raise exception 'Faltan datos: partida, pregunta y opcion.' using errcode = '22023', hint = 'datos_incompletos';
+    raise exception 'Faltan datos: partida, pregunta y opción.' using errcode = '22023', hint = 'datos_incompletos';
   end if;
 
-  -- Bloquea la partida: dos envios simultaneos se atienden de a uno.
   v_partida := public.partida_propia(p_partida_id, true);
+  if v_partida.tipo <> 'preguntas' then
+    raise exception 'Esta partida no es de preguntas.' using errcode = 'P0001', hint = 'tipo_incorrecto';
+  end if;
 
   select * into v_respuesta from public.partida_respuestas
    where partida_id = p_partida_id and pregunta_id = p_pregunta_id;
 
   if v_respuesta.partida_id is not null then
-    -- Envio repetido: se devuelve lo que ya estaba, sin volver a sumar.
     v_repetida := true;
   else
     if v_partida.estado <> 'en_curso' then
-      raise exception 'Esta partida ya termino.' using errcode = 'P0001', hint = 'partida_cerrada';
+      raise exception 'Esta partida ya terminó.' using errcode = 'P0001', hint = 'partida_cerrada';
     end if;
     if now() > v_partida.vence_en + make_interval(secs => v_partida.gracia_segundos) then
-      raise exception 'Se termino el tiempo de esta partida.' using errcode = 'P0001', hint = 'partida_vencida';
+      raise exception 'Se terminó el tiempo de esta partida.' using errcode = 'P0001', hint = 'partida_vencida';
     end if;
     if not exists (select 1 from public.partida_preguntas
                     where partida_id = p_partida_id and pregunta_id = p_pregunta_id) then
@@ -327,7 +349,7 @@ begin
     select es_correcta into v_correcta from public.opciones_desafio
      where id = p_opcion_id and pregunta_id = p_pregunta_id;
     if v_correcta is null then
-      raise exception 'Esa opcion no pertenece a la pregunta.' using errcode = 'P0002', hint = 'opcion_no_encontrada';
+      raise exception 'Esa opción no pertenece a la pregunta.' using errcode = 'P0002', hint = 'opcion_no_encontrada';
     end if;
 
     insert into public.partida_respuestas (partida_id, pregunta_id, opcion_id, es_correcta, puntos)
@@ -335,7 +357,6 @@ begin
             case when v_correcta then v_partida.puntos_por_acierto else 0 end)
     returning * into v_respuesta;
 
-    -- El resultado sale de contar lo guardado.
     select count(*) filter (where es_correcta), count(*) filter (where not es_correcta)
       into v_aciertos, v_errores
       from public.partida_respuestas where partida_id = p_partida_id;
@@ -354,11 +375,10 @@ begin
     returning * into v_partida;
   end if;
 
+  -- Solo que quedo registrada (y cual se eligio): ni correcta ni puntos.
   return jsonb_build_object(
     'pregunta_id', v_respuesta.pregunta_id,
     'opcion_id',   v_respuesta.opcion_id,
-    'correcta',    v_respuesta.es_correcta,
-    'puntos',      v_respuesta.puntos,
     'repetida',    v_repetida,
     'partida',     public.resumen_partida(v_partida)
   );
@@ -384,6 +404,12 @@ begin
 
   if v_partida.estado <> 'en_curso' then
     v_repetida := true;
+  elsif v_partida.tipo = 'minijuego' and now() >= v_partida.vence_en then
+    -- Se acabo el tiempo del minijuego: termina con lo atrapado y cuenta.
+    update public.partidas
+       set estado = 'finalizada', finalizada_en = vence_en, duracion_ms = duracion_segundos * 1000
+     where id = p_partida_id
+    returning * into v_partida;
   elsif now() > v_partida.vence_en + make_interval(secs => v_partida.gracia_segundos) then
     update public.partidas
        set estado = 'vencida', finalizada_en = vence_en, duracion_ms = duracion_segundos * 1000
@@ -404,6 +430,28 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
+-- Mis partidas de un evento, con el puntaje oculto en las de preguntas en curso
+-- (la app la usa en lugar de leer la tabla).
+-- ---------------------------------------------------------------------------
+create or replace function public.mis_partidas(p_evento_id text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_usuario uuid := public.exigir_sesion();
+begin
+  perform public.vencer_partidas(v_usuario);
+  return coalesce((
+    select jsonb_agg(public.resumen_partida(p) order by p.iniciada_en desc)
+      from public.partidas p
+     where p.usuario_id = v_usuario and p.evento_id = p_evento_id
+  ), '[]'::jsonb);
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
 -- 7. Permisos de ejecucion
 -- ---------------------------------------------------------------------------
 revoke all on function public.resumen_partida(public.partidas)       from public, anon, authenticated;
@@ -411,6 +459,7 @@ revoke all on function public.vencer_partidas(uuid)                  from public
 revoke all on function public.partida_propia(uuid, boolean)          from public, anon, authenticated;
 revoke all on function public.partida_completa(uuid)                 from public, anon, authenticated;
 revoke all on function public.mejor_partida(uuid, text)              from public, anon, authenticated;
+revoke all on function public.oculta_resultado(public.partidas)      from public, anon, authenticated;
 
 revoke all on function public.iniciar_partida(uuid, text)            from public, anon;
 revoke all on function public.obtener_partida(uuid)                  from public, anon;
@@ -420,5 +469,7 @@ grant execute on function public.iniciar_partida(uuid, text)          to authent
 grant execute on function public.obtener_partida(uuid)                to authenticated;
 grant execute on function public.responder_partida(uuid, text, text)  to authenticated;
 grant execute on function public.finalizar_partida(uuid)              to authenticated;
+revoke all on function public.mis_partidas(text)                     from public, anon;
+grant execute on function public.mis_partidas(text)                   to authenticated;
 
 commit;

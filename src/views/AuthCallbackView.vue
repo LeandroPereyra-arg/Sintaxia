@@ -99,7 +99,7 @@ onMounted(async () => {
         <h1>{{ parametros.hayCodigo ? 'Tu correo esta confirmado' : 'No hay nada para confirmar' }}</h1>
         <MensajeEstado v-if="parametros.hayCodigo" tipo="exito">
           <p>
-            Ya podes ingresar con tu correo y tu contrasena.
+            Ya podes ingresar con tu correo y tu contraseña.
           </p>
           <p>
             Como abriste el enlace en un dispositivo distinto del que usaste para pedirlo, la sesion no se

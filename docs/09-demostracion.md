@@ -29,7 +29,7 @@ sirve como ensayo previo a la demostracion.
 
 1. **Empezar la leccion 1 y responder dos actividades** → arriba de cada una aparece
    "Respuesta guardada": la confirmo el servidor.
-2. **Cerrar la pestana y volver a abrir la leccion** → "Tenes un intento sin terminar:
+2. **Cerrar la pestaña y volver a abrir la leccion** → "Tenes un intento sin terminar:
    2 de 4 respondidas". "Continuar el intento" retoma en la actividad 3 con las mismas vidas.
 3. **Cortar el wifi y comprobar una respuesta** → "Pendiente: sin conexion": no se corrige
    ni se cuenta. Al volver el wifi se manda sola y pasa a "Respuesta guardada".

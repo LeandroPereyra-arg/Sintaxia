@@ -265,6 +265,7 @@ const codigo4 = (c) => String(c).padStart(4, '0')
         v-for="t in vistas"
         :key="t.desafioId"
         class="tablero"
+        :class="{ 'tablero--total': t.esTotal }"
         :data-desafio="t.desafioId"
       >
         <h2>{{ t.desafio }} <small>{{ t.total }} {{ t.total === 1 ? 'participante' : 'participantes' }}</small></h2>
@@ -467,6 +468,12 @@ const codigo4 = (c) => String(c).padStart(4, '0')
   border-radius: 20px;
   padding: clamp(14px, 1.6vw, 28px);
   min-width: 0;
+}
+
+/* El puntaje total (suma de la mejor partida de cada desafio) va primero y destacado. */
+.tablero--total {
+  border-color: var(--c-violeta);
+  box-shadow: 0 0 0 3px var(--c-violeta-suave);
 }
 
 .tablero h2 {
