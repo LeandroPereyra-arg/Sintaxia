@@ -221,7 +221,7 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [25. Defensa y demostracion](docs/25-defensa-y-demostracion.md) | Guion de la demo con varios celulares y la pantalla; guia para la defensa individual |
 | [26. Cierre de la expo](docs/26-cierre-de-la-expo.md) | Revisar datos, conservar registros, limpiar y registrar problemas y mejoras |
 | [27. Minijuego y puntaje total](docs/27-minijuego-y-puntaje-total.md) | *Sintax atrapa el código*, desafios sin correccion a la vista y el puntaje total del ranking |
-| [28. Registro de pruebas del juego de la expo](docs/28-registro-de-pruebas-juego-expo.md) | Los 8 casos y la regresion completa |
+| [28. Registro de pruebas del juego de la expo](docs/28-registro-de-pruebas-juego-expo.md) | Los 9 casos y la regresion completa |
 
 ---
 

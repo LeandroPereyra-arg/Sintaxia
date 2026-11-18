@@ -233,6 +233,10 @@ router.beforeEach(async (to) => {
   await iniciar()
 
   if (necesitaSesion && !conSesion.value) {
+    // En la competencia no hace falta ingresar: el evento pide solo un alias.
+    if ((to.name === 'partida' || to.name === 'minijuego') && to.params.eventoId) {
+      return { name: 'evento', params: { eventoId: to.params.eventoId } }
+    }
     return { name: 'ingresar', query: { volver: to.fullPath } }
   }
   if (to.meta?.requiereCuenta === true && esInvitado.value) {

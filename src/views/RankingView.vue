@@ -45,7 +45,10 @@ onMounted(async () => {
         </li>
         <li>
           <Icono nombre="usuario" :tamano="18" />
-          <span>Solo aparecen las <strong>cuentas</strong>: los invitados juegan y ven su puntaje, pero no figuran.</span>
+          <span>
+            Aparecen las <strong>cuentas</strong> y quienes juegan la competencia <strong>con un alias</strong>
+            (no hace falta crear cuenta). Los invitados que no eligen alias juegan y ven su puntaje, pero no figuran.
+          </span>
         </li>
         <li>
           <Icono nombre="trofeo" :tamano="18" />

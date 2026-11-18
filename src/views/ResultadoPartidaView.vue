@@ -88,7 +88,7 @@ const vencida = computed(() => partida.value?.estado === ESTADO_PARTIDA.VENCIDA)
               guardadas, pero una partida incompleta no entra al ranking.
             </p>
           </MensajeEstado>
-          <MensajeEstado v-else-if="esInvitado" tipo="info" data-prueba="aviso-invitado-resultado">
+          <MensajeEstado v-else-if="esInvitado && posicion?.invitado !== false" tipo="info" data-prueba="aviso-invitado-resultado">
             <p>
               Jugaste como invitado: este puntaje es tuyo, pero <strong>no aparece en el ranking</strong>.
               Si creas tu cuenta ahora, tus partidas pasan a contar con tu alias.

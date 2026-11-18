@@ -395,7 +395,7 @@ await caso(
     const aviso = normalizar(await p.locator('[data-prueba="lo-publico"]').innerText())
     await p.goto(`${URL_APP}/ranking`, { waitUntil: 'networkidle' })
     const reglas = normalizar(await p.locator('[data-prueba="reglas-ranking"]').innerText())
-    for (const frase of ['alias con su codigo', 'puntaje', 'tiempo', 'Los invitados no aparecen']) {
+    for (const frase of ['alias con su codigo', 'puntaje', 'tiempo', 'los invitados que no eligen alias no aparecen']) {
       verificar(aviso.includes(frase), `el aviso no dice "${frase}": ${aviso}`)
     }
     verificar(/alias con su codigo/.test(reglas) && /invitados/.test(reglas), `reglas: ${reglas}`)

@@ -128,7 +128,8 @@ const MOTIVOS = {
   datos_incompletos: 'Faltan datos para enviar la respuesta.',
   tipo_incorrecto: 'Esa partida es de otro tipo de juego.',
   ficha_ajena: 'Esa ficha no es de esta partida.',
-  ficha_fuera_de_tiempo: 'Esa ficha ya no estaba cayendo.'
+  ficha_fuera_de_tiempo: 'Esa ficha ya no estaba cayendo.',
+  alias_invalido: 'Ese alias no se puede usar: de 3 a 20 letras sin tilde, numeros o guion bajo.'
 }
 
 function traducir(error, que) {
@@ -262,6 +263,16 @@ export async function atraparFicha(partidaId, n) {
   const { data, error } = await cliente().rpc('atrapar_ficha', { p_partida_id: partidaId, p_n: n })
   if (error) throw traducir(error, 'registrar la ficha')
   return { n: data.n, valida: Boolean(data.valida), repetida: Boolean(data.repetida), partida: aPartida(data.partida) }
+}
+
+/**
+ * Alias para jugar la competencia sin cuenta (15-ranking-publico.sql). Sin
+ * alias, devuelve el actual. { alias, codigo, invitado, enRanking }
+ */
+export async function elegirAliasExpo(alias = null) {
+  const { data, error } = await cliente().rpc('elegir_alias_expo', { p_alias: alias })
+  if (error) throw traducir(error, 'guardar tu alias')
+  return { alias: data.alias, codigo: data.codigo, invitado: Boolean(data.invitado), enRanking: Boolean(data.en_ranking) }
 }
 
 /** Cierra la partida. Repetirlo devuelve el resultado ya guardado. */
