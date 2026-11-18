@@ -3,7 +3,7 @@
 #  Sintaxia - Recuperar el contenido desde un respaldo
 # ---------------------------------------------------------------------------
 #  Carga un archivo hecho con respaldar-contenido.sh en un proyecto NUEVO,
-#  despues de correr los scripts 01 a 16 de supabase/. Reemplaza el contenido
+#  despues de correr los scripts 01 a 17 de supabase/. Reemplaza el contenido
 #  de ejemplo de los scripts por el del respaldo.
 #
 #  Para no borrar historial por error, se niega a seguir si la base ya tiene
@@ -30,7 +30,8 @@ psql "$SUPABASE_DB_URL" --single-transaction -v ON_ERROR_STOP=1 -q -o /dev/null 
         end if;
       end \$\$;" \
   -c "truncate public.opciones_desafio, public.preguntas_desafio, public.desafios, public.eventos,
-               public.opciones, public.preguntas, public.lecciones, public.unidades, public.cursos cascade;" \
+               public.opciones, public.preguntas, public.lecciones, public.unidades, public.cursos,
+               public.minijuego_fichas, public.minijuego_categorias cascade;" \
   -c "set session_replication_role = replica;" \
   -f "$archivo" \
   -c "set session_replication_role = origin;"

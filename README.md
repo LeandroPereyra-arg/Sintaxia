@@ -7,7 +7,7 @@ historial de cada persona viven en una base PostgreSQL protegida con RLS.
 
 Lecciones de cinco minutos, ejercicios interactivos con correccion inmediata, vidas, XP,
 rachas, medallas y un camino de unidades que se va desbloqueando. Se puede entrar como
-**invitado** (con un usuario propio) o **crear una cuenta con correo y contrasena**; un
+**invitado** (con un usuario propio) o **crear una cuenta con correo y contraseña**; un
 invitado que crea su cuenta **conserva su historial**.
 
 El curso implementado es el de **JavaScript**. Desde la etapa 3 los cursos, las
@@ -53,7 +53,7 @@ Supabase (*Project Settings → API Keys*). La app queda en http://localhost:517
 > En Windows no copies los comentarios que empiezan con `#` en los bloques de
 > comandos: en la consola de Windows no son comentarios y rompen el comando.
 
-En el proyecto de Supabase hay que ejecutar, en orden, los scripts `01` a `16` de la
+En el proyecto de Supabase hay que ejecutar, en orden, los scripts `01` a `17` de la
 carpeta [`supabase/`](supabase/). Los datos del proyecto y la organizacion de las
 tablas estan en [`supabase/README.md`](supabase/README.md).
 
@@ -101,6 +101,7 @@ Requiere **Node 22+** (lo pide Capacitor 8), **PostgreSQL 14+** y **Go** (solo p
 | `npm run pruebas:etapa6` | Competencia: partidas, tiempo del servidor, envios repetidos, partidas vencidas y puntaje manipulado |
 | `npm run pruebas:etapa7` | Pantalla del ranking con Realtime (tres dispositivos y la pantalla), permisos y panel de administracion |
 | `npm run pruebas:etapa8` | APK: boton Atras, enlaces de los correos dentro de la app, contenido del APK y clave de firma |
+| `npm run pruebas:etapa9` | Juego de la expo: desafios sin correccion a la vista, minijuego, puntaje total y ñ |
 | `npm run android:web` | Compila para el APK (`--mode android`) y lo copia al proyecto Android |
 | `npm run android:debug` | Lo anterior + `./gradlew assembleDebug` (Linux/macOS; en Windows ver docs/20) |
 | `npm run android:release` | Lo anterior + `assembleRelease`, firmado con la clave de las variables `SINTAXIA_*` |
@@ -214,11 +215,13 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [19. Registro de pruebas (etapa 7)](docs/19-registro-de-pruebas-etapa7.md) | Los 17 casos, problemas encontrados y lo que no se probo |
 | [20. APK de Android (etapa 8)](docs/20-apk-android.md) | Versiones, instalar JDK y SDK, generar el APK debug y la release firmada desde la terminal (Linux y Windows) |
 | [21. Registro de pruebas (etapa 8)](docs/21-registro-de-pruebas-etapa8.md) | Los 8 casos automaticos y la planilla para probar en celulares fisicos |
-| [22. Manual para participantes](docs/22-manual-participantes.md) | Instalar, entrar como invitado o con cuenta, jugar, resultado, recuperar la contrasena |
+| [22. Manual para participantes](docs/22-manual-participantes.md) | Instalar, entrar como invitado o con cuenta, jugar, resultado, recuperar la contraseña |
 | [23. Manual para administradores](docs/23-manual-administradores.md) | Rol, contenido, preparar, abrir y cerrar el evento, recuperacion de cuentas |
 | [24. Informe final](docs/24-informe-final.md) | Fundamentacion, alcance, historias de usuario, cronograma, arquitectura, DER, diccionario, reglas, seguridad, pruebas y mejoras |
 | [25. Defensa y demostracion](docs/25-defensa-y-demostracion.md) | Guion de la demo con varios celulares y la pantalla; guia para la defensa individual |
 | [26. Cierre de la expo](docs/26-cierre-de-la-expo.md) | Revisar datos, conservar registros, limpiar y registrar problemas y mejoras |
+| [27. Minijuego y puntaje total](docs/27-minijuego-y-puntaje-total.md) | *Sintax atrapa el código*, desafios sin correccion a la vista y el puntaje total del ranking |
+| [28. Registro de pruebas del juego de la expo](docs/28-registro-de-pruebas-juego-expo.md) | Los 8 casos y la regresion completa |
 
 ---
 
@@ -261,7 +264,7 @@ encuadrada con el ancho de un celular.
 ![Bienvenida en escritorio](docs/capturas/17-bienvenida-escritorio.png)
 
 ### Ingresar, crear cuenta o seguir como invitado
-Correo y contrasena, o un usuario de invitado propio. Si ya hay un invitado, la pantalla
+Correo y contraseña, o un usuario de invitado propio. Si ya hay un invitado, la pantalla
 avisa que entrar a otra cuenta **no pasa su historial**.
 
 <p>
@@ -313,6 +316,7 @@ supabase/
 ├── 14-evento-expo.sql           evento de ejemplo con dos desafios
 ├── 15-ranking-publico.sql       tabla publica del ranking (la mantiene el servidor) y Realtime
 ├── 16-administracion.sql        rol de administrador y funciones admin_* del panel
+├── 17-juego-de-la-expo.sql      minijuego, puntaje total y desafios sin correccion a la vista
 ├── respaldo/                    respaldar y recuperar el contenido (pg_dump / psql)
 └── README.md                 datos del proyecto y organizacion de las tablas
 
@@ -416,7 +420,14 @@ sus preguntas (de un banco propio, separado del de practica), mide el tiempo con
 y calcula el puntaje: el celular solo manda que pregunta y que opcion. En el ranking cuenta la
 mejor partida de cada persona en cada desafio, nunca la suma; a igual puntaje gana el menor
 tiempo. Juegan invitados y cuentas; en el ranking aparecen solo las cuentas, con su alias.
+Mientras se juega no se muestra si cada respuesta estuvo bien: el puntaje aparece al final.
 Detalle en [docs/16-competencia.md](docs/16-competencia.md).
+
+Ademas hay un **minijuego, "Sintax atrapa el código"**: caen fichas con codigo y Sintax tiene
+que atrapar las que cumplen la consigna (por ejemplo, palabras reservadas de JavaScript), con
+3 vidas y 1 minuto. El servidor arma las fichas y es el unico que sabe cuales valen. El ranking
+muestra un **puntaje total** que suma la mejor partida de cada desafio, minijuego incluido.
+Detalle en [docs/27-minijuego-y-puntaje-total.md](docs/27-minijuego-y-puntaje-total.md).
 
 ## Ranking de la expo y administracion
 

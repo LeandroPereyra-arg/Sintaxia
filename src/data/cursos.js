@@ -52,7 +52,7 @@ export const cursos = [
     nombre: 'HTML y CSS',
     slug: 'html-css',
     descripcion:
-      'La estructura y el diseno de cualquier sitio web. Etiquetas, selectores, cajas, flexbox y diseno responsivo.',
+      'La estructura y el diseño de cualquier sitio web. Etiquetas, selectores, cajas, flexbox y diseño responsivo.',
     estado: ESTADO_CURSO.PROXIMAMENTE,
     nivel: 'Principiante',
     icono: '</>',
@@ -61,7 +61,7 @@ export const cursos = [
     totalUnidades: 5,
     totalLecciones: 12,
     horasEstimadas: 9,
-    etiquetas: ['Web', 'Diseno']
+    etiquetas: ['Web', 'Diseño']
   },
   {
     id: 'sql',

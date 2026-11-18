@@ -108,13 +108,13 @@ contesta y cada reintento lo vuelve a mandar tal cual (`iniciar_intento` es
 idempotente). Caso 21: la primera respuesta se pierde, "Reintentar" repite el
 mismo id y queda un solo intento.
 
-### P3 · Caso 14 intermitente: la pestana que se cerraba reenviaba la respuesta
+### P3 · Caso 14 intermitente: la pestaña que se cerraba reenviaba la respuesta
 
 En 2 de cada 10 corridas, al volver a abrir la leccion la respuesta pendiente ya
 estaba guardada. No era un error de la app: la prueba devolvia la conexion
-mientras la pestana se estaba cerrando, esa pestana todavia escuchaba el evento
+mientras la pestaña se estaba cerrando, esa pestaña todavia escuchaba el evento
 `online` y reenviaba ella misma la respuesta (que es justamente lo que tiene que
-hacer). **Correccion de la prueba:** se descarga la app antes de cerrar la pestana,
+hacer). **Correccion de la prueba:** se descarga la app antes de cerrar la pestaña,
 asi "cerrar la app" es determinista (10 de 10). (El script de la prueba que marca la
 bienvenida como vista tambien se protegio: en `about:blank` no hay `localStorage`.) Y como el reenvio al reconectarse
 no estaba probado a proposito, se agrego el **caso 22**.

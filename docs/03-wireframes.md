@@ -44,7 +44,7 @@ el pulgar.
 │             ▭ icono           │   │                               │
 │                               │   │                               │
 │       Hola, soy Sintax        │   │          Empecemos            │
-│  Te voy a acompaniar a        │   │  Con una cuenta guardas tu    │
+│  Te voy a acompañar a        │   │  Con una cuenta guardas tu    │
 │  aprender a programar...      │   │  progreso y competis...       │
 │                               │   │                               │
 │                               │   │  [ G  Continuar con Google  ] │
@@ -128,7 +128,7 @@ su nombre, la barra de avance del curso y un boton **IR AL CURSO**.
 │  │ lineas.             │ │                     │ │                     │  │
 │  │                     │ │                     │ │                     │  │
 │  │ 📚 6  🎯 14  ⏱ 12h  │ │ 📚 6  🎯 15  ⏱ 13h  │ │ 📚 5  🎯 12  ⏱ 9h   │  │
-│  │ #Web #Front-end     │ │ #Datos              │ │ #Web #Diseno        │  │
+│  │ #Web #Front-end     │ │ #Datos              │ │ #Web #Diseño        │  │
 │  │ [    EMPEZAR     ]  │ │ [ PROXIMAMENTE   ]  │ │ [ PROXIMAMENTE   ]  │  │
 │  └─────────────────────┘ └─────────────────────┘ └─────────────────────┘  │
 │  ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐  │

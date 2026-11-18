@@ -45,7 +45,7 @@ la misma base.
 |---|---|
 | Curso de JavaScript: 1 unidad publicada (3 lecciones, 12 actividades); el resto "proximamente" | Otros lenguajes (figuran en el catalogo como proximamente) |
 | Actividades de opcion multiple corregidas por el servidor | Editor de codigo con ejecucion real |
-| Invitados, cuentas con correo y contrasena, confirmacion y recuperacion | Inicio de sesion con Google o GitHub (fue de la etapa 1, con Express; no se paso a Supabase) |
+| Invitados, cuentas con correo y contraseña, confirmacion y recuperacion | Inicio de sesion con Google o GitHub (fue de la etapa 1, con Express; no se paso a Supabase) |
 | Intentos, historial, progreso, desbloqueo, XP, racha, medallas | Repaso espaciado de los errores |
 | Competencia: eventos, desafios con banco propio, partidas con tiempo del servidor | Varios eventos abiertos a la vez en la misma pantalla |
 | Ranking publico de la expo con Realtime | Ligas semanales entre estudiantes |
@@ -66,11 +66,12 @@ prueba automatico que lo verifica.
 | HU3 | Como alumno quiero que se desbloquee la siguiente leccion al aprobar para saber como seguir | Con 60 % se habilita la siguiente; la unidad siguiente espera a la anterior (etapa 5, caso 7) | 2, 5 |
 | HU4 | Como visitante quiero probar sin registrarme, para no perder tiempo en la expo | **Continuar como invitado** crea un usuario anonimo y puede jugar (etapa 4) | 4 |
 | HU5 | Como alumno quiero crear una cuenta y conservar mi progreso de invitado | Al convertirse, el mismo usuario pasa a ser cuenta y conserva el historial (etapa 4) | 4 |
-| HU6 | Como alumno quiero recuperar mi contrasena desde el correo | El enlace abre la app en "Nueva contrasena" (etapa 4, caso 18; etapa 8, caso 4 en el APK) | 4, 8 |
+| HU6 | Como alumno quiero recuperar mi contraseña desde el correo | El enlace abre la app en "Nueva contraseña" (etapa 4, caso 18; etapa 8, caso 4 en el APK) | 4, 8 |
 | HU7 | Como alumno quiero ver mi historial y mi progreso en cualquier dispositivo | Perfil con lecciones, ultimo intento e historial; se recupera ingresando (etapa 5) | 5 |
 | HU8 | Como visitante de la expo quiero jugar un desafio contra reloj y ver mi puntaje final | Partida con tiempo del servidor, resultado confirmado para invitado y cuenta (etapa 6) | 6 |
 | HU9 | Como participante quiero aparecer en la pantalla del ranking con mi alias | La pantalla se actualiza sola al terminar; solo cuentas, alias con codigo (etapa 7, caso 1) | 7 |
 | HU10 | Como participante quiero instalar la app en mi celular | APK instalable que no depende de la computadora (etapa 8) | 8 |
+| HU10b | Como participante de la expo quiero un minijuego con Sintax que me sume puntos | *Sintax atrapa el código*: fichas validadas por el servidor, vidas, suma al puntaje total ([27](27-minijuego-y-puntaje-total.md); pruebas del juego, casos 3 a 7) | expo |
 
 ### Docente y organizador
 
@@ -172,7 +173,9 @@ llevan un comentario por tabla y por columna, y los DER.
 |---|---|---|
 | Leccion | 3 vidas; se aprueba con 60 %; cada repeticion es un intento nuevo y cuenta el mejor | [6](06-reglas-de-avance.md), [14](14-intentos-y-progreso.md) |
 | Desbloqueo | La leccion siguiente al aprobar; la unidad siguiente al completar la anterior | [6](06-reglas-de-avance.md) |
-| Partida | Tiempo medido por el servidor con gracia de red; una respuesta por pregunta; puntaje = aciertos × puntos | [16](16-competencia.md) |
+| Partida | Tiempo medido por el servidor con gracia de red; una respuesta por pregunta; puntaje = aciertos × puntos; la correccion se ve recien al terminar | [16](16-competencia.md), [27](27-minijuego-y-puntaje-total.md) |
+| Minijuego | 60 s, 3 vidas, +20 por ficha valida; termina por tiempo o vidas y cuenta | [27](27-minijuego-y-puntaje-total.md) |
+| Puntaje total | Suma de la mejor partida de cada desafio del evento | [27](27-minijuego-y-puntaje-total.md) |
 | Ranking | Mejor partida valida por persona y desafio; mas puntaje, menos tiempo; empates comparten puesto; solo cuentas | [16.5](16-competencia.md), [18.2](18-ranking-y-administracion.md) |
 | Contenido | Opciones distintas, exactamente una correcta; una leccion publicada necesita una actividad publicada | [18.4](18-ranking-y-administracion.md) |
 | Desafio | Con partidas queda congelado: se cambia con una version nueva | [18.4](18-ranking-y-administracion.md) |
@@ -183,6 +186,8 @@ llevan un comentario por tabla y por columna, y los DER.
 | Riesgo | Como se cubre |
 |---|---|
 | Leer las soluciones desde el cliente | Sin permiso de columna sobre `es_correcta` ni `explicacion`; el banco de los desafios no se lee; correccion solo en el servidor |
+| Aprender las soluciones entre intentos | Mientras se juega un desafio, ni la pantalla ni el servidor dicen si cada respuesta fue correcta ni el puntaje |
+| Trampa en el minijuego | El servidor arma las fichas, solo el sabe cuales son validas y acepta cada una mientras cae segun su reloj |
 | Falsificar puntaje, tiempo o progreso | El cliente no escribe partidas, intentos ni puntajes; funciones `security definer` calculan todo; restricciones en la tabla (`puntaje = aciertos × puntos`) |
 | Ver datos de otra persona | RLS: cada uno ve solo lo propio; el ranking publica una tabla minima sin correos ni ids de cuenta |
 | Darse el rol de administrador | Tabla `administradores` sin permisos para el cliente; se otorga solo desde el servidor; cada funcion `admin_*` verifica `es_admin()` |
@@ -206,7 +211,8 @@ proyecto y Chromium; la capa HTTP de datos y Realtime son imitaciones locales.
 | 6 | 16 | Partidas, tiempo del servidor, puntaje manipulado, dos jugadores |
 | 7 | 17 | Ranking con Realtime, permisos, panel de administracion |
 | 8 | 8 | Boton Atras, enlaces de correo en la app, APK, clave de firma |
-| **Total** | **121** | Corrida completa desde una base nueva: ver [21](21-registro-de-pruebas-etapa8.md) |
+| Juego de la expo | 8 | Desafios sin correccion a la vista, minijuego, puntaje total, ñ ([28](28-registro-de-pruebas-juego-expo.md)) |
+| **Total** | **129** | Corrida completa desde una base nueva |
 
 **No probado automaticamente:** el proyecto real de Supabase, PostgREST y Realtime
 reales, carga con muchos participantes y los celulares fisicos (planilla en

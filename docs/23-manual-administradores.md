@@ -17,7 +17,7 @@ rol desde la app.
 
 ## 2. Antes de la expo
 
-### Cargar o revisar el contenido (pestana **Contenido**)
+### Cargar o revisar el contenido (pestaña **Contenido**)
 
 - Elegi curso, unidad y leccion con los filtros de arriba. Se recuerdan al recargar.
 - **+ Nuevo** crea un curso, unidad o leccion; **Editar** los cambia.
@@ -27,10 +27,13 @@ rol desde la app.
 - **Publicar** hace visible algo para los alumnos. Una leccion necesita al menos una
   actividad publicada para poder publicarse.
 
-### Preparar el evento (pestana **Eventos de expo**)
+### Preparar el evento (pestaña **Eventos de expo**)
 
 1. Crea el evento: queda **en preparacion** (nadie lo ve).
 2. Crea sus desafios con las reglas: duracion, puntos por acierto, intentos y gracia.
+   El minijuego *Sintax atrapa el código* del evento de ejemplo lo crea el script 17;
+   para otro evento se copia ese `insert` con el id nuevo (el panel todavia no crea
+   minijuegos).
 3. Carga el banco de preguntas de cada desafio (es aparte del de practica).
 4. Para probar las preguntas jugando, usa un **evento de ensayo** aparte: un evento
    en preparacion no se puede jugar, y las partidas de prueba no tienen que quedar en
@@ -55,12 +58,12 @@ rol desde la app.
 
 ## 4. Recuperacion de cuentas
 
-- Un participante que olvido la contrasena la recupera solo desde la app: **Olvide mi
-  contrasena** (ver el manual de participantes, seccion 5).
+- Un participante que olvido la contraseña la recupera solo desde la app: **Olvide mi
+  contraseña** (ver el manual de participantes, seccion 5).
 - Si el correo no llega: revisar spam; el proveedor de correo de Supabase tiene un
   cupo bajo por hora (ver [12. Acceso](12-acceso-y-sesiones.md), seccion 12.6).
 - Un invitado que perdio el celular o cerro sesion **no se puede recuperar**: no tiene
-  correo ni contrasena. Por eso conviene que quien quiera figurar en el ranking cree
+  correo ni contraseña. Por eso conviene que quien quiera figurar en el ranking cree
   una cuenta.
 
 ## 5. Cerrar el evento

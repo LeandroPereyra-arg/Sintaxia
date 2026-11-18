@@ -59,9 +59,13 @@ const vencida = computed(() => partida.value?.estado === ESTADO_PARTIDA.VENCIDA)
         <template v-if="enCurso">
           <h1>La partida sigue en curso</h1>
           <p class="texto-secundario">Te quedan {{ partida.segundosRestantes }} segundos.</p>
-          <BaseBoton :to="{ name: 'partida', params: { eventoId, desafioId: partida.desafioId }, query: { partida: partida.id } }">
+          <BaseBoton
+            v-if="partida.tipo === 'preguntas'"
+            :to="{ name: 'partida', params: { eventoId, desafioId: partida.desafioId }, query: { partida: partida.id } }"
+          >
             Seguir jugando
           </BaseBoton>
+          <BaseBoton v-else :to="{ name: 'evento', params: { eventoId } }">Volver al evento</BaseBoton>
         </template>
 
         <template v-else>
@@ -70,8 +74,12 @@ const vencida = computed(() => partida.value?.estado === ESTADO_PARTIDA.VENCIDA)
             Puntaje guardado · partida {{ partida.numero }}
           </p>
           <h1 class="puntaje" data-prueba="puntaje-final">{{ partida.puntaje }} <small>pts</small></h1>
-          <p class="texto-secundario">
-            {{ partida.aciertos }} de {{ partida.total }} correctas · {{ formatoTiempo(partida.duracionMs) }}
+          <p class="texto-secundario" data-prueba="detalle-final">
+            <template v-if="partida.tipo === 'minijuego'">
+              {{ partida.aciertos }} {{ partida.aciertos === 1 ? 'ficha atrapada' : 'fichas atrapadas' }} ·
+              {{ partida.vidas === 0 ? 'sin vidas' : `${partida.vidas} ${partida.vidas === 1 ? 'vida' : 'vidas'}` }}
+            </template>
+            <template v-else>Tiempo: {{ formatoTiempo(partida.duracionMs) }}</template>
           </p>
 
           <MensajeEstado v-if="vencida" tipo="alerta">

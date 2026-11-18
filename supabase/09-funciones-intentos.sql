@@ -363,7 +363,7 @@ begin
   end if;
 
   -- Se bloquea el renglon del intento: dos respuestas al mismo intento (dos
-  -- pestanas, un reintento) se procesan una despues de la otra.
+  -- pestañas, un reintento) se procesan una despues de la otra.
   v_intento := public.intento_propio(p_intento_id, true);
 
   select * into v_respuesta
@@ -475,7 +475,7 @@ comment on function public.responder_actividad(uuid, text, text) is
 -- ---------------------------------------------------------------------------
 -- 6. abandonar_intento
 --    Para "empezar de nuevo" sin dejar el anterior colgado. Si el intento ya
---    estaba cerrado no cambia nada (repetir la peticion no hace dano).
+--    estaba cerrado no cambia nada (repetir la peticion no hace daño).
 -- ---------------------------------------------------------------------------
 create or replace function public.abandonar_intento(p_intento_id uuid)
 returns jsonb

@@ -23,7 +23,7 @@ leccion, actividades y resultados.
 | 6 | Repetir una leccion | El intento arranca de cero | Vuelve a "ejercicio 1 de 4" con las 3 vidas | PASA |
 | 7 | Volver a la unidad | Vuelve a la pantalla de la unidad | Llega a `/cursos/javascript/unidades/js-u1` | PASA |
 | 8 | Abrir una direccion con un identificador de leccion inexistente | Avisa que no existe y ofrece una salida, sin pantalla rota | "No encontramos esa leccion" con 2 accesos de salida | PASA |
-| 9 | Usar la aplicacion en una pantalla de tamanio movil (412 px) | Ninguna pantalla desborda a lo ancho | Anchos 412 en las 5 pantallas del recorrido; el ejemplo de codigo se desplaza dentro de su caja | PASA |
+| 9 | Usar la aplicacion en una pantalla de tamaño movil (412 px) | Ninguna pantalla desborda a lo ancho | Anchos 412 en las 5 pantallas del recorrido; el ejemplo de codigo se desplaza dentro de su caja | PASA |
 
 ## 7.2 Casos agregados
 

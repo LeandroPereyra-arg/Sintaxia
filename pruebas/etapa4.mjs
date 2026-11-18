@@ -269,7 +269,7 @@ await caso(
     await p.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Alias', { exact: true }).fill('Ana_Dev')
     await p.getByLabel('Correo', { exact: true }).fill(correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.getByRole('heading', { name: 'Revisa tu correo' }).waitFor({ timeout: 10000 })
 
@@ -303,12 +303,12 @@ await caso(
     await p.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Alias', { exact: true }).fill('Segunda')
     await p.getByLabel('Correo', { exact: true }).fill(cuenta.correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill('otra-clave-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('otra-clave-123')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.getByText(/ya tiene una cuenta/).first().waitFor({ timeout: 10000 })
 
     const hayIngresar = await p.getByRole('link', { name: 'Iniciar sesion' }).first().isVisible()
-    const hayRecuperar = await p.getByRole('link', { name: 'Recuperar mi contrasena' }).isVisible()
+    const hayRecuperar = await p.getByRole('link', { name: 'Recuperar mi contraseña' }).isVisible()
     const [{ n }] = await consulta('select count(*)::int as n from auth.users where email = $1', [cuenta.correo])
     verificar(n === 1, `cuentas con ese correo: ${n}`)
     verificar(hayIngresar && hayRecuperar, 'faltan los accesos para ingresar o recuperar')
@@ -319,8 +319,8 @@ await caso(
 
 await caso(
   9,
-  'Contrasena invalida',
-  'La app rechaza una contrasena corta sin llamar al servidor, y traduce el rechazo del servidor (weak_password)',
+  'Contraseña invalida',
+  'La app rechaza una contraseña corta sin llamar al servidor, y traduce el rechazo del servidor (weak_password)',
   async () => {
     // a) El formulario la rechaza antes de pedirla.
     const ctx = await contexto()
@@ -332,10 +332,10 @@ await caso(
     await p.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Alias', { exact: true }).fill('Clave_Corta')
     await p.getByLabel('Correo', { exact: true }).fill(correoNuevo('corta'))
-    await p.getByLabel('Contrasena', { exact: true }).fill('abc')
+    await p.getByLabel('Contraseña', { exact: true }).fill('abc')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.getByText(/al menos 8 caracteres/).first().waitFor({ timeout: 5000 })
-    verificar(pedidosAlta.length === 0, 'la contrasena corta llego al servidor')
+    verificar(pedidosAlta.length === 0, 'la contraseña corta llego al servidor')
 
     // b) El servidor tambien la rechaza (si alguien se salta el formulario).
     const directo = await api.auth('/signup', { email: correoNuevo('directo'), password: 'abc' })
@@ -350,7 +350,7 @@ await caso(
         body: JSON.stringify({ code: 422, error_code: 'weak_password', msg: 'Password should be at least 8 characters.' })
       })
     )
-    await p.getByLabel('Contrasena', { exact: true }).fill('abcdefgh')
+    await p.getByLabel('Contraseña', { exact: true }).fill('abcdefgh')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.getByText(/demasiado debil/).waitFor({ timeout: 5000 })
     await ctx.close()
@@ -371,7 +371,7 @@ await caso(
     })
     await p.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Correo', { exact: true }).fill(correoNuevo('alias'))
-    await p.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
 
     const resultados = []
     for (const [alias, patron] of [
@@ -406,7 +406,7 @@ await caso(
     const p = await pagina(ctx)
     await p.goto(`${URL_APP}/ingresar`, { waitUntil: 'networkidle' })
     await p.getByLabel('Correo', { exact: true }).fill(cuenta.correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill(cuenta.clave)
+    await p.getByLabel('Contraseña', { exact: true }).fill(cuenta.clave)
     await p.getByRole('button', { name: 'Entrar', exact: true }).click()
     await p.waitForURL('**/perfil', { timeout: 15000 })
     await dormir(500)
@@ -513,7 +513,7 @@ await caso(
     await p.getByText(/Tu progreso se conserva/).waitFor({ timeout: 5000 })
     await p.getByLabel('Alias', { exact: true }).fill('Convertida')
     await p.getByLabel('Correo', { exact: true }).fill(correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.getByRole('heading', { name: 'Revisa tu correo' }).waitFor({ timeout: 10000 })
     await p.getByText(/Seguis como invitado hasta que confirmes/).waitFor({ timeout: 4000 })
@@ -556,7 +556,7 @@ await caso(
   'Convertir un invitado con un correo que ya tiene cuenta',
   'Se rechaza con un mensaje claro y la persona sigue siendo el mismo invitado, sin perder nada',
   async () => {
-    const existente = await api.cuentaConfirmada({ correo: correoNuevo('ocupado'), alias: 'Dueno' })
+    const existente = await api.cuentaConfirmada({ correo: correoNuevo('ocupado'), alias: 'Dueño' })
     const ctx = await contexto()
     const p = await pagina(ctx)
     await entrarComoInvitado(p)
@@ -565,7 +565,7 @@ await caso(
     await p.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Alias', { exact: true }).fill('Intruso')
     await p.getByLabel('Correo', { exact: true }).fill(existente.correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.getByText(/ya tiene una cuenta/).first().waitFor({ timeout: 10000 })
 
@@ -595,7 +595,7 @@ await caso(
     await p.goto(`${URL_APP}/ingresar`, { waitUntil: 'networkidle' })
     await p.getByText(/no se va a pasar/).first().waitFor({ timeout: 5000 })
     await p.getByLabel('Correo', { exact: true }).fill(cuenta.correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill(cuenta.clave)
+    await p.getByLabel('Contraseña', { exact: true }).fill(cuenta.clave)
     const entrar = p.getByRole('button', { name: 'Entrar', exact: true })
     verificar(await entrar.isDisabled(), 'el boton Entrar estaba habilitado sin confirmar la advertencia')
 
@@ -624,7 +624,7 @@ await caso(
 await caso(
   18,
   'Recuperar el acceso en el mismo dispositivo',
-  'Se pide el enlace, llega por correo, permite elegir una contrasena nueva y la vieja deja de servir',
+  'Se pide el enlace, llega por correo, permite elegir una contraseña nueva y la vieja deja de servir',
   async () => {
     const cuenta = await api.cuentaConfirmada({ correo: correoNuevo('olvido'), clave: 'clave-vieja-123', alias: 'Olvidadiza' })
     const ctx = await contexto()
@@ -637,19 +637,19 @@ await caso(
 
     const mail = await esperarCorreo(cuenta.correo, { cantidad: 2 }) // el 1ro fue el de confirmacion
     await p.goto(enlaceDeVerificacion(mail))
-    await p.getByRole('heading', { name: 'Elegi tu contrasena nueva' }).waitFor({ timeout: 10000 })
+    await p.getByRole('heading', { name: 'Elegi tu contraseña nueva' }).waitFor({ timeout: 10000 })
 
-    await p.getByLabel('Contrasena nueva', { exact: true }).fill('clave-nueva-456')
+    await p.getByLabel('Contraseña nueva', { exact: true }).fill('clave-nueva-456')
     await p.getByLabel('Repetila', { exact: true }).fill('clave-nueva-456')
-    await p.getByRole('button', { name: 'Guardar contrasena' }).click()
-    await p.getByRole('heading', { name: 'Contrasena cambiada' }).waitFor({ timeout: 10000 })
+    await p.getByRole('button', { name: 'Guardar contraseña' }).click()
+    await p.getByRole('heading', { name: 'Contraseña cambiada' }).waitFor({ timeout: 10000 })
 
     const vieja = await api.iniciarSesion(cuenta.correo, 'clave-vieja-123')
     const nueva = await api.iniciarSesion(cuenta.correo, 'clave-nueva-456')
     verificar(vieja.estado === 400 && vieja.datos.error_code === 'invalid_credentials', `la vieja respondio ${vieja.estado}`)
     verificar(nueva.estado === 200 && nueva.token, `la nueva respondio ${nueva.estado}`)
     await ctx.close()
-    return `enlace "${mail.asunto}" -> contrasena cambiada · la vieja: ${vieja.estado} invalid_credentials · la nueva: ${nueva.estado}`
+    return `enlace "${mail.asunto}" -> contraseña cambiada · la vieja: ${vieja.estado} invalid_credentials · la nueva: ${nueva.estado}`
   }
 )
 
@@ -966,7 +966,7 @@ await caso(
 await caso(
   35,
   'El enlace de confirmacion abierto en otro dispositivo',
-  'El correo queda confirmado pero no se abre sesion alli; la pantalla lo explica y con la contrasena se ingresa',
+  'El correo queda confirmado pero no se abre sesion alli; la pantalla lo explica y con la contraseña se ingresa',
   async () => {
     const correo = correoNuevo('otrodisp2')
     const ctx1 = await contexto()
@@ -974,7 +974,7 @@ await caso(
     await p1.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p1.getByLabel('Alias', { exact: true }).fill('Dispositiva')
     await p1.getByLabel('Correo', { exact: true }).fill(correo)
-    await p1.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p1.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
     await p1.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p1.getByRole('heading', { name: 'Revisa tu correo' }).waitFor({ timeout: 10000 })
     const mail = await esperarCorreo(correo)
@@ -990,14 +990,14 @@ await caso(
 
     await p2.getByRole('link', { name: 'Ingresar' }).click()
     await p2.getByLabel('Correo', { exact: true }).fill(correo)
-    await p2.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p2.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
     await p2.getByRole('button', { name: 'Entrar', exact: true }).click()
     await p2.waitForURL('**/perfil', { timeout: 15000 })
     await dormir(500)
     const etiqueta = await etiquetaDePerfil(p2)
     verificar(/^Dispositiva#\d{4}$/.test(etiqueta), `etiqueta: ${etiqueta}`)
     await otro.close()
-    return `otro dispositivo: "Tu correo esta confirmado", sin sesion · correo confirmado en la base · luego ingresa con la contrasena como ${etiqueta}`
+    return `otro dispositivo: "Tu correo esta confirmado", sin sesion · correo confirmado en la base · luego ingresa con la contraseña como ${etiqueta}`
   }
 )
 
@@ -1017,7 +1017,7 @@ await caso(
     await p.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Alias', { exact: true }).fill('Inmediata')
     await p.getByLabel('Correo', { exact: true }).fill(correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.waitForURL('**/perfil?cuenta=creada', { timeout: 15000 })
     await p.getByText(/Tu cuenta esta lista/).waitFor({ timeout: 5000 })
@@ -1042,7 +1042,7 @@ await caso(
     await p.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Alias', { exact: true }).fill('Segunda')
     await p.getByLabel('Correo', { exact: true }).fill(cuenta.correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill('otra-clave-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('otra-clave-123')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.getByText(/ya tiene una cuenta/).first().waitFor({ timeout: 10000 })
     const [{ n }] = await consulta('select count(*)::int as n from auth.users where email = $1', [cuenta.correo])
@@ -1068,7 +1068,7 @@ await caso(
     await p.goto(`${URL_APP}/registro`, { waitUntil: 'networkidle' })
     await p.getByLabel('Alias', { exact: true }).fill('Instantanea')
     await p.getByLabel('Correo', { exact: true }).fill(correo)
-    await p.getByLabel('Contrasena', { exact: true }).fill('clave-segura-123')
+    await p.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123')
     await p.getByRole('button', { name: /^Crear (mi )?cuenta$/ }).click()
     await p.waitForURL('**/perfil?cuenta=creada', { timeout: 15000 })
     await dormir(800)
@@ -1270,7 +1270,7 @@ await caso(
       const p = await pagina(ctx)
       await p.goto(`${URL_APP}/ingresar`, { waitUntil: 'networkidle' })
       await p.getByLabel('Correo', { exact: true }).fill(ancha.correo)
-      await p.getByLabel('Contrasena', { exact: true }).fill(ancha.clave)
+      await p.getByLabel('Contraseña', { exact: true }).fill(ancha.clave)
       await p.getByRole('button', { name: 'Entrar', exact: true }).click()
       await p.waitForURL('**/perfil', { timeout: 15000 })
       await p.waitForFunction(() => /WWWW#8888/.test(document.body.innerText), null, { timeout: 8000 })
@@ -1312,7 +1312,7 @@ await caso(
     await p.getByText('Que datos guardamos y cuales se ven').click()
     const cuerpo = await texto(p)
     for (const frase of [
-      'la contrasena queda cifrada',
+      'la contraseña queda cifrada',
       'Solo el ranking de la expo, y solo si tenes una cuenta',
       'Los invitados no aparecen',
       'perdes el acceso a tu historial de invitado'

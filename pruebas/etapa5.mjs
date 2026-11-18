@@ -123,7 +123,7 @@ async function entrarComoInvitado(p) {
 async function entrarConCuenta(p, cuenta) {
   await p.goto(`${URL_APP}/ingresar?volver=%2Fperfil`, { waitUntil: 'networkidle' })
   await p.getByLabel('Correo', { exact: true }).fill(cuenta.correo)
-  await p.getByLabel('Contrasena', { exact: true }).fill(cuenta.clave)
+  await p.getByLabel('Contraseña', { exact: true }).fill(cuenta.clave)
   await p.getByRole('button', { name: 'Entrar', exact: true }).click()
   await p.waitForURL('**/perfil', { timeout: 15000 })
   await dormir(400)

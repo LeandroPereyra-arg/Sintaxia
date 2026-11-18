@@ -67,7 +67,7 @@ y el evento cerrado no se puede volver a jugar.
   actividad en 30 dias (nunca toca cuentas). Correrla **despues** de exportar lo que
   se quiera conservar: al borrar un invitado se borran sus partidas.
 - **Celulares prestados**: desinstalar la app o, en la app, **Cerrar sesion**.
-- **Clave de firma**: confirmar que el `.jks` y sus contrasenas estan en los dos
+- **Clave de firma**: confirmar que el `.jks` y sus contraseñas estan en los dos
   lugares acordados (ver [20. APK](20-apk-android.md), seccion 20.6) y en ninguna
   computadora compartida.
 

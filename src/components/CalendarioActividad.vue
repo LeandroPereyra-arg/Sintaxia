@@ -9,7 +9,7 @@ import { computed } from 'vue'
 const props = defineProps({
   /** [{ fecha: 'YYYY-MM-DD', xp, lecciones }] */
   actividad: { type: Array, default: () => [] },
-  /** Cuantas semanas mostrar (53 = un anio completo, como el grafico de GitHub). */
+  /** Cuantas semanas mostrar (53 = un año completo, como el grafico de GitHub). */
   semanas: { type: Number, default: 53 }
 })
 
@@ -109,7 +109,7 @@ const totales = computed(() => {
     <header class="calendario__cabecera">
       <p class="calendario__resumen">
         <strong>{{ totales.dias }}</strong> {{ totales.dias === 1 ? 'dia' : 'dias' }} de practica ·
-        <strong>{{ totales.xp }}</strong> XP en el ultimo anio
+        <strong>{{ totales.xp }}</strong> XP en el ultimo año
       </p>
       <div class="calendario__escala">
         <span>Menos</span>

@@ -13,7 +13,7 @@
 --  de lectura para el cliente: las preguntas le llegan solo a traves de su
 --  partida, sin la marca de cual opcion es correcta.
 --
---    eventos             una exposicion (por ejemplo, la expo de fin de ano)
+--    eventos             una exposicion (por ejemplo, la expo de fin de año)
 --    desafios            las pruebas de un evento, con sus reglas
 --    preguntas_desafio   banco propio de cada desafio
 --    opciones_desafio    opciones de esas preguntas (con la solucion)
@@ -367,5 +367,25 @@ alter table public.opciones_desafio   enable row level security;
 alter table public.partidas           enable row level security;
 alter table public.partida_preguntas  enable row level security;
 alter table public.partida_respuestas enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Tipo de desafio y de partida (juego de la expo: el minijuego es de 17-juego-de-la-expo.sql)
+-- ---------------------------------------------------------------------------
+alter table public.desafios add column if not exists tipo text not null default 'preguntas';
+alter table public.partidas add column if not exists tipo text not null default 'preguntas';
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'ck_desafios_tipo') then
+    alter table public.desafios add constraint ck_desafios_tipo check (tipo in ('preguntas', 'minijuego'));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'ck_partidas_tipo') then
+    alter table public.partidas add constraint ck_partidas_tipo check (tipo in ('preguntas', 'minijuego'));
+  end if;
+end;
+$$;
+
+comment on column public.desafios.tipo is 'preguntas (opcion multiple contra reloj) o minijuego (Sintax atrapa el codigo).';
+comment on column public.partidas.tipo is 'Copia del tipo del desafio al crear la partida.';
 
 commit;

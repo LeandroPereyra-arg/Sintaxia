@@ -113,7 +113,7 @@ async function entrarComoInvitado(p, volver = `/expo/${EVENTO}`) {
 async function entrarConCuenta(p, cuenta, volver = `/expo/${EVENTO}`) {
   await p.goto(`${URL_APP}/ingresar?volver=${encodeURIComponent(volver)}`, { waitUntil: 'networkidle' })
   await p.getByLabel('Correo', { exact: true }).fill(cuenta.correo)
-  await p.getByLabel('Contrasena', { exact: true }).fill(cuenta.clave)
+  await p.getByLabel('Contraseña', { exact: true }).fill(cuenta.clave)
   await p.getByRole('button', { name: 'Entrar', exact: true }).click()
   await p.waitForURL(`**${volver}`, { timeout: 15000 })
   await dormir(400)
@@ -141,9 +141,9 @@ async function responderEnPantalla(p, soluciones, { bien = true, continuar = tru
   if (!s) throw new Error(`No reconozco la pregunta: ${enunciado} ${codigo}`)
   await p.getByRole('button', { name: bien ? s.bien : s.mal, exact: true }).first().click()
   await p.getByRole('button', { name: /^(Responder|Reintentar)$/ }).click()
-  await p.waitForSelector('.feedback', { timeout: 10000 })
+  await p.waitForSelector('[data-prueba="registrada"]', { timeout: 10000 })
   if (continuar) {
-    await p.locator('.feedback button').click()
+    await p.locator('[data-prueba="registrada"] button').click()
     await dormir(150)
   }
 }
@@ -214,7 +214,7 @@ await caso(
 
 await caso(
   2,
-  'El servidor crea la partida, registra el dueno y fija preguntas y reglas',
+  'El servidor crea la partida, registra el dueño y fija preguntas y reglas',
   'La partida queda a nombre de quien la pidio, con las 5 preguntas en un orden fijo y una copia de las reglas; el tiempo lo pone el servidor',
   async () => {
     const yo = await api.altaAnonima()
@@ -228,13 +228,13 @@ await caso(
     const [d] = await consulta('select version, puntos_por_acierto, duracion_segundos, gracia_segundos from desafios where id = $1', [SPRINT])
     const asignadas = await consulta('select pregunta_id, orden from partida_preguntas where partida_id = $1 order by orden', [id])
     const otraVez = await api.rpc(yo.token, 'obtener_partida', { p_partida_id: id })
-    verificar(p.usuario_id === yo.id && p.reciente, 'dueno o fecha incorrectos')
+    verificar(p.usuario_id === yo.id && p.reciente, 'dueño o fecha incorrectos')
     verificar(p.version_desafio === d.version && p.puntos_por_acierto === d.puntos_por_acierto &&
       p.duracion_segundos === d.duracion_segundos && p.segundos === d.duracion_segundos, 'reglas no copiadas')
     verificar(asignadas.length === 5 && p.total_preguntas === 5, `asignadas: ${asignadas.length}`)
     verificar(otraVez.datos.preguntas.map((q) => q.id).join() === asignadas.map((a) => a.pregunta_id).join() &&
       inicio.datos.preguntas.map((q) => q.id).join() === asignadas.map((a) => a.pregunta_id).join(), 'el orden cambio entre consultas')
-    return `dueno: quien la pidio · reglas copiadas (v${p.version_desafio}, ${p.puntos_por_acierto} pts, ${p.duracion_segundos} s, gracia ${p.gracia_segundos} s) · vence a los ${p.segundos} s por reloj del servidor · 5 preguntas en orden fijo`
+    return `dueño: quien la pidio · reglas copiadas (v${p.version_desafio}, ${p.puntos_por_acierto} pts, ${p.duracion_segundos} s, gracia ${p.gracia_segundos} s) · vence a los ${p.segundos} s por reloj del servidor · 5 preguntas en orden fijo`
   }
 )
 
@@ -292,8 +292,9 @@ await caso(
       api.rpc(yo.token, 'responder_partida', { p_partida_id: id, p_pregunta_id: q2.id, p_opcion_id: s.get(q2.id).correcta })))
     const [p] = await consulta('select aciertos, puntaje from partidas where id = $1', [id])
     const [{ n }] = await consulta('select count(*)::int as n from partida_respuestas where partida_id = $1', [id])
-    verificar(primera.datos.repetida === false && repetida.datos.repetida === true && repetida.datos.puntos === 100, 'no marco la repeticion')
-    verificar(otra.datos.repetida === true && otra.datos.correcta === true && otra.datos.opcion_id === s.get(q1.id).correcta, 'la segunda opcion reemplazo a la primera')
+    // Desde el script 17 la respuesta no dice si fue correcta: se compara la opcion guardada.
+    verificar(primera.datos.repetida === false && repetida.datos.repetida === true && repetida.datos.opcion_id === s.get(q1.id).correcta, 'no marco la repeticion')
+    verificar(otra.datos.repetida === true && otra.datos.opcion_id === s.get(q1.id).correcta, 'la segunda opcion reemplazo a la primera')
     verificar(rafaga.every((r) => r.estado === 200) && rafaga.filter((r) => !r.datos.repetida).length === 1, `rafaga: ${rafaga.map((r) => r.estado)}`)
     verificar(n === 2 && p.aciertos === 2 && p.puntaje === 200, `respuestas ${n}, puntaje ${p.puntaje}`)
     let rechazo = ''
@@ -500,7 +501,7 @@ await caso(
       rechazo = e.constraint ?? e.code
     }
     verificar(rechazo === 'ck_partidas_puntaje', `puntaje inconsistente como superusuario: ${rechazo || 'entro'}`)
-    return `crear ${estados.crear} · modificar puntaje ${estados.inflar} · insertar/modificar respuestas ${estados.respuesta}/${estados.cambiarRespuesta} · borrar ${estados.borrar} · rpc con p_puntaje ${estados.rpcPuntaje} · partida intacta (100 pts) · aun como dueno de la base, un puntaje que no sea aciertos x puntos: ${rechazo}`
+    return `crear ${estados.crear} · modificar puntaje ${estados.inflar} · insertar/modificar respuestas ${estados.respuesta}/${estados.cambiarRespuesta} · borrar ${estados.borrar} · rpc con p_puntaje ${estados.rpcPuntaje} · partida intacta (100 pts) · aun como dueño de la base, un puntaje que no sea aciertos x puntos: ${rechazo}`
   }
 )
 

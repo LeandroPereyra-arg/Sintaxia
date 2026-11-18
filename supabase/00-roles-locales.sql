@@ -28,7 +28,7 @@ begin
     create role postgres nologin createrole;
   end if;
 
-  -- Usuario con el que GoTrue se conecta a la base y es dueno del esquema auth.
+  -- Usuario con el que GoTrue se conecta a la base y es dueño del esquema auth.
   if not exists (select 1 from pg_roles where rolname = 'supabase_auth_admin') then
     create role supabase_auth_admin login createrole noinherit password 'solo-para-pruebas-locales';
   end if;

@@ -126,7 +126,8 @@ const ROLES_PERMITIDOS = new Set(['anon', 'authenticated', 'service_role'])
 const TABLAS = new Set([
   'cursos', 'unidades', 'lecciones', 'preguntas', 'opciones', 'perfiles', 'intentos', 'respuestas',
   'eventos', 'desafios', 'preguntas_desafio', 'opciones_desafio', 'partidas', 'partida_preguntas',
-  'partida_respuestas', 'resultados_publicos', 'administradores'
+  'partida_respuestas', 'resultados_publicos', 'administradores',
+  'minijuego_categorias', 'minijuego_fichas', 'partida_fichas'
 ])
 
 function identificador(nombre) {

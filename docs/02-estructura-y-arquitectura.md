@@ -18,11 +18,11 @@ La aplicacion es una SPA (Single Page Application) con **11 vistas**:
 | 8 | 404 | `/:rutaInexistente(.*)*` | `no-encontrado` | Pagina de error. |
 
 Las rutas usan nombres (`:to="{ name: 'leccion' }"`) para no escribir URLs a mano en las
-plantillas: si manana cambia la direccion, se toca un solo archivo.
+plantillas: si mañana cambia la direccion, se toca un solo archivo.
 
 Desde la etapa 3 el curso **no** esta escrito en la direccion: `/cursos/:cursoId`
 recibe el identificador que tiene la fila en la base y con el pide sus unidades.
-Las direcciones viejas (`/cursos/javascript/unidades/js-u1` y companiia) siguen
+Las direcciones viejas (`/cursos/javascript/unidades/js-u1` y compañía) siguen
 funcionando como redirecciones.
 
 ## Flujo de navegacion
@@ -123,7 +123,7 @@ animacion/
     │   └── verificarRespuesta.js  Correccion de cada tipo de ejercicio
     │
     ├── components/
-    │   ├── BaseBoton.vue       Boton reutilizable (5 variantes, 3 tamanios)
+    │   ├── BaseBoton.vue       Boton reutilizable (5 variantes, 3 tamaños)
     │   ├── BarraProgreso.vue   Barra de progreso reutilizable
     │   ├── BarraFeedback.vue   Barra verde/roja de correccion
     │   ├── CursoCard.vue       Tarjeta de curso  (recibe props, emite "seleccionar")

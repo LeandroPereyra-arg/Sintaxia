@@ -44,7 +44,7 @@ Los nueve puntos que pide la consigna estan cubiertos por estos casos:
 | Dos invitados distintos | 1, 2, 3 |
 | Registro | 5, 6, 10 |
 | Correo ya utilizado | 7, 8, 16 |
-| Contrasena invalida | 9 |
+| Contraseña invalida | 9 |
 | Cierre y reapertura | 11, 12, 3 |
 | Conversion a cuenta | 14, 15, 16, 17 |
 | Acceso no autorizado a otro perfil | 21, 22, 24 |
@@ -61,7 +61,7 @@ Los nueve puntos que pide la consigna estan cubiertos por estos casos:
 | 6 | Registro con la confirmacion de correo desactivada | La sesion se abre al instante, sin esperar ningun correo, y el perfil tiene el alias elegido | sin esperar correo: /perfil?cuenta=creada, Inmediata#9910 · correos enviados: 0 | PASA |
 | 7 | Registro con un correo ya utilizado | Avisa que ese correo ya tiene cuenta, ofrece ingresar o recuperar, y no crea una cuenta duplicada | mensaje "ya tiene una cuenta" · enlaces a ingresar y recuperar · cuentas con ese correo: 1 | PASA |
 | 8 | Correo ya utilizado con la confirmacion desactivada | El servidor responde con un error explicito (user_already_exists) y la app lo muestra; no se duplica la cuenta | mensaje "ya tiene una cuenta" · cuentas con ese correo: 1 | PASA |
-| 9 | Contrasena invalida | La app rechaza una contrasena corta sin llamar al servidor, y traduce el rechazo del servidor (weak_password) | formulario: rechaza "abc" sin pedido al servidor · servidor: 422 weak_password · app: "demasiado debil" | PASA |
+| 9 | Contraseña invalida | La app rechaza una contraseña corta sin llamar al servidor, y traduce el rechazo del servidor (weak_password) | formulario: rechaza "abc" sin pedido al servidor · servidor: 422 weak_password · app: "demasiado debil" | PASA |
 | 10 | Reglas del alias en el formulario | Un alias reservado, muy corto o con tilde se rechaza en pantalla, sin llamar al servidor | rechazados en pantalla: admin, ab, Martín, _sombra, Invitado · pedidos al servidor: 0 | PASA |
 | 11 | Cierre y reapertura de sesion de una cuenta | Al reabrir la app la sesion se restaura; al cerrar sesion se pierde y las rutas protegidas piden ingresar | login -> Sesionista#5944 · reapertura restaura · cerrar sesion borra la sesion · /perfil -> /ingresar | PASA |
 | 12 | Un invitado que cierra sesion recibe la advertencia | Se avisa que pierde el historial para siempre, se puede quedar, y solo sale si confirma | advertencia visible · "Quedarme" conserva la sesion · "Salir igual" la cierra | PASA |
@@ -70,7 +70,7 @@ Los nueve puntos que pide la consigna estan cubiertos por estos casos:
 | 15 | Convertir un invitado con la confirmacion desactivada | La conversion es inmediata: mismo usuario, historial intacto, y ya es cuenta sin esperar ningun correo | mismo id · ya es cuenta al instante (Instantanea#1563) · historial: 1 intento | PASA |
 | 16 | Convertir un invitado con un correo que ya tiene cuenta | Se rechaza con un mensaje claro y la persona sigue siendo el mismo invitado, sin perder nada | mensaje "ya tiene una cuenta" · el invitado sigue siendo el mismo, sin correo | PASA |
 | 17 | Un invitado entra a una cuenta que ya existe | La app advierte que los historiales no se fusionan, exige confirmarlo, y no copia nada de un lado al otro | advertencia + confirmacion obligatoria · ahora Destino#7740 · historial de la cuenta: 1 intento, del invitado: 1 (no se fusionaron) | PASA |
-| 18 | Recuperar el acceso en el mismo dispositivo | Se pide el enlace, llega por correo, permite elegir una contrasena nueva y la vieja deja de servir | enlace "Reset your password" -> contrasena cambiada · la vieja: 400 invalid_credentials · la nueva: 200 | PASA |
+| 18 | Recuperar el acceso en el mismo dispositivo | Se pide el enlace, llega por correo, permite elegir una contraseña nueva y la vieja deja de servir | enlace "Reset your password" -> contraseña cambiada · la vieja: 400 invalid_credentials · la nueva: 200 | PASA |
 | 19 | El enlace de recuperacion abierto en otro dispositivo | Explica por que no sirve y ofrece pedir uno nuevo, en lugar de dejar la pantalla rota | otro dispositivo -> "Este enlace no sirve" + explicacion + "Pedir un enlace nuevo" · no se abre sesion | PASA |
 | 20 | Recuperacion con un correo que no tiene cuenta | Responde igual que si existiera (no revela quien esta registrado) y no manda ningun correo | mismo mensaje que con una cuenta real · correos enviados: 0 | PASA |
 | 21 | Cada participante ve solo su perfil y su historial | Pidiendo todo, cada uno recibe unicamente lo propio; sin sesion no se ve nada | A ve 1 perfil y 1 intento · perfil de B por id: 0 filas · sin sesion: HTTP 401 y 401 | PASA |
@@ -87,7 +87,7 @@ Los nueve puntos que pide la consigna estan cubiertos por estos casos:
 | 32 | La etapa 3 sigue andando sin sesion | Sin ingresar se ve el catalogo de cursos y las unidades del curso; la correccion de respuestas sigue disponible | 6 cursos y 6 unidades visibles sin sesion · comprobar_respuesta responde 200 | PASA |
 | 33 | Se informa que datos se guardan y cuales son publicos | Al crear la cuenta se puede leer que se guarda (correo cifrado, alias, historial) y que hoy no se muestra nada a otras personas | visible junto al formulario: que se guarda, que es publico ("Hoy, nada."), y el riesgo de ser invitado | PASA |
 | 34 | Volver a correr los scripts no deshace permisos ni datos | Re-ejecutar 02, 05, 06 y 07 deja igual el contenido, los perfiles, el historial y lo que cada persona puede hacer | scripts 02, 05, 06, 07 re-ejecutados · datos iguales (119 perfiles, 1227 intentos) · el invitado sigue viendo su perfil, sin sesion sigue 401, es_invitado sigue protegido (403) | PASA |
-| 35 | El enlace de confirmacion abierto en otro dispositivo | El correo queda confirmado pero no se abre sesion alli; la pantalla lo explica y con la contrasena se ingresa | otro dispositivo: "Tu correo esta confirmado", sin sesion · correo confirmado en la base · luego ingresa con la contrasena como Dispositiva#5593 | PASA |
+| 35 | El enlace de confirmacion abierto en otro dispositivo | El correo queda confirmado pero no se abre sesion alli; la pantalla lo explica y con la contraseña se ingresa | otro dispositivo: "Tu correo esta confirmado", sin sesion · correo confirmado en la base · luego ingresa con la contraseña como Dispositiva#5593 | PASA |
 
 **35 casos · 35 pasan · 0 fallan · 0 excepciones no atrapadas en la pagina.**
 
@@ -107,7 +107,7 @@ limpio (el caso 35 se agrego despues, y la tabla de arriba es de la corrida fina
 ## 13.4 Problemas encontrados y correcciones
 
 Los cuatro primeros son **defectos reales del proyecto** que aparecieron al correr las
-pruebas, no al escribir el codigo. El quinto se detecto al disenar, antes de que
+pruebas, no al escribir el codigo. El quinto se detecto al diseñar, antes de que
 llegara a ocurrir.
 
 ### P1 · La politica del tope de invitados bloqueaba el guardado de todo el historial

@@ -8,7 +8,7 @@ import { useAuth } from '@/composables/useAuth.js'
 import { motivoCorreoInvalido } from '@/utils/validaciones.js'
 
 /**
- * "Olvide mi contrasena": se pide el correo y Supabase manda un enlace para elegir
+ * "Olvide mi contraseña": se pide el correo y Supabase manda un enlace para elegir
  * una nueva.
  *
  * La respuesta es siempre la misma, tenga o no cuenta ese correo: asi nadie puede
@@ -45,13 +45,13 @@ async function enviar() {
   <div class="recuperar seccion contenedor">
     <div class="tarjeta">
       <SintaxMascota :estado="enviado ? 'normal' : 'pensando'" :alto="110" alt="" />
-      <h1>Recuperar mi contrasena</h1>
+      <h1>Recuperar mi contraseña</h1>
 
       <template v-if="enviado">
         <MensajeEstado tipo="exito">
           <p>
             Si <strong>{{ correo.trim() }}</strong> tiene una cuenta, te mandamos un enlace para elegir una
-            contrasena nueva.
+            contraseña nueva.
           </p>
         </MensajeEstado>
         <p class="nota">
@@ -63,7 +63,7 @@ async function enviar() {
 
       <template v-else>
         <p class="texto-secundario">
-          Escribi el correo de tu cuenta y te mandamos un enlace para elegir una contrasena nueva.
+          Escribi el correo de tu cuenta y te mandamos un enlace para elegir una contraseña nueva.
         </p>
 
         <MensajeEstado v-if="!hayConfig" tipo="alerta">

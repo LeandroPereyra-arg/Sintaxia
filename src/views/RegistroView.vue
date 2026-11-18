@@ -19,7 +19,7 @@ import {
 } from '@/utils/validaciones.js'
 
 /**
- * Crear una cuenta con correo y contrasena.
+ * Crear una cuenta con correo y contraseña.
  *
  * Hay dos casos que se ven casi igual pero son distintos por dentro:
  *
@@ -111,7 +111,7 @@ async function reenviar() {
 
 /**
  * "Ya confirme mi correo": sirve cuando el enlace se abrio en otro dispositivo o
- * pestana. Se renueva la sesion para ver si el invitado ya paso a ser cuenta.
+ * pestaña. Se renueva la sesion para ver si el invitado ya paso a ser cuenta.
  */
 async function yaConfirme() {
   verificando.value = true
@@ -130,7 +130,7 @@ async function yaConfirme() {
   }
 }
 
-// Al volver a esta pestana (por ejemplo despues de abrir el enlace del correo en otra)
+// Al volver a esta pestaña (por ejemplo despues de abrir el enlace del correo en otra)
 // se comprueba solo si ya se confirmo.
 function alVolverALaPestana() {
   if (document.visibilityState === 'visible' && pendiente.value?.conversion && !verificando.value) {
@@ -235,7 +235,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', alVolverA
           />
           <CampoTexto
             v-model="clave"
-            etiqueta="Contrasena"
+            etiqueta="Contraseña"
             tipo="password"
             autocomplete="new-password"
             :ayuda="`Al menos ${CLAVE_MINIMA} caracteres.`"
@@ -248,7 +248,7 @@ onBeforeUnmount(() => document.removeEventListener('visibilitychange', alVolverA
             <p v-if="error.codigo === 'user_already_exists' || error.codigo === 'email_exists'">
               <router-link :to="{ name: 'ingresar', query: route.query }">Iniciar sesion</router-link>
               ·
-              <router-link :to="{ name: 'recuperar' }">Recuperar mi contrasena</router-link>
+              <router-link :to="{ name: 'recuperar' }">Recuperar mi contraseña</router-link>
             </p>
           </MensajeEstado>
 

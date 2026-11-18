@@ -42,7 +42,7 @@ export function motivoCorreoInvalido(correo) {
 
 export function motivoClaveInvalida(clave) {
   const texto = String(clave ?? '')
-  if (texto.length < CLAVE_MINIMA) return `La contrasena necesita al menos ${CLAVE_MINIMA} caracteres.`
+  if (texto.length < CLAVE_MINIMA) return `La contraseña necesita al menos ${CLAVE_MINIMA} caracteres.`
   return ''
 }
 

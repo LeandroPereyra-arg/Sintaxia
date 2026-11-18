@@ -15,7 +15,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL?.trim()
 
-// Supabase llamo "anon key" a esta clave durante anios y ahora la llama
+// Supabase llamo "anon key" a esta clave durante años y ahora la llama
 // "publishable key". Se aceptan los dos nombres para que un .env viejo siga
 // funcionando.
 const clave = (
@@ -38,7 +38,7 @@ if (!hayConfiguracion && import.meta.env.DEV) {
 
 /**
  * Direccion a la que vuelven los enlaces de los correos (confirmacion, cambio de
- * correo, recuperacion de contrasena).
+ * correo, recuperacion de contraseña).
  *
  *   · En la web es el propio sitio: window.location.origin.
  *   · En la app movil (APK) hay que fijar el esquema que abre la app, por ejemplo
@@ -68,7 +68,7 @@ export function urlDeRetorno(ruta = '/auth/callback') {
  *     que solo sirve en el dispositivo que lo pidio, en lugar de dejar los
  *     tokens a la vista en la direccion. Es lo que Supabase recomienda para
  *     apps moviles. Consecuencia: abrir el enlace en OTRO dispositivo confirma el
- *     correo pero no inicia la sesion alli; hay que ingresar con la contrasena.
+ *     correo pero no inicia la sesion alli; hay que ingresar con la contraseña.
  */
 export const supabase = hayConfiguracion
   ? createClient(url, clave, {

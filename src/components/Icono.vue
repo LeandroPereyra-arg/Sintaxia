@@ -11,7 +11,7 @@ import { iconos } from '@/assets/iconos.js'
  */
 const props = defineProps({
   nombre: { type: String, required: true },
-  /** Tamanio en pixeles. */
+  /** Tamaño en pixeles. */
   tamano: { type: [Number, String], default: 20 },
   /** Grosor del trazo. */
   trazo: { type: [Number, String], default: 2 },

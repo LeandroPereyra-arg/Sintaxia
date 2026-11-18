@@ -133,7 +133,7 @@ Si Gradle no encuentra el SDK, crear `android/local.properties` (esta en
 
 - **Boton Atras de Android**: vuelve a la pantalla anterior; en el inicio minimiza la
   app en lugar de cerrarla.
-- **Enlaces de los correos**: confirmar la cuenta y recuperar la contrasena vuelven a
+- **Enlaces de los correos**: confirmar la cuenta y recuperar la contraseña vuelven a
   `sintaxia://auth/auth/callback` o `sintaxia://auth/auth/nueva-clave`. Android abre la
   app y esta pasa a la pantalla equivalente, donde el cliente de Supabase canjea el
   codigo como en la web. Solo se aceptan esas dos rutas.
@@ -204,7 +204,7 @@ Para inspeccionar la app de un celular conectado: Chrome en la computadora →
 mkdir -p ~/claves-sintaxia
 keytool -genkeypair -v -keystore ~/claves-sintaxia/sintaxia-release.jks \
   -alias sintaxia -keyalg RSA -keysize 2048 -validity 10000
-# pide dos contrasenas y los datos del certificado
+# pide dos contraseñas y los datos del certificado
 ```
 
 En Windows es el mismo comando en una sola linea (`keytool` viene con el JDK), por
@@ -212,10 +212,10 @@ ejemplo con `%USERPROFILE%\claves-sintaxia\sintaxia-release.jks`.
 
 ### 2. Resguardar la clave
 
-- El `.jks` y sus contrasenas **nunca** van al repositorio: el `.gitignore` ignora
+- El `.jks` y sus contraseñas **nunca** van al repositorio: el `.gitignore` ignora
   `*.jks`, `*.keystore` y `firma*.properties` por si alguien se equivoca.
 - Guardar **dos copias** del `.jks` (por ejemplo, la unidad del docente y un pendrive) y
-  las contrasenas en un gestor de contrasenas. **Si se pierde la clave no se puede
+  las contraseñas en un gestor de contraseñas. **Si se pierde la clave no se puede
   publicar una actualizacion de la misma app**: habria que desinstalar y cambiar el
   identificador.
 
@@ -228,8 +228,8 @@ del proyecto):
 # Linux
 export SINTAXIA_KEYSTORE=~/claves-sintaxia/sintaxia-release.jks
 export SINTAXIA_KEY_ALIAS=sintaxia
-read -s -p "Contrasena del almacen: " SINTAXIA_KEYSTORE_PASSWORD; export SINTAXIA_KEYSTORE_PASSWORD
-read -s -p "Contrasena de la clave: " SINTAXIA_KEY_PASSWORD; export SINTAXIA_KEY_PASSWORD
+read -s -p "Contraseña del almacen: " SINTAXIA_KEYSTORE_PASSWORD; export SINTAXIA_KEYSTORE_PASSWORD
+read -s -p "Contraseña de la clave: " SINTAXIA_KEY_PASSWORD; export SINTAXIA_KEY_PASSWORD
 npm run android:web && cd android && ./gradlew assembleRelease
 ```
 
@@ -237,8 +237,8 @@ npm run android:web && cd android && ./gradlew assembleRelease
 # Windows (PowerShell)
 $env:SINTAXIA_KEYSTORE = "$env:USERPROFILE\claves-sintaxia\sintaxia-release.jks"
 $env:SINTAXIA_KEY_ALIAS = "sintaxia"
-$env:SINTAXIA_KEYSTORE_PASSWORD = Read-Host "Contrasena del almacen"
-$env:SINTAXIA_KEY_PASSWORD = Read-Host "Contrasena de la clave"
+$env:SINTAXIA_KEYSTORE_PASSWORD = Read-Host "Contraseña del almacen"
+$env:SINTAXIA_KEY_PASSWORD = Read-Host "Contraseña de la clave"
 npm run android:web; cd android; .\gradlew.bat assembleRelease
 ```
 

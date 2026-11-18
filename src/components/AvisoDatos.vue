@@ -23,8 +23,8 @@ defineProps({
         <h3>Lo que guardamos (solo lo ves vos)</h3>
         <ul>
           <li>
-            <strong>Tu correo y tu contrasena</strong>, si creas una cuenta. Los guarda el servicio de
-            autenticacion; la contrasena queda cifrada y nosotros nunca la vemos.
+            <strong>Tu correo y tu contraseña</strong>, si creas una cuenta. Los guarda el servicio de
+            autenticacion; la contraseña queda cifrada y nosotros nunca la vemos.
           </li>
           <li><strong>Tu alias</strong>, tu avatar y tu meta diaria.</li>
           <li>

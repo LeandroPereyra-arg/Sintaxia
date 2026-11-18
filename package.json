@@ -26,6 +26,7 @@
     "pruebas:etapa6": "node pruebas/etapa6.mjs",
     "pruebas:etapa7": "node pruebas/etapa7.mjs",
     "pruebas:etapa8": "node pruebas/etapa8.mjs",
+    "pruebas:etapa9": "node pruebas/etapa9.mjs",
     "android:recursos": "node scripts/generar-recursos-android.mjs",
     "android:web": "vite build --mode android && cap sync android",
     "android:debug": "npm run android:web && cd android && ./gradlew assembleDebug",
