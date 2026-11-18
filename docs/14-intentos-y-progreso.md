@@ -315,6 +315,6 @@ etapa 4 y caso 20 de la etapa 5).
   intentos (todos validados por el servidor), pero todavia no hay una tabla de
   puntajes publicos.
 - La app sigue siendo web. La reescritura con Quasar (para el celular) viene
-  despues; el modelo de datos y las funciones del servidor no dependen de eso.
+  despues; el modelo de datos y las funciones del servidor no dependen de eso. *(Etapa 8: ya hay APK, hecho con Capacitor sobre Vite y sin Quasar; ver [20](20-apk-android.md) y [21](21-registro-de-pruebas-etapa8.md).)*
 - Si se cambia el umbral de aprobacion, los intentos ya cerrados conservan el
   `aprobado` con el que se guardaron (es una foto, como las respuestas).

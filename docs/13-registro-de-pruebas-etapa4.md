@@ -173,7 +173,7 @@ Consecuencia: ya no borra lo que se saque del contenido de origen.
 
 - **El APK.** No existe todavia (la app es web; el APK llega con el rediseño en
   Quasar). Queda pendiente probar, dentro del APK, que cada enlace de correo abra la
-  app, que la sesion se abra y el flujo de recuperacion. Ver 12.7.
+  app, que la sesion se abra y el flujo de recuperacion. Ver 12.7. *(Etapa 8: ya hay APK, hecho con Capacitor sobre Vite y sin Quasar; ver [20](20-apk-android.md) y [21](21-registro-de-pruebas-etapa8.md).)*
 - **El proyecto real de Supabase en la nube**: entrega real de correos con un
   proveedor SMTP, los limites configurados en el panel, y que los ajustes de 12.6
   esten cargados.

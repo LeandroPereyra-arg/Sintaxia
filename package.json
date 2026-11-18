@@ -24,9 +24,17 @@
     "pruebas:etapa4": "node pruebas/etapa4.mjs",
     "pruebas:etapa5": "node pruebas/etapa5.mjs",
     "pruebas:etapa6": "node pruebas/etapa6.mjs",
-    "pruebas:etapa7": "node pruebas/etapa7.mjs"
+    "pruebas:etapa7": "node pruebas/etapa7.mjs",
+    "pruebas:etapa8": "node pruebas/etapa8.mjs",
+    "android:recursos": "node scripts/generar-recursos-android.mjs",
+    "android:web": "vite build --mode android && cap sync android",
+    "android:debug": "npm run android:web && cd android && ./gradlew assembleDebug",
+    "android:release": "npm run android:web && cd android && ./gradlew assembleRelease"
   },
   "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.2",
     "@supabase/supabase-js": "^2.117.2",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
@@ -37,6 +45,7 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.6.2",
     "@vitejs/plugin-vue": "^5.2.1",
     "concurrently": "^10.0.5",
     "nodemon": "^3.1.14",

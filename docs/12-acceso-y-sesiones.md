@@ -209,20 +209,22 @@ Lo hace una persona del equipo en el panel; no se puede hacer desde el codigo.
 
 ## 12.7 App movil (APK)
 
-La consigna pide probar registro, confirmacion y recuperacion **dentro del APK** y
-revisar los enlaces de retorno. **Eso no se pudo hacer en esta etapa**: la
-aplicacion todavia es web (no hay un APK que probar). El rediseño en Quasar es lo
-que va a permitir generarlo. Lo que ya queda resuelto para ese momento:
+> **Actualizado en la etapa 8.** Cuando se entrego esta etapa la app todavia era solo
+> web y esto quedo pendiente. Ahora hay APK: ver [20. APK de Android](20-apk-android.md).
 
 - `urlDeRetorno()` (en `src/servicios/supabase.js`) arma la direccion de retorno de
-  los enlaces: el propio sitio en la web, y el valor de `VITE_URL_RETORNO_AUTH`
-  (por ejemplo `sintaxia://auth`) en la app movil.
-- Esa misma direccion tiene que estar en *Redirect URLs* del panel.
-- La app tiene que declarar el esquema `sintaxia://` para que el sistema abra la app
-  desde el correo, y el codigo del enlace se canjea dentro de la app (por eso PKCE).
+  los enlaces: el propio sitio en la web, y `sintaxia://auth` en el APK (se compila con
+  `.env.android`).
+- Esa direccion tiene que estar en *Redirect URLs* del panel: `sintaxia://auth/**`.
+- El APK declara el esquema `sintaxia://auth` (`AndroidManifest.xml`) y
+  `src/servicios/nativo.js` pasa el enlace a la pantalla de la app, donde el codigo se
+  canjea como en la web (PKCE).
+- No se hizo con Quasar: Capacitor se agrego directo al proyecto de Vite (ver 20.2).
 
-**Pendiente de probar en el APK:** que el enlace de cada correo abra la app y no el
-navegador, que la sesion se abra, y el flujo de recuperacion completo.
+**Probado** con Auth real y el puente de Android simulado (etapa 8, casos 3 a 5):
+confirmar la cuenta con la app abierta, recuperar la contrasena con la app cerrada y
+enlaces vencidos o ajenos. **Falta** repetirlo en celulares fisicos
+([21.4](21-registro-de-pruebas-etapa8.md)).
 
 ## 12.8 Limites de altas anonimas
 
