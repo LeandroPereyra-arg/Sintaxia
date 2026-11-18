@@ -127,7 +127,7 @@ const routes = [
     path: '/ranking',
     name: 'ranking',
     component: () => import('@/views/RankingView.vue'),
-    meta: { titulo: 'Ranking semanal' }
+    meta: { titulo: 'Ranking' }
   },
   {
     // Panel de administracion (etapa 7). La ruta pide una cuenta; el permiso de

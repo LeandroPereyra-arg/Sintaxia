@@ -57,7 +57,7 @@ npm run pruebas:entorno   # Auth + datos + correos de prueba + la app (queda cor
 npm run pruebas:etapa7    # en otra terminal (o etapa2 a etapa6)
 ```
 
-Requiere **Node 18+**, **PostgreSQL 14+** y **Go** (solo para compilar Auth). Detalle en
+Requiere **Node 22+** (lo pide Capacitor 8), **PostgreSQL 14+** y **Go** (solo para compilar Auth). Detalle en
 [docs/13-registro-de-pruebas-etapa4.md](docs/13-registro-de-pruebas-etapa4.md) y
 [docs/15-registro-de-pruebas-etapa5.md](docs/15-registro-de-pruebas-etapa5.md).
 
@@ -82,6 +82,11 @@ Requiere **Node 18+**, **PostgreSQL 14+** y **Go** (solo para compilar Auth). De
 | `npm run pruebas:etapa5` | Intentos, respuestas, progreso, desconexion, peticiones repetidas y permisos |
 | `npm run pruebas:etapa6` | Competencia: partidas, tiempo del servidor, envios repetidos, partidas vencidas y puntaje manipulado |
 | `npm run pruebas:etapa7` | Pantalla del ranking con Realtime (tres dispositivos y la pantalla), permisos y panel de administracion |
+| `npm run pruebas:etapa8` | APK: boton Atras, enlaces de los correos dentro de la app, contenido del APK y clave de firma |
+| `npm run android:web` | Compila para el APK (`--mode android`) y lo copia al proyecto Android |
+| `npm run android:debug` | Lo anterior + `./gradlew assembleDebug` (Linux/macOS; en Windows ver docs/20) |
+| `npm run android:release` | Lo anterior + `assembleRelease`, firmado con la clave de las variables `SINTAXIA_*` |
+| `npm run android:recursos` | Regenera el icono y el splash de Android |
 
 ---
 
@@ -189,6 +194,13 @@ Heredan el color del texto, asi que cambian solos segun el contexto.
 | [17. Registro de pruebas (etapa 6)](docs/17-registro-de-pruebas-etapa6.md) | Los 16 casos, problemas encontrados y lo que no se probo |
 | [18. Ranking publico y administracion (etapa 7)](docs/18-ranking-y-administracion.md) | Pantalla de la expo con Realtime, que se publica, rol de administrador, panel, eventos y versiones, respaldo y recuperacion · [DER](docs/der/sintaxia-der-etapa7.png) |
 | [19. Registro de pruebas (etapa 7)](docs/19-registro-de-pruebas-etapa7.md) | Los 17 casos, problemas encontrados y lo que no se probo |
+| [20. APK de Android (etapa 8)](docs/20-apk-android.md) | Versiones, instalar JDK y SDK, generar el APK debug y la release firmada desde la terminal (Linux y Windows) |
+| [21. Registro de pruebas (etapa 8)](docs/21-registro-de-pruebas-etapa8.md) | Los 8 casos automaticos y la planilla para probar en celulares fisicos |
+| [22. Manual para participantes](docs/22-manual-participantes.md) | Instalar, entrar como invitado o con cuenta, jugar, resultado, recuperar la contrasena |
+| [23. Manual para administradores](docs/23-manual-administradores.md) | Rol, contenido, preparar, abrir y cerrar el evento, recuperacion de cuentas |
+| [24. Informe final](docs/24-informe-final.md) | Fundamentacion, alcance, historias de usuario, cronograma, arquitectura, DER, diccionario, reglas, seguridad, pruebas y mejoras |
+| [25. Defensa y demostracion](docs/25-defensa-y-demostracion.md) | Guion de la demo con varios celulares y la pantalla; guia para la defensa individual |
+| [26. Cierre de la expo](docs/26-cierre-de-la-expo.md) | Revisar datos, conservar registros, limpiar y registrar problemas y mejoras |
 
 ---
 
@@ -301,6 +313,11 @@ src/
 │                      layout/ y ejercicios/
 └── views/             una por ruta
 
+android/               proyecto Android de Capacitor (etapa 8); se compila con ./gradlew
+capacitor.config.json  identificador, nombre y carpeta web del APK
+.env.android           direccion de retorno de los correos en el APK (sintaxia://auth)
+scripts/               generar-recursos-android.mjs (icono y splash)
+
 server/                (etapa 2: YA NO LO USA LA APP; queda como referencia)
 ├── index.js           Express: middlewares, rutas y manejo de errores
 ├── config.js          Variables de entorno y validacion al arrancar
@@ -396,6 +413,21 @@ mismo) usan `/admin` para crear, publicar y despublicar cursos, unidades, leccio
 su solucion, y para preparar, abrir y cerrar los eventos y sus desafios. Todos los permisos se
 verifican en Supabase. Detalle, y el procedimiento de respaldo y recuperacion, en
 [docs/18-ranking-y-administracion.md](docs/18-ranking-y-administracion.md).
+
+## App de Android (APK)
+
+La misma app se empaqueta como APK con **Capacitor** y el **Gradle Wrapper**, desde la terminal
+y sin Android Studio. El APK lleva la app adentro (no depende de la computadora) y habla con
+el mismo proyecto de Supabase que la web y la pantalla del ranking.
+
+```bash
+npm run android:web                 # vite build --mode android + npx cap sync android
+cd android && ./gradlew assembleDebug   # Windows: gradlew.bat assembleDebug
+# -> android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Versiones, instalacion del SDK, firma de la release y problemas comunes en
+[docs/20-apk-android.md](docs/20-apk-android.md).
 
 ## Cuentas y progreso
 

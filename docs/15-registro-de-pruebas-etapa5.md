@@ -149,6 +149,6 @@ carga el catalogo del curso de la leccion. Se agrego la verificacion al caso 16
 - **Una red movil real** (conexiones lentas o que se cortan a mitad de la respuesta): se
   simulo cortando la conexion del navegador y descartando respuestas puntuales.
 - **La app instalada en el celular**: sigue siendo web; la version con Quasar es
-  posterior.
+  posterior. *(Etapa 8: ya hay APK, hecho con Capacitor sobre Vite y sin Quasar; ver [20](20-apk-android.md) y [21](21-registro-de-pruebas-etapa8.md).)*
 - **Muchos usuarios a la vez**: las peticiones simultaneas se probaron para una misma
   persona (cinco a la vez), no con carga.

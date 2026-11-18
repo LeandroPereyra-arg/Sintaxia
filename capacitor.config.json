@@ -1,0 +1,13 @@
+{
+  "appId": "com.sintaxia.app",
+  "appName": "Sintaxia",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true
+    }
+  }
+}

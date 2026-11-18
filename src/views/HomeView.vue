@@ -377,6 +377,14 @@ function comenzar() {
   }
 }
 
+@media (max-width: 420px) {
+  /* En celulares chicos (320 px) Sintax corrido a la derecha se salia de la
+     pantalla y aparecia scroll horizontal. */
+  .demo__sintax {
+    right: -4px;
+  }
+}
+
 /* Pasos */
 .pasos-seccion {
   background: var(--c-violeta-suave);

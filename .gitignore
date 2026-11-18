@@ -12,3 +12,8 @@ npm-debug.log*
 
 # Respaldos de la base (tienen soluciones o datos personales)
 respaldo-*.sql
+
+# Clave de firma del APK: nunca en el repositorio (ver docs/20-apk-android.md)
+*.jks
+*.keystore
+firma*.properties
