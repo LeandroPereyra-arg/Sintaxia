@@ -21,23 +21,41 @@ unidades queda como "proximamente" hasta que se cargue su contenido.
 
 ## Como ejecutarlo
 
-### El contenido: Supabase
+### En tu computadora (lo mas simple)
+
+1. Instalar **Node.js** (version LTS) desde https://nodejs.org/.
+2. Bajar el proyecto: en GitHub, **Code → Download ZIP**, y descomprimirlo.
+3. Dentro de la carpeta (al lado de `package.json`):
+   - **Windows**: doble clic en `iniciar-sintaxia.bat`.
+   - **Linux o macOS**: `./iniciar-sintaxia.sh` en una terminal.
+
+La primera vez crea la configuracion (`.env`) con los datos publicos del proyecto de
+Supabase, instala las dependencias y abre el navegador. Las siguientes arranca en
+segundos. Mientras la ventana este abierta:
+
+| Que | Direccion |
+|---|---|
+| La app | http://localhost:5173/ |
+| Pantalla del ranking de la expo | http://localhost:5173/expo/expo-2026/ranking |
+| Panel de administracion | http://localhost:5173/admin |
+
+### A mano
 
 ```bash
 npm install
 cp .env.example .env
-#   Completa VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY con los datos
-#   del panel de Supabase (Project Settings -> API).
-npm run dev        # http://localhost:5173
+npm run dev
 ```
 
-En el proyecto de Supabase hay que ejecutar, en este orden, los scripts de la
-carpeta [`supabase/`](supabase/): `01-esquema.sql`, `02-datos-iniciales.sql`,
-`03-politicas-rls.sql` y `04-funcion-comprobar.sql`. Los datos del proyecto y la
-organizacion de las tablas estan en [`supabase/README.md`](supabase/README.md).
+En `.env` van `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`, del panel de
+Supabase (*Project Settings → API Keys*). La app queda en http://localhost:5173.
 
-Sin cuenta, la app entra en **modo invitado** y guarda el progreso en el
-navegador; el contenido igual sale de Supabase.
+> En Windows no copies los comentarios que empiezan con `#` en los bloques de
+> comandos: en la consola de Windows no son comentarios y rompen el comando.
+
+En el proyecto de Supabase hay que ejecutar, en orden, los scripts `01` a `16` de la
+carpeta [`supabase/`](supabase/). Los datos del proyecto y la organizacion de las
+tablas estan en [`supabase/README.md`](supabase/README.md).
 
 > En el `.env` del front solo va la **clave publicable**. Todo lo que empieza con
 > `VITE_` queda dentro del paquete que se descarga el navegador: que sea una
@@ -46,8 +64,8 @@ navegador; el contenido igual sale de Supabase.
 
 ### Probarlo en la maquina, con Supabase local
 
-Las claves del proyecto real no se suben al repositorio, asi que las pruebas corren contra
-un entorno local equivalente: **Supabase Auth real** (compilado desde su codigo fuente),
+Las pruebas no usan el proyecto real (no tocan sus datos): corren contra un entorno
+local equivalente: **Supabase Auth real** (compilado desde su codigo fuente),
 PostgreSQL con los mismos scripts de `supabase/` y una imitacion de la API de datos.
 
 ```bash
