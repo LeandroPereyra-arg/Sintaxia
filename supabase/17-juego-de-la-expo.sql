@@ -216,7 +216,7 @@ begin
   -- puede pausar): se cierra con lo que tenia y se empieza otra.
   update public.partidas
      set estado = 'finalizada', finalizada_en = now(),
-         duracion_ms = least(duracion_segundos * 1000, (extract(epoch from (now() - iniciada_en)) * 1000)::integer)
+         duracion_ms = least(duracion_segundos * 1000, greatest(0, (extract(epoch from (now() - iniciada_en)) * 1000)::integer))
    where usuario_id = v_usuario and desafio_id = p_desafio_id and estado = 'en_curso';
 
   select count(*) into v_usadas from public.partidas
@@ -235,7 +235,9 @@ begin
   ) values (
     p_partida_id, v_usuario, p_desafio_id, v_desafio.evento_id, v_usadas + 1, 'minijuego',
     v_desafio.version, v_desafio.puntos_por_acierto, v_desafio.duracion_segundos, v_desafio.gracia_segundos,
-    v_cantidad, now(), now() + make_interval(secs => v_desafio.duracion_segundos)
+    -- Cuenta regresiva: el juego (y su reloj) empieza 3 s despues de pedirlo,
+    -- mientras el celular muestra 3, 2, 1. Asi nadie pierde segundos de juego.
+    v_cantidad, now() + interval '3 seconds', now() + interval '3 seconds' + make_interval(secs => v_desafio.duracion_segundos)
   );
 
   -- Tres consignas distintas al azar, una por tercio del tiempo.
@@ -324,7 +326,7 @@ begin
            finalizada_en = case when v_errores >= 3 then least(now(), vence_en) end,
            duracion_ms = case when v_errores >= 3
                               then least(duracion_segundos * 1000,
-                                         (extract(epoch from (now() - iniciada_en)) * 1000)::integer)
+                                         greatest(0, (extract(epoch from (now() - iniciada_en)) * 1000)::integer))
                          end
      where id = p_partida_id
     returning * into v_partida;
@@ -381,6 +383,14 @@ select 'expo-2026-minijuego', 'expo-2026', 3, 'Sintax atrapa el código',
        'facil', 60, 20, 3, 5, 'publicado', 'minijuego'
  where exists (select 1 from public.eventos where id = 'expo-2026')
    and not exists (select 1 from public.desafios where id = 'expo-2026-minijuego');
+
+update public.desafios
+   set descripcion = 'Sintax se quedó sin código y te necesita. Caen fichas con palabras y símbolos de '
+                  || 'JavaScript: mové a Sintax para atrapar solo las que cumplen la consigna de arriba '
+                  || '(por ejemplo, palabras reservadas como let o return) y esquivá las falsas, como lett '
+                  || 'o funtion. Cada ficha buena suma 20 puntos y cada error te cuesta una de tus 3 vidas. '
+                  || 'Dura 1 minuto y la consigna cambia cada 20 segundos.'
+ where id = 'expo-2026-minijuego';
 
 -- ---------------------------------------------------------------------------
 -- 6. Permisos

@@ -395,6 +395,10 @@ await caso(
     await p.waitForURL(`**/minijuego/${MINI}`)
     await p.locator('[data-prueba="empezar"]').click()
     await p.locator('[data-prueba="area-juego"]').waitFor({ timeout: 10000 })
+    // Cuenta regresiva: el servidor empieza la partida 3 s despues; mientras tanto no caen fichas.
+    const regresiva = normalizar(await p.locator('[data-prueba="cuenta-regresiva"]').innerText({ timeout: 3000 }))
+    const fichasEnLaCuenta = await p.locator('[data-prueba="ficha"]').count()
+    verificar(/^[123]$/.test(regresiva) && fichasEnLaCuenta === 0, `cuenta regresiva: "${regresiva}", fichas ${fichasEnLaCuenta}`)
     const consigna = normalizar(await p.locator('[data-prueba="consigna"]').innerText())
 
     const caja = await p.locator('[data-prueba="area-juego"]').boundingBox()
@@ -419,7 +423,7 @@ await caso(
     verificar(enBase.estado === 'finalizada' && enBase.aciertos + enBase.errores > 0, `en la base: ${JSON.stringify(enBase)}`)
     verificar(final === enBase.puntaje && Math.max(...puntajesVistos) === enBase.puntaje, `final ${final}, visto ${Math.max(...puntajesVistos)}, base ${enBase.puntaje}`)
     verificar(detalle.includes(`${enBase.aciertos} ficha`), `detalle: ${detalle}`)
-    return `tarjeta: Minijuego, 3 vidas · consigna "${consigna}" · ${enBase.aciertos} atrapadas buenas y ${enBase.errores} malas · en juego se vio ${Math.max(...puntajesVistos)} pts · final ${final} pts = ${enBase.puntaje} en la base`
+    return `tarjeta: Minijuego, 3 vidas · cuenta regresiva (${regresiva}...) sin fichas · consigna "${consigna}" · ${enBase.aciertos} atrapadas buenas y ${enBase.errores} malas · en juego se vio ${Math.max(...puntajesVistos)} pts · final ${final} pts = ${enBase.puntaje} en la base`
   }
 )
 

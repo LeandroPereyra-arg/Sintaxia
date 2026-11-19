@@ -7,7 +7,7 @@ Guia corta para quien juega en la expo con su celular.
 1. Pedi el archivo **Sintaxia.apk** (codigo QR, enlace o Bluetooth en el stand).
 2. Abrilo desde el celular. Si Android pregunta, permiti **"Instalar apps de origen
    desconocido"** para la app con la que lo abriste (Archivos, Chrome, Drive...).
-3. Toca **Instalar** y despues **Abrir**. El icono es un `< >` blanco sobre verde.
+3. Toca **Instalar** y despues **Abrir**. El icono es Sintax, la cotorra verde con la notebook.
 
 Necesitas internet (wifi o datos) para jugar: los resultados se guardan en el
 servidor, no en el celular.
@@ -52,7 +52,8 @@ reservadas de JavaScript*):
 
 - Mové a Sintax arrastrando el dedo o con los botones ◀ ▶.
 - Ficha correcta: **+20 puntos**. Ficha equivocada: **perdés una vida** (tenés 3).
-- Dura 1 minuto y la consigna cambia cada 20 segundos.
+- Arranca con una cuenta regresiva (3, 2, 1, ¡Ya!). Dura 1 minuto y la consigna cambia cada
+  20 segundos.
 - Al terminar el tiempo o las vidas, la partida cuenta. Tenés 3 intentos.
 
 Si se corta internet a mitad de partida, la respuesta queda **pendiente** y se manda

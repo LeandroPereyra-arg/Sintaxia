@@ -2,24 +2,13 @@
 import { ref } from 'vue'
 
 /**
- * Logo de Sintaxia.
- *
- * Usa la imagen `public/sintax/sintaxia.png`. Si ese archivo todavia no existe, cae
- * automaticamente en un dibujo SVG de respaldo para que nunca se vea una
- * imagen rota; en cuanto se agrega el PNG, aparece solo sin tocar codigo.
+ * Logo de Sintaxia: Sintax, la cotorra con la notebook (public/sintax/normal.webp).
  *
  * Variantes:
- *   icono    -> recorte cuadrado centrado en el buho (cabecera, avatares)
- *   completo -> la imagen entera, con el buho y la palabra "Sintaxia"
+ *   icono    -> solo la cotorra (cabecera, pie, pantalla del ranking)
+ *   completo -> la cotorra y la palabra "Sintaxia"
  *
- * El recorte de la variante "icono" se controla con dos variables CSS, porque
- * depende de donde este el buho dentro del PNG:
- *   --logo-zoom   cuanto se agranda la imagen
- *   --logo-foco-y que franja vertical queda a la vista
- *
- * Los valores actuales salen de medir el PNG: el buho ocupa de y=167 a y=673 y
- * la palabra arranca justo debajo, en y=674. Si el logo cambia de composicion,
- * se ajustan esos dos numeros y listo.
+ * Si la imagen no carga, se dibuja un SVG de respaldo: nunca se ve una imagen rota.
  */
 const props = defineProps({
   variante: {
@@ -35,9 +24,9 @@ const props = defineProps({
   animado: { type: Boolean, default: false }
 })
 
-const RUTA = `${import.meta.env.BASE_URL}sintax/sintaxia.png`
+const RUTA = `${import.meta.env.BASE_URL}sintax/normal.webp`
 
-// Si el PNG no esta, se muestra el respaldo.
+// Si la imagen no esta, se muestra el respaldo.
 const hayImagen = ref(true)
 </script>
 
@@ -47,58 +36,27 @@ const hayImagen = ref(true)
     :class="[`logo--${variante}`, { 'logo--animado': animado }]"
     :style="{ '--alto': alto + 'px' }"
   >
-    <!-- Imagen invisible: solo sirve para saber si el PNG existe. -->
     <img
-      v-if="variante === 'icono'"
+      v-if="hayImagen"
       :src="RUTA"
-      alt=""
-      class="logo__sonda"
-      aria-hidden="true"
-      decoding="async"
-      @error="hayImagen = false"
-    />
-
-    <!-- Recorte cuadrado sobre el buho (se pinta de fondo para poder encuadrarlo). -->
-    <span
-      v-if="variante === 'icono' && hayImagen"
-      class="logo__recorte"
-      :style="{ backgroundImage: `url(${RUTA})` }"
-      role="img"
-      :aria-label="alt || undefined"
-    />
-
-    <img
-      v-else-if="hayImagen"
-      :src="RUTA"
-      :alt="alt"
+      :alt="variante === 'completo' ? '' : alt"
       class="logo__imagen"
       decoding="async"
       @error="hayImagen = false"
     />
-
-    <!-- Respaldo: se dibuja solo si falta public/sintaxia.png -->
+    <!-- Respaldo: se dibuja solo si falta la imagen de la cotorra -->
     <svg
       v-else
       class="logo__respaldo"
       viewBox="0 0 64 64"
       role="img"
-      :aria-label="alt || 'Sintaxia'"
+      :aria-label="alt || undefined"
     >
-      <rect width="64" height="64" rx="16" fill="var(--c-verde)" />
-      <circle cx="24" cy="26" r="8" fill="#fff" />
-      <circle cx="40" cy="26" r="8" fill="#fff" />
-      <circle cx="24" cy="26" r="4" fill="var(--c-noche)" />
-      <circle cx="40" cy="26" r="4" fill="var(--c-noche)" />
-      <path d="M32 33l-3 4h6z" fill="var(--c-amarillo)" />
-      <path
-        d="M22 48l-5-5 5-5M42 38l5 5-5 5M36 36l-8 14"
-        fill="none"
-        stroke="#fff"
-        stroke-width="3.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
+      <rect width="64" height="64" rx="16" fill="#2FBF56" />
+      <path d="M24 21 13 32l11 11" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M40 21l11 11-11 11" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
+    <span v-if="variante === 'completo'" class="logo__palabra" :aria-label="alt || undefined">Sintaxia</span>
   </span>
 </template>
 
@@ -107,6 +65,7 @@ const hayImagen = ref(true)
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35em;
   flex-shrink: 0;
   height: var(--alto);
 }
@@ -114,56 +73,20 @@ const hayImagen = ref(true)
 .logo__imagen,
 .logo__respaldo {
   height: 100%;
+  width: auto;
   display: block;
-}
-
-/* El respaldo es solo un marcador de posicion mientras falta el PNG:
-   se acota para que no domine la pantalla en los tamaños grandes. */
-.logo__respaldo {
-  max-width: 64px;
-  max-height: 64px;
-}
-
-/* Recorte cuadrado: el PNG trae el buho arriba y la palabra abajo. Como la
-   imagen es mas ancha que alta, object-fit no alcanza para recortar en
-   vertical, asi que se pinta de fondo y se encuadra con background-position. */
-.logo--icono {
-  width: var(--alto);
-  --logo-zoom: 275%;
-  --logo-foco-y: 30%;
-}
-
-.logo__sonda {
-  display: none;
-}
-
-.logo__recorte {
-  width: 100%;
-  height: 100%;
-  background-size: var(--logo-zoom) auto;
-  background-position: 50% var(--logo-foco-y);
-  background-repeat: no-repeat;
-  border-radius: var(--r-sm);
-}
-
-.logo--icono .logo__respaldo {
-  width: 100%;
-  border-radius: var(--r-sm);
-}
-
-/* Imagen completa, con la palabra incluida. */
-.logo--completo {
-  width: auto;
-}
-
-.logo--completo .logo__imagen {
-  width: auto;
-  max-width: 100%;
   object-fit: contain;
 }
 
-.logo--completo .logo__respaldo {
-  width: var(--alto);
+.logo--icono {
+  min-width: var(--alto);
+}
+
+.logo__palabra {
+  font-size: calc(var(--alto) * 0.42);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--c-violeta-osc);
 }
 
 /* Entrada suave, para la portada y la pantalla de ingreso. */

@@ -105,37 +105,28 @@ Requiere **Node 22+** (lo pide Capacitor 8), **PostgreSQL 14+** y **Go** (solo p
 | `npm run android:web` | Compila para el APK (`--mode android`) y lo copia al proyecto Android |
 | `npm run android:debug` | Lo anterior + `./gradlew assembleDebug` (Linux/macOS; en Windows ver docs/20) |
 | `npm run android:release` | Lo anterior + `assembleRelease`, firmado con la clave de las variables `SINTAXIA_*` |
-| `npm run android:recursos` | Regenera el icono y el splash de Android |
+| `npm run android:recursos` | Regenera los iconos (APK y web) y el splash con la cotorra |
 
 ---
 
 ## El logo
 
-El logo vive en **`public/sintax/sintaxia.png`**. Con solo dejar el archivo ahi aparece en la cabecera,
-el pie, la portada, la pantalla de ingreso, el 404 y como favicon: no hay que tocar codigo.
+El logo es **Sintax, la cotorra con la notebook** (`public/sintax/normal.webp`, la misma
+imagen de la mascota). Lo muestra el componente `LogoSintaxia.vue` en la cabecera, el pie y la
+pantalla del ranking; si la imagen no carga, dibuja un respaldo en SVG y nunca se ve una
+imagen rota.
 
-Mientras ese archivo no exista, la app dibuja un logo de respaldo en SVG, asi que nunca se ve
-una imagen rota.
+| Variante | Que muestra |
+|---|---|
+| `icono` | Solo la cotorra |
+| `completo` | La cotorra y la palabra "Sintaxia" |
 
-El componente `LogoSintaxia.vue` tiene dos variantes:
+El icono de la pestaña (`public/favicon.png`), el de los celulares (`public/apple-touch-icon.png`)
+y el icono y la pantalla de inicio del APK salen de la misma imagen:
+`npm run android:recursos` los vuelve a generar.
 
-| Variante | Que muestra | Donde se usa |
-|---|---|---|
-| `icono` | Recorte cuadrado centrado en el buho | Cabecera, pie, 404 |
-| `completo` | La imagen entera, con la palabra "Sintaxia" | Portada y pantalla de ingreso |
-
-El recorte de la variante `icono` se ajusta con dos variables CSS, por si el buho queda
-descentrado con otra version del logo:
-
-```css
-.logo--icono {
-  --logo-zoom: 275%;    /* cuanto se agranda la imagen */
-  --logo-foco-y: 30%;   /* que franja vertical queda a la vista */
-}
-```
-
-Los valores salen de medir el PNG: el buho ocupa de `y=167` a `y=673` y la palabra arranca
-justo debajo.
+> Hasta noviembre de 2026 el logo era un buho; se reemplazo por la cotorra para que el logo y la
+> mascota sean el mismo personaje.
 
 ## Pensada tambien para el celular
 
@@ -155,7 +146,7 @@ La aplicacion tiene que funcionar igual en la web y en un telefono Android, asi 
 
 ## Sintax, la mascota
 
-El buho del logo aparece en toda la aplicacion y **reacciona a lo que pasa**: celebra una
+Sintax, la cotorra del logo, aparece en toda la aplicacion y **reacciona a lo que pasa**: celebra una
 leccion perfecta, se enoja cuando se pierden las tres vidas, se confunde en el 404 y duerme
 si hace rato que no practicas.
 

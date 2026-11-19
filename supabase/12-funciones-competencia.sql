@@ -419,8 +419,9 @@ begin
     update public.partidas
        set estado = 'finalizada',
            finalizada_en = now(),
+           -- greatest: un minijuego cerrado durante su cuenta regresiva dura 0.
            duracion_ms = least(duracion_segundos * 1000,
-                               (extract(epoch from (now() - iniciada_en)) * 1000)::integer)
+                               greatest(0, (extract(epoch from (now() - iniciada_en)) * 1000)::integer))
      where id = p_partida_id
     returning * into v_partida;
   end if;
