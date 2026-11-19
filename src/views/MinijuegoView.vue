@@ -69,7 +69,19 @@ const area = ref(null)
 
 // --- Datos que se muestran ------------------------------------------------------
 const duracionMs = computed(() => (partida.value?.duracionSegundos ?? 60) * 1000)
-const restantes = computed(() => Math.max(0, Math.ceil((duracionMs.value - tiempo.value) / 1000)))
+const restantes = computed(() =>
+  Math.min(duracionMs.value / 1000, Math.max(0, Math.ceil((duracionMs.value - tiempo.value) / 1000)))
+)
+/**
+ * Cuenta regresiva: el servidor hace empezar la partida 3 s despues de pedirla,
+ * asi que el tiempo de juego arranca en negativo. 3, 2, 1 y "¡Ya!" un instante.
+ */
+const cuenta = computed(() => {
+  if (fase.value !== 'jugando') return ''
+  if (tiempo.value < 0) return String(Math.ceil(-tiempo.value / 1000))
+  if (tiempo.value < 700) return '¡Ya!'
+  return ''
+})
 const consigna = computed(() => {
   const actual = [...rondas.value].reverse().find((r) => tiempo.value >= r.desdeMs - 1500)
   return actual?.consigna ?? rondas.value[0]?.consigna ?? ''
@@ -91,7 +103,8 @@ async function empezar() {
     partida.value = p
     rondas.value = p.rondas
     fichas.value = p.fichas.map((f) => ({ ...f, estado: f.atrapada ? 'atrapada' : 'cayendo' }))
-    const transcurrido = Math.max(0, Date.parse(p.ahora ?? p.iniciadaEn) - Date.parse(p.iniciadaEn))
+    // Negativo durante la cuenta regresiva (el servidor empieza la partida 3 s despues).
+    const transcurrido = Date.parse(p.ahora ?? p.iniciadaEn) - Date.parse(p.iniciadaEn)
     origen = performance.now() - (Number.isFinite(transcurrido) ? transcurrido : 0)
     sintaxX.value = objetivoX = 0.5
     fase.value = 'jugando'
@@ -226,11 +239,35 @@ const mensajeError = computed(() => error.value?.message ?? '')
       <div class="tarjeta">
         <SintaxMascota estado="saludando" :alto="130" alt="" />
         <h1>Sintax atrapa el código</h1>
+        <p class="intro">
+          Sintax se quedó sin código y te necesita. Del cielo caen <strong>fichas</strong> con palabras y
+          símbolos de JavaScript: algunas son correctas y otras están mal escritas o no existen.
+        </p>
         <ul class="reglas">
-          <li><Icono nombre="puntero" :tamano="18" /><span>Mové a Sintax arrastrando el dedo, con las flechas o con los botones.</span></li>
-          <li><Icono nombre="check" :tamano="18" /><span>Atrapá las fichas que cumplen la <strong>consigna</strong> de arriba. Cambia durante el juego.</span></li>
-          <li><Icono nombre="corazon" :tamano="18" /><span>Cada ficha equivocada te cuesta una vida. Tenés 3.</span></li>
-          <li><Icono nombre="reloj" :tamano="18" /><span>Dura 1 minuto. Tu mejor partida suma al puntaje total del ranking.</span></li>
+          <li>
+            <Icono nombre="check" :tamano="18" />
+            <span>
+              Arriba vas a ver la <strong>consigna</strong>, por ejemplo <em>"Atrapá palabras reservadas de
+              JavaScript"</em>. Atrapá solo las fichas que la cumplen (<code>let</code>, <code>return</code>) y
+              dejá caer las falsas (<code>lett</code>, <code>funtion</code>). La consigna cambia cada 20 segundos.
+            </span>
+          </li>
+          <li>
+            <Icono nombre="puntero" :tamano="18" />
+            <span>Para moverlo, arrastrá el dedo sobre el juego, usá los botones ◀ ▶ o las flechas del teclado. Sintax atrapa lo que le cae encima.</span>
+          </li>
+          <li>
+            <Icono nombre="rayo" :tamano="18" />
+            <span>Cada ficha correcta suma <strong>20 puntos</strong>. Las fichas caen cada vez más rápido.</span>
+          </li>
+          <li>
+            <Icono nombre="corazon" :tamano="18" />
+            <span>Tenés <strong>3 vidas</strong>: cada ficha equivocada te saca una. Sin vidas, la partida termina.</span>
+          </li>
+          <li>
+            <Icono nombre="reloj" :tamano="18" />
+            <span>Dura <strong>1 minuto</strong> y empieza con una cuenta regresiva. Tenés 3 intentos: tu mejor partida suma al <strong>puntaje total</strong> del ranking.</span>
+          </li>
         </ul>
         <MensajeEstado v-if="mensajeError" tipo="error" data-prueba="error-minijuego">{{ mensajeError }}</MensajeEstado>
         <BaseBoton tamano="grande" ancho-completo :deshabilitado="fase === 'cargando'" data-prueba="empezar" @click="empezar">
@@ -274,6 +311,10 @@ const mensajeError = computed(() => error.value?.message ?? '')
           :style="{ left: `${f.x * 100}%`, top: `calc(${f.progreso} * (100% - var(--alto-sintax)))` }"
         >
           {{ f.texto }}
+        </div>
+
+        <div v-if="cuenta" class="cuenta" data-prueba="cuenta-regresiva" aria-live="assertive">
+          <span :key="cuenta" class="cuenta__numero">{{ cuenta }}</span>
         </div>
 
         <span
@@ -499,6 +540,48 @@ const mensajeError = computed(() => error.value?.message ?? '')
   }
 }
 
+.intro {
+  text-align: left;
+}
+
+.reglas code {
+  font-family: var(--f-codigo);
+  font-variant-ligatures: none;
+  background: var(--c-fondo);
+  border-radius: 4px;
+  padding: 0 0.25rem;
+}
+
+/* Cuenta regresiva sobre el area de juego. */
+.cuenta {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 0.55);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cuenta__numero {
+  font-size: 6rem;
+  font-weight: 900;
+  color: var(--c-violeta);
+  text-shadow: 0 4px 0 var(--c-violeta-suave);
+  animation: latido 0.9s ease-out both;
+}
+
+@keyframes latido {
+  from {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .controles {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -523,7 +606,8 @@ const mensajeError = computed(() => error.value?.message ?? '')
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .efecto {
+  .efecto,
+  .cuenta__numero {
     animation: none;
   }
 }

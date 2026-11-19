@@ -208,6 +208,7 @@ Es lo que convierte una pantalla de resultados en algo que da ganas de volver a 
 La marca es un **buho verde con una notebook que muestra `</>`**, acompanado de la palabra
 "Sintaxia".
 
+- *(Actualizado: el logo ya no es el buho sino Sintax, la cotorra de la mascota; ver README, "El logo".)*
 - **El buho** es el guino directo al genero: es la mascota que uno espera en una app de
   aprender por lecciones cortas. Da cara y personalidad a algo que, si no, seria una grilla
   de tarjetas.

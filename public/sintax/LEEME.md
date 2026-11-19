@@ -2,14 +2,10 @@
 
 ## El logo
 
-`sintaxia.png` es el logo completo: el pajaro con la notebook y la palabra "Sintaxia".
-Lo usa `src/components/LogoSintaxia.vue` en la cabecera, el pie y el 404, y tambien
-es el favicon.
-
-En la cabecera se muestra recortado, solo el personaje. El recorte esta calculado
-midiendo el PNG (el pajaro va de y=167 a y=673 y la palabra arranca en y=674) y se
-ajusta con dos variables CSS dentro del componente: `--logo-zoom: 275%` y
-`--logo-foco-y: 30%`.
+El logo es la misma cotorra de `normal.webp`: lo usa `src/components/LogoSintaxia.vue`
+en la cabecera, el pie y la pantalla del ranking. Los iconos de la web
+(`public/favicon.png`, `public/apple-touch-icon.png`) y del APK se generan desde esa imagen
+con `npm run android:recursos`. (El logo anterior, un buho, ya no se usa.)
 
 ## Los estados de Sintax
 

@@ -120,7 +120,7 @@ Si Gradle no encuentra el SDK, crear `android/local.properties` (esta en
 |---|---|---|
 | Identificador | `com.sintaxia.app` | `capacitor.config.json` y `android/app/build.gradle` |
 | Nombre | Sintaxia | `capacitor.config.json` (`android/app/src/main/res/values/strings.xml`) |
-| Icono y splash | el `< >` blanco sobre verde del logo | `npm run android:recursos` los genera en `android/app/src/main/res/` |
+| Icono y splash | Sintax, la cotorra con la notebook, sobre verde suave | `npm run android:recursos` los genera en `android/app/src/main/res/` |
 | Version | `versionName` = `version` de `package.json` (1.0.0); `versionCode` = 1·10000 + 0·100 + 0 = 10000 | `android/app/build.gradle` la lee de `package.json`: para una version nueva se cambia **solo** `package.json` |
 | Carpeta web | `dist` (lo que compila Vite) | `capacitor.config.json` → `webDir` |
 | Servidor de desarrollo | **ninguno**: no hay `server.url` | `capacitor.config.json` |

@@ -46,6 +46,9 @@ es el juego.
   ◀ ▶.
 - Ficha que cumple la consigna: **+20 puntos** (Sintax festeja). Ficha que no: **pierde
   una vida** (Sintax se enoja). Hay **3 vidas**.
+- Empieza con una **cuenta regresiva** (3, 2, 1, ¡Ya!). La marca el servidor: la partida
+  arranca 3 segundos después de pedirla, así la cuenta no le resta tiempo de juego a nadie
+  y el celular la muestra sincronizada con ese reloj.
 - Dura **60 segundos**. Las fichas caen cada vez más rápido.
 - Termina al acabarse el tiempo o las vidas, y **la partida cuenta** (no queda "vencida").
 - **3 intentos** por persona. En el ranking cuenta la mejor partida, como en los demás
