@@ -128,10 +128,9 @@ async function jugarEnPantalla(p, desafioId, aciertos) {
     const codigo = (await p.locator('.partida .bloque-codigo').count()) ? normalizar(await p.locator('.partida .bloque-codigo').innerText()) : ''
     const s = soluciones.get(enunciado + '|' + codigo)
     await p.getByRole('button', { name: i < aciertos ? s.bien : s.mal, exact: true }).first().click()
-    await p.getByRole('button', { name: /^(Responder|Reintentar)$/ }).click()
     await p.waitForSelector('[data-prueba="registrada"]', { timeout: 10000 })
-    await p.locator('[data-prueba="registrada"] button').click()
-    await dormir(120)
+    await p.locator('[data-prueba="registrada"]').waitFor({ state: 'detached', timeout: 10000 })
+    await dormir(100)
   }
   await p.locator('[data-prueba="puntaje-final"]').waitFor({ timeout: 10000 })
   return Number((await p.locator('[data-prueba="puntaje-final"]').innerText()).match(/\d+/)[0])
@@ -712,6 +711,26 @@ await caso(
     verificar(JSON.stringify(antes) === JSON.stringify(despues), `conteos: ${JSON.stringify(antes)} -> ${JSON.stringify(despues)}`)
     verificar(comunSigue.datos?.hint === 'sin_permiso_admin' && profeSigue.datos === true && lectura.estado === 200, 'cambiaron los permisos')
     return `resultados ${antes.r} y administradores ${antes.a}: iguales · la cuenta comun sigue sin permiso, el administrador lo conserva, el ranking se sigue leyendo`
+  }
+)
+
+await caso(
+  18,
+  'Reservar el rol para un correo que todavia no tiene cuenta',
+  'otorgar_administrador con un correo sin cuenta lo deja reservado (sin error); al crear la cuenta con ese correo ya es administrador y la reserva desaparece',
+  async () => {
+    const correo = correoNuevo('reservada')
+    const reserva = await api.rpc(claves.claveDeServicio, 'otorgar_administrador', { p_correo: correo.toUpperCase() })
+    const [{ n: pendientes }] = await consulta('select count(*)::int as n from administradores_pendientes where correo = $1', [correo])
+    const nueva = await api.cuentaConfirmada({ correo, alias: 'Reservada' })
+    const esAdmin = await api.rpc(nueva.token, 'es_admin', {})
+    const [{ n: quedan }] = await consulta('select count(*)::int as n from administradores_pendientes where correo = $1', [correo])
+    const invalido = await api.rpc(claves.claveDeServicio, 'otorgar_administrador', { p_correo: 'no-es-correo' })
+    await api.rpc(claves.claveDeServicio, 'quitar_administrador', { p_correo: correo })
+    verificar(reserva.estado === 200 && reserva.datos === null && pendientes === 1, `reserva: ${reserva.estado} ${JSON.stringify(reserva.datos)}, pendientes ${pendientes}`)
+    verificar(esAdmin.datos === true && quedan === 0, `al crear la cuenta: es_admin ${esAdmin.datos}, reservas ${quedan}`)
+    verificar(invalido.estado >= 400, `correo invalido: ${invalido.estado}`)
+    return 'correo sin cuenta: queda reservado (1 reserva) · al crear la cuenta: es_admin = true y la reserva se borra · un texto que no es correo se rechaza'
   }
 )
 

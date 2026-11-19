@@ -72,13 +72,15 @@ const duracionMs = computed(() => (partida.value?.duracionSegundos ?? 60) * 1000
 const restantes = computed(() =>
   Math.min(duracionMs.value / 1000, Math.max(0, Math.ceil((duracionMs.value - tiempo.value) / 1000)))
 )
+const textoRestante = computed(() => `${Math.floor(restantes.value / 60)}:${String(restantes.value % 60).padStart(2, '0')}`)
 /**
  * Cuenta regresiva: el servidor hace empezar la partida 3 s despues de pedirla,
  * asi que el tiempo de juego arranca en negativo. 3, 2, 1 y "¡Ya!" un instante.
  */
 const cuenta = computed(() => {
   if (fase.value !== 'jugando') return ''
-  if (tiempo.value < 0) return String(Math.ceil(-tiempo.value / 1000))
+  // (El primer cuadro puede traer una marca apenas anterior: nunca mas de 3.)
+  if (tiempo.value < 0) return String(Math.min(3, Math.ceil(-tiempo.value / 1000)))
   if (tiempo.value < 700) return '¡Ya!'
   return ''
 })
@@ -107,6 +109,8 @@ async function empezar() {
     const transcurrido = Date.parse(p.ahora ?? p.iniciadaEn) - Date.parse(p.iniciadaEn)
     origen = performance.now() - (Number.isFinite(transcurrido) ? transcurrido : 0)
     sintaxX.value = objetivoX = 0.5
+    // Antes del primer cuadro: si no, se veria un instante "¡Ya!" (tiempo 0) antes del 3.
+    tiempo.value = performance.now() - origen
     fase.value = 'jugando'
     cuadro = requestAnimationFrame(paso)
   } catch (e) {
@@ -258,7 +262,7 @@ const mensajeError = computed(() => error.value?.message ?? '')
           </li>
           <li>
             <Icono nombre="rayo" :tamano="18" />
-            <span>Cada ficha correcta suma <strong>20 puntos</strong>. Las fichas caen cada vez más rápido.</span>
+            <span>Cada ficha correcta suma <strong>20 puntos</strong>. Las fichas caen cada vez más rápido y más seguido: aguantar hasta el final es para tryhards.</span>
           </li>
           <li>
             <Icono nombre="corazon" :tamano="18" />
@@ -266,7 +270,7 @@ const mensajeError = computed(() => error.value?.message ?? '')
           </li>
           <li>
             <Icono nombre="reloj" :tamano="18" />
-            <span>Dura <strong>1 minuto</strong> y empieza con una cuenta regresiva. Tenés 3 intentos: tu mejor partida suma al <strong>puntaje total</strong> del ranking.</span>
+            <span>Dura <strong>hasta 3 minutos</strong>: termina cuando se acaba el tiempo o te quedás sin vidas, así que cuanto más aguantes, más puntos. Empieza con una cuenta regresiva. Tenés 3 intentos: tu mejor partida suma al <strong>puntaje total</strong> del ranking.</span>
           </li>
         </ul>
         <MensajeEstado v-if="mensajeError" tipo="error" data-prueba="error-minijuego">{{ mensajeError }}</MensajeEstado>
@@ -282,7 +286,7 @@ const mensajeError = computed(() => error.value?.message ?? '')
       <header class="hud">
         <p class="hud__consigna" data-prueba="consigna">{{ consigna }}</p>
         <div class="hud__datos">
-          <span class="hud__tiempo" data-prueba="tiempo-juego"><Icono nombre="reloj" :tamano="16" /> {{ restantes }} s</span>
+          <span class="hud__tiempo" data-prueba="tiempo-juego"><Icono nombre="reloj" :tamano="16" /> {{ textoRestante }}</span>
           <span class="hud__puntaje" data-prueba="puntaje-juego">{{ partida?.puntaje ?? 0 }} pts</span>
           <span class="hud__vidas" data-prueba="vidas" :data-vidas="partida?.vidas ?? 3" :aria-label="`${partida?.vidas ?? 3} vidas`">
             <Icono v-for="i in 3" :key="i" :nombre="i <= (partida?.vidas ?? 3) ? 'corazon' : 'corazonRoto'" :tamano="18" :class="{ apagado: i > (partida?.vidas ?? 3) }" />

@@ -12,6 +12,10 @@ Para docentes y organizadores de la expo. El detalle tecnico esta en
    ```
 3. Cerra sesion y volve a entrar: en el menu aparece **Administracion** (`/admin`).
 
+Tambien se puede correr el paso 2 **antes** de crear la cuenta: el rol queda
+reservado para ese correo y se otorga solo cuando se crea la cuenta con el (o cuando
+un invitado la convierte en cuenta con ese correo).
+
 Para quitarlo: `select public.quitar_administrador('correo');`. Nadie puede darse el
 rol desde la app.
 

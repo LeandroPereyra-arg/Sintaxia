@@ -165,8 +165,11 @@ declare
   v_evento   public.eventos;
   v_usadas   integer;
   v_rondas   text[];
-  v_cantidad constant integer := 56;   -- una ficha por segundo, aprox.
+  v_cantidad integer;
   v_duracion integer;
+  v_nrondas  integer;
+  v_cat      text;
+  t          double precision;
   i          integer;
   v_ronda    integer;
   v_caida    integer;
@@ -228,6 +231,9 @@ begin
 
   update public.desafios set congelado_en = now() where id = p_desafio_id and congelado_en is null;
 
+  -- Unas 5 fichas cada 4 segundos (en el minijuego de 3 minutos, 225).
+  v_cantidad := greatest(10, v_desafio.duracion_segundos * 5 / 4);
+
   insert into public.partidas (
     id, usuario_id, desafio_id, evento_id, numero, tipo,
     version_desafio, puntos_por_acierto, duracion_segundos, gracia_segundos,
@@ -240,16 +246,25 @@ begin
     v_cantidad, now() + interval '3 seconds', now() + interval '3 seconds' + make_interval(secs => v_desafio.duracion_segundos)
   );
 
-  -- Tres consignas distintas al azar, una por tercio del tiempo.
-  select array_agg(id order by random()) into v_rondas
-    from (select id from public.minijuego_categorias order by random() limit 3) c;
-
+  -- Una consigna cada 20 segundos, al azar y nunca la misma dos veces seguidas.
   v_duracion := v_desafio.duracion_segundos * 1000;
+  v_nrondas  := greatest(1, ceil(v_duracion / 20000.0)::integer);
+  v_rondas   := array[]::text[];
+  for i in 1 .. v_nrondas loop
+    select id into v_cat from public.minijuego_categorias
+     where id is distinct from v_rondas[i - 1] or (select count(*) from public.minijuego_categorias) = 1
+     order by random() limit 1;
+    v_rondas := v_rondas || v_cat;
+  end loop;
+
+  -- Para los que aguantan: las fichas caen cada vez mas rapido (de 4,2 s a 1,6 s)
+  -- y cada vez mas seguido (t^0,8 junta las del final). Todas llegan abajo antes
+  -- de que se acabe el tiempo. Con 3 vidas, quien se equivoca termina antes.
   for i in 0 .. v_cantidad - 1 loop
-    -- Caen cada vez mas rapido: de 4,2 s a 2,4 s. Todas llegan abajo antes del final.
-    v_caida   := 4200 - (1800 * i / (v_cantidad - 1));
-    v_aparece := ((v_duracion - 2400 - 1500) * i / (v_cantidad - 1)) + (random() * 300)::integer;
-    v_ronda   := least(2, v_aparece * 3 / v_duracion);
+    t         := i::double precision / (v_cantidad - 1);
+    v_caida   := 4200 - round(2600 * t)::integer;
+    v_aparece := round((v_duracion - 1600 - 1500) * power(t, 0.8))::integer + (random() * 300)::integer;
+    v_ronda   := least(v_nrondas - 1, v_aparece / 20000);
     v_valida  := random() < 0.55;
     select texto into v_texto
       from public.minijuego_fichas
@@ -380,7 +395,7 @@ insert into public.desafios (id, evento_id, orden, nombre, descripcion, dificult
                              puntos_por_acierto, intentos_permitidos, gracia_segundos, estado, tipo)
 select 'expo-2026-minijuego', 'expo-2026', 3, 'Sintax atrapa el código',
        'Mové a Sintax y atrapá las fichas que cumplen la consigna. Cada error te cuesta una vida.',
-       'facil', 60, 20, 3, 5, 'publicado', 'minijuego'
+       'facil', 180, 20, 3, 5, 'publicado', 'minijuego'
  where exists (select 1 from public.eventos where id = 'expo-2026')
    and not exists (select 1 from public.desafios where id = 'expo-2026-minijuego');
 
@@ -389,8 +404,15 @@ update public.desafios
                   || 'JavaScript: mové a Sintax para atrapar solo las que cumplen la consigna de arriba '
                   || '(por ejemplo, palabras reservadas como let o return) y esquivá las falsas, como lett '
                   || 'o funtion. Cada ficha buena suma 20 puntos y cada error te cuesta una de tus 3 vidas. '
-                  || 'Dura 1 minuto y la consigna cambia cada 20 segundos.'
+                  || 'Dura hasta 3 minutos: las fichas caen cada vez más rápido y la consigna cambia cada '
+                  || '20 segundos. Termina cuando se acaba el tiempo o te quedás sin vidas: cuanto más aguantes, '
+                  || 'más puntos.'
  where id = 'expo-2026-minijuego';
+
+-- De 1 a 3 minutos. Si el desafio ya tiene partidas (congelado), sus reglas no
+-- se tocan desde aca: ver docs/27 (se cambia una sola vez, a mano).
+update public.desafios set duracion_segundos = 180
+ where id = 'expo-2026-minijuego' and duracion_segundos = 60 and congelado_en is null;
 
 -- ---------------------------------------------------------------------------
 -- 6. Permisos

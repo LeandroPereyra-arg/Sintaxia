@@ -92,7 +92,7 @@ async function minijuegoPorApi(token, { buenas = 0, malas = 0 } = {}) {
   }
   const [p] = await consulta('select estado from partidas where id = $1', [id])
   if (p.estado === 'en_curso') {
-    await moverPartida(id, 60500)
+    await moverPartida(id, 180500)
     await api.rpc(token, 'finalizar_partida', { p_partida_id: id })
   }
   const [final] = await consulta('select estado, aciertos, errores, puntaje, duracion_ms from partidas where id = $1', [id])
@@ -162,7 +162,7 @@ await consulta("update eventos set estado = 'abierto' where id = $1", [EVENTO])
 await caso(
   1,
   'El desafio no muestra si cada respuesta estuvo bien',
-  'Despues de responder solo dice "Respuesta registrada" y "Siguiente": sin correcto/incorrecto, sin marcar la opcion correcta y sin puntaje en vivo; al final se ve el puntaje, igual al de la base',
+  'Tocar una opcion la manda y pasa sola a la siguiente; solo dice "Respuesta registrada": sin correcto/incorrecto, sin marcar la opcion correcta y sin puntaje en vivo; al final se ve el puntaje, igual al de la base',
   async () => {
     const cuenta = await cuentaCon('Ciega')
     const ctx = await contexto()
@@ -181,8 +181,8 @@ await caso(
       const enunciado = normalizar(await p.locator('.partida__consigna').innerText())
       const codigo = (await p.locator('.partida .bloque-codigo').count()) ? normalizar(await p.locator('.partida .bloque-codigo').innerText()) : ''
       const s = porClave.get(enunciado + '|' + codigo)
+      // Un solo toque: elegir la opcion ya la manda (no hay boton Responder).
       await p.getByRole('button', { name: i < 3 ? s.bien : s.mal, exact: true }).first().click()
-      await p.getByRole('button', { name: /^(Responder|Reintentar)$/ }).click()
       await p.locator('[data-prueba="registrada"]').waitFor({ timeout: 10000 })
       const pantalla = normalizar(await p.locator('.partida').innerText())
       vistos.push({
@@ -190,8 +190,9 @@ await caso(
         puntaje: /\d+\s*pts/.test(pantalla),
         marcada: await p.locator('.opcion--correcta, .opcion--incorrecta, .feedback').count()
       })
-      await p.locator('[data-prueba="registrada"] button').click()
-      await dormir(150)
+      // Pasa sola a la siguiente pregunta, sin tocar Siguiente.
+      await p.locator('[data-prueba="registrada"]').waitFor({ state: 'detached', timeout: 10000 })
+      await dormir(100)
     }
     await p.locator('[data-prueba="puntaje-final"]').waitFor({ timeout: 10000 })
     const final = Number((await p.locator('[data-prueba="puntaje-final"]').innerText()).match(/\d+/)[0])
@@ -199,7 +200,7 @@ await caso(
     await ctx.close()
     verificar(vistos.every((v) => !v.correccion && !v.puntaje && v.marcada === 0), `durante la partida: ${JSON.stringify(vistos)}`)
     verificar(final === 300 && enBase.puntaje === 300, `final ${final}, base ${enBase.puntaje}`)
-    return '5 respuestas: solo "Respuesta registrada" + Siguiente, sin correcto/incorrecto, sin marcar opciones y sin puntaje · al final: 300 pts = 300 en la base'
+    return '5 respuestas de un toque, cada una pasa sola a la siguiente: solo "Respuesta registrada", sin correcto/incorrecto, sin marcar opciones y sin puntaje · al final: 300 pts = 300 en la base'
   }
 )
 
@@ -242,7 +243,7 @@ await caso(
 await caso(
   3,
   'Minijuego: el servidor arma las fichas y las valida',
-  'Empieza con 56 fichas y 3 consignas, sin decir cuales son validas; una valida suma 20; repetirla no suma; una que todavia no cae, una ajena o la partida de otro se rechazan; 3 errores terminan la partida',
+  'Empieza con 225 fichas y 9 consignas (una cada 20 s, sin repetir dos seguidas) que caen cada vez más rápido, sin decir cuales son validas; una valida suma 20; repetirla no suma; una que todavia no cae, una ajena o la partida de otro se rechazan; 3 errores terminan la partida',
   async () => {
     const yo = await api.altaAnonima()
     const otro = await api.altaAnonima()
@@ -250,7 +251,11 @@ await caso(
     const inicio = await api.rpc(yo.token, 'iniciar_minijuego', { p_partida_id: id, p_desafio_id: MINI })
     verificar(inicio.estado === 200, `iniciar: ${inicio.estado} ${JSON.stringify(inicio.datos).slice(0, 120)}`)
     const d = inicio.datos
-    verificar(d.fichas.length === 56 && d.rondas.length === 3 && d.rondas.every((r) => r.consigna.startsWith('Atrapá')), `fichas ${d.fichas.length}, rondas ${JSON.stringify(d.rondas)}`)
+    verificar(d.fichas.length === 225 && d.rondas.length === 9 && d.rondas.every((r) => r.consigna.startsWith('Atrapá')), `fichas ${d.fichas.length}, rondas ${JSON.stringify(d.rondas)}`)
+    verificar(d.rondas.every((r, i) => i === 0 || r.consigna !== d.rondas[i - 1].consigna), `consignas repetidas seguidas: ${d.rondas.map((r) => r.consigna)}`)
+    const primeraF = d.fichas[0]
+    const ultimaF = d.fichas[d.fichas.length - 1]
+    verificar(ultimaF.caida_ms < primeraF.caida_ms && ultimaF.aparece_ms + ultimaF.caida_ms <= 180000, `caida ${primeraF.caida_ms} -> ${ultimaF.caida_ms}, la ultima termina en ${ultimaF.aparece_ms + ultimaF.caida_ms}`)
     verificar(d.fichas.every((f) => f.valida === null), 'el inicio dice cuales fichas son validas')
     const fichas = await fichasDe(id)
     const validas = fichas.filter((f) => f.valida)
@@ -277,14 +282,14 @@ await caso(
     verificar(vidas.join() === '2,1,0' && ultima.datos.valida === false && ultima.datos.partida.estado === 'finalizada', `vidas ${vidas}, estado ${ultima.datos.partida.estado}`)
     verificar(cerrada.datos?.hint === 'partida_cerrada', `despues de perder: ${JSON.stringify(cerrada.datos)}`)
     verificar(p.estado === 'finalizada' && p.aciertos === 1 && p.errores === 3 && p.puntaje === 20, `partida: ${JSON.stringify(p)}`)
-    return '56 fichas, 3 consignas, ninguna dice si es valida · temprana: ficha_fuera_de_tiempo · valida: +20 · repetida: no suma · ajena / de otro: rechazadas · 3 errores: vidas 2, 1, 0 y la partida termina (20 pts, cuenta) · despues: partida_cerrada'
+    return '225 fichas, 9 consignas sin repetir seguidas, caen cada vez más rápido y todas antes de los 3 min, ninguna dice si es valida · temprana: ficha_fuera_de_tiempo · valida: +20 · repetida: no suma · ajena / de otro: rechazadas · 3 errores: vidas 2, 1, 0 y la partida termina (20 pts, cuenta) · despues: partida_cerrada'
   }
 )
 
 await caso(
   4,
   'Minijuego: terminar el tiempo cuenta, y solo se puede atrapar mientras cae',
-  'Cerrar cuando se acabo el tiempo deja la partida finalizada con 60 s; una partida que nadie cerro tambien queda finalizada (no vencida); una ficha que ya paso se rechaza',
+  'Cerrar cuando se acabo el tiempo deja la partida finalizada con 180 s; una partida que nadie cerro tambien queda finalizada (no vencida); una ficha que ya paso se rechaza',
   async () => {
     const yo = await api.altaAnonima()
     const id = nuevoId()
@@ -295,18 +300,18 @@ await caso(
     // Una ficha que ya termino de caer hace rato.
     await moverPartida(id, fichas[0].aparece_ms + fichas[0].caida_ms + 8000)
     const pasada = await api.rpc(yo.token, 'atrapar_ficha', { p_partida_id: id, p_n: fichas[0].n === primera.n ? fichas[1].n : fichas[0].n })
-    await moverPartida(id, 61000)
+    await moverPartida(id, 181000)
     const cierre = await api.rpc(yo.token, 'finalizar_partida', { p_partida_id: id })
 
     const id2 = nuevoId()
     await api.rpc(yo.token, 'iniciar_minijuego', { p_partida_id: id2, p_desafio_id: MINI })
-    await moverPartida(id2, 75000)
+    await moverPartida(id2, 195000)
     await api.rpc(yo.token, 'mis_partidas', { p_evento_id: EVENTO })
     const [sola] = await consulta('select estado, duracion_ms from partidas where id = $1', [id2])
     verificar(pasada.datos?.hint === 'ficha_fuera_de_tiempo', `ficha pasada: ${JSON.stringify(pasada.datos)}`)
-    verificar(cierre.datos.estado === 'finalizada' && cierre.datos.duracion_ms === 60000 && cierre.datos.puntaje === 20, `cierre: ${JSON.stringify(cierre.datos).slice(0, 140)}`)
-    verificar(sola.estado === 'finalizada' && sola.duracion_ms === 60000, `sin cerrar: ${JSON.stringify(sola)}`)
-    return 'ficha que ya paso: ficha_fuera_de_tiempo · cerrar al terminar el tiempo: finalizada, 60 s, 20 pts · sin cerrar: finalizada (no vencida) con 60 s'
+    verificar(cierre.datos.estado === 'finalizada' && cierre.datos.duracion_ms === 180000 && cierre.datos.puntaje === 20, `cierre: ${JSON.stringify(cierre.datos).slice(0, 140)}`)
+    verificar(sola.estado === 'finalizada' && sola.duracion_ms === 180000, `sin cerrar: ${JSON.stringify(sola)}`)
+    return 'ficha que ya paso: ficha_fuera_de_tiempo · cerrar al terminar el tiempo: finalizada, 180 s, 20 pts · sin cerrar: finalizada (no vencida) con 180 s'
   }
 )
 
@@ -403,7 +408,7 @@ await caso(
 
     const caja = await p.locator('[data-prueba="area-juego"]').boundingBox()
     const puntajesVistos = []
-    const fin = Date.now() + 75000
+    const fin = Date.now() + 200000
     while (Date.now() < fin && !p.url().includes('/partidas/')) {
       const fichas = await p.locator('[data-prueba="ficha"]').evaluateAll((els) =>
         els.map((e) => ({ x: Number(e.dataset.x), progreso: Number(e.dataset.progreso), clase: e.className })))

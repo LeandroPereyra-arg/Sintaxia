@@ -9,6 +9,9 @@
 --
 --      select public.otorgar_administrador('docente@escuela.edu.ar');   -- SQL Editor
 --
+--    Si ese correo todavia no tiene cuenta, el rol queda reservado
+--    (administradores_pendientes) y se otorga solo cuando se crea la cuenta.
+--
 --    otorgar_administrador / quitar_administrador solo las puede ejecutar
 --    service_role (el SQL Editor del panel de Supabase corre como postgres,
 --    que tambien puede). Un invitado nunca es administrador.
@@ -92,15 +95,61 @@ as $$
 declare
   v_id uuid;
 begin
+  if coalesce(btrim(p_correo), '') !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
+    raise exception 'Correo invalido: %.', p_correo using errcode = '22023';
+  end if;
   select u.id into v_id from auth.users u
    where lower(u.email) = lower(btrim(p_correo)) and not coalesce(u.is_anonymous, false);
   if v_id is null then
-    raise exception 'No hay una cuenta confirmada con el correo %.', p_correo using errcode = 'P0002';
+    -- Todavia no hay cuenta con ese correo: queda reservado y se otorga solo
+    -- cuando se crea (disparador tg_auth_zz_administrador_pendiente).
+    insert into public.administradores_pendientes (correo) values (lower(btrim(p_correo)))
+    on conflict (correo) do nothing;
+    raise notice 'No hay una cuenta con el correo %: el rol queda reservado y se otorga al crearla.', p_correo;
+    return null;
   end if;
   insert into public.administradores (usuario_id) values (v_id) on conflict (usuario_id) do nothing;
+  delete from public.administradores_pendientes where correo = lower(btrim(p_correo));
   return v_id;
 end;
 $$;
+
+-- Correos con el rol reservado (todavia sin cuenta). Sin permisos para el cliente.
+create table if not exists public.administradores_pendientes (
+  correo       text        primary key check (correo = lower(btrim(correo))),
+  otorgado_por text        not null default current_user,
+  otorgado_en  timestamptz not null default now()
+);
+comment on table public.administradores_pendientes is 'Correos a los que otorgar_administrador() reservo el rol antes de que tuvieran cuenta.';
+alter table public.administradores_pendientes enable row level security;
+revoke all on public.administradores_pendientes from anon, authenticated;
+
+-- Al crear la cuenta (o al convertir un invitado en cuenta) con un correo
+-- reservado, pasa a ser administrador. El nombre empieza con tg_auth_zz para
+-- correr DESPUES de los disparadores que crean y sincronizan el perfil (05).
+create or replace function public.fn_administrador_pendiente()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if new.email is not null and not coalesce(new.is_anonymous, false)
+     and exists (select 1 from public.administradores_pendientes where correo = lower(new.email))
+     and exists (select 1 from public.perfiles where id = new.id) then
+    insert into public.administradores (usuario_id, otorgado_por) values (new.id, 'reserva por correo')
+    on conflict (usuario_id) do nothing;
+    delete from public.administradores_pendientes where correo = lower(new.email);
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.fn_administrador_pendiente() from public, anon, authenticated;
+
+drop trigger if exists tg_auth_zz_administrador_pendiente on auth.users;
+create trigger tg_auth_zz_administrador_pendiente
+  after insert or update of email, is_anonymous on auth.users
+  for each row execute function public.fn_administrador_pendiente();
 
 create or replace function public.quitar_administrador(p_correo text)
 returns boolean
@@ -114,6 +163,7 @@ begin
   delete from public.administradores a using auth.users u
    where a.usuario_id = u.id and lower(u.email) = lower(btrim(p_correo));
   get diagnostics v_borradas = row_count;
+  delete from public.administradores_pendientes where correo = lower(btrim(p_correo));
   return v_borradas > 0;
 end;
 $$;
