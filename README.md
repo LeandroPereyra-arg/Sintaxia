@@ -10,10 +10,12 @@ rachas, medallas y un camino de unidades que se va desbloqueando. Se puede entra
 **invitado** (con un usuario propio) o **crear una cuenta con correo y contraseña**; un
 invitado que crea su cuenta **conserva su historial**.
 
-El curso implementado es el de **JavaScript**. Desde la etapa 3 los cursos, las
-unidades, las lecciones y las actividades se leen de Supabase: hay una unidad
-publicada (3 lecciones y 12 actividades de opcion multiple) y el resto de las
-unidades queda como "proximamente" hasta que se cargue su contenido.
+Hay seis cursos disponibles: **JavaScript, Python, HTML y CSS, SQL, Java y C++**. Desde
+la etapa 3 los cursos, las unidades, las lecciones y las actividades se leen de Supabase.
+JavaScript tiene una unidad publicada (3 lecciones y 12 actividades de opcion multiple);
+cada uno de los otros cinco tiene dos unidades publicadas (4 lecciones y 16 actividades,
+en `src/data/cursosNuevos.js`). El resto de las unidades queda como "proximamente" hasta
+que se cargue su contenido (`npm run supabase:datos` regenera `02-datos-iniciales.sql`).
 
 ![Pagina de inicio](docs/capturas/01-inicio.png)
 

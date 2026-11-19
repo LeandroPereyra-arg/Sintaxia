@@ -17,11 +17,12 @@ import { cursos } from '../src/data/cursos.js'
 import { unidadesJavaScript } from '../src/data/unidades.js'
 import { lecciones } from '../src/data/lecciones/index.js'
 import { TIPO_EJERCICIO } from '../src/data/tiposEjercicio.js'
+import { unidadesCursosNuevos, leccionesCursosNuevos } from '../src/data/cursosNuevos.js'
 
 const raiz = dirname(fileURLToPath(import.meta.url))
 
 /** Unidades cuyo contenido esta completo y se publica en esta etapa. */
-const UNIDADES_PUBLICADAS = new Set(['js-u1'])
+const UNIDADES_PUBLICADAS = new Set(['js-u1', ...unidadesCursosNuevos.filter((u) => u.publicada).map((u) => u.id)])
 
 /** Los colores de las unidades estan como variables CSS; la base guarda el hexadecimal. */
 const COLORES = {
@@ -119,10 +120,11 @@ w(
 w()
 
 // --- unidades --------------------------------------------------------------
-const unidades = unidadesJavaScript
+const unidades = [...unidadesJavaScript, ...unidadesCursosNuevos]
 w('-- ---------------------------------------------------------------------------')
-w(`-- Unidades del curso de JavaScript (${unidades.length})`)
-w('-- Solo la unidad 1 tiene el contenido completo; el resto queda como')
+w(`-- Unidades (${unidades.length})`)
+w('-- JavaScript: solo la unidad 1 tiene el contenido completo. Los demas cursos')
+w('-- (src/data/cursosNuevos.js): las unidades 1 y 2. El resto queda como')
 w('-- "proximamente", es decir, visible pero no disponible.')
 w('-- ---------------------------------------------------------------------------')
 w('insert into public.unidades')
@@ -149,7 +151,7 @@ w(
 w()
 
 // --- lecciones -------------------------------------------------------------
-const leccionesPublicadas = lecciones.filter((leccion) => UNIDADES_PUBLICADAS.has(leccion.unidadId))
+const leccionesPublicadas = [...lecciones, ...leccionesCursosNuevos].filter((leccion) => UNIDADES_PUBLICADAS.has(leccion.unidadId))
 
 w('-- ---------------------------------------------------------------------------')
 w(`-- Lecciones publicadas (${leccionesPublicadas.length})`)

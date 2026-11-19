@@ -51,9 +51,27 @@ function alCerrarSesion() {
   router.push({ name: 'inicio' })
 }
 
-/** Cierra el menu del usuario al hacer clic afuera. */
+/**
+ * Al cerrar la sesion desde el menu, el menu desaparece (sin sesion se muestra
+ * "Entrar") y el aviso 'cerrada' del boton puede no llegar. Por eso tambien se
+ * mira la sesion: si se cerro estando en una pantalla que la necesita, al inicio.
+ */
+watch(conSesion, (ahora, antes) => {
+  if (antes && !ahora) {
+    cerrarTodo()
+    if (route.meta?.requiereSesion) router.push({ name: 'inicio' })
+  }
+})
+
+/**
+ * Cierra el menu del usuario al hacer clic afuera. Se mira el recorrido del clic
+ * (composedPath) y no evento.target: si el clic cambio el menu (por ejemplo
+ * "Cerrar sesion" de un invitado, que reemplaza el boton por el aviso), el boton
+ * tocado ya no esta en la pagina y parecia un clic afuera: el menu se cerraba y
+ * el aviso con "Salir igual" no llegaba a verse.
+ */
 function clicAfuera(evento) {
-  if (contenedorUsuario.value && !contenedorUsuario.value.contains(evento.target)) {
+  if (contenedorUsuario.value && !evento.composedPath().includes(contenedorUsuario.value)) {
     menuUsuario.value = false
   }
 }
