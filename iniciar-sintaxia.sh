@@ -11,7 +11,7 @@ if [ ! -f .env ]; then
   echo "Creando la configuracion de Supabase..."
   printf 'VITE_SUPABASE_URL=https://lbhktoibjccncblxpets.supabase.co\nVITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_Ty32Dfcm0vpaT3jav3F7wg_tS6z5Jt4\n' > .env
 fi
-if [ ! -d node_modules ]; then
+if ! node scripts/faltan-dependencias.cjs; then
   echo "Instalando dependencias. La primera vez tarda unos minutos..."
   npm install --no-audit --no-fund || { echo "No se pudo instalar. Revisa la conexion."; exit 1; }
 fi
