@@ -500,6 +500,127 @@ await caso(
 )
 
 // ===========================================================================
+//  G. COMPU COMPARTIDA: SALIR Y CAMBIAR DE JUGADOR
+// ===========================================================================
+
+await caso(
+  10,
+  'Un invitado cierra sesion desde el menu de arriba',
+  'Cerrar sesion muestra el aviso (no se cierra el menu); "Salir igual" borra la sesion del navegador y lleva fuera de las pantallas que la necesitan',
+  async () => {
+    const ctx = await contexto({ viewport: { width: 1280, height: 800 } })
+    const p = await pagina(ctx)
+    await p.goto(`${URL_APP}/ingresar`, { waitUntil: 'networkidle' })
+    await p.getByRole('button', { name: /invitado/i }).first().click()
+    await p.waitForFunction(() => Boolean(localStorage.getItem('sintaxia:sesion')), null, { timeout: 10000 })
+    await p.goto(`${URL_APP}/perfil`, { waitUntil: 'networkidle' })
+    await p.getByRole('button', { name: 'Abrir menu de la cuenta' }).click()
+    await p.getByRole('banner').getByRole('button', { name: /Cerrar sesion/ }).click()
+    await dormir(300)
+    const aviso = await p.getByRole('banner').getByRole('button', { name: 'Salir igual' }).count()
+    verificar(aviso === 1, 'el menu se cerro y el aviso no se vio')
+    await p.getByRole('banner').getByRole('button', { name: 'Salir igual' }).click()
+    await p.waitForFunction(() => !localStorage.getItem('sintaxia:sesion'), null, { timeout: 10000 })
+    await p.waitForURL((u) => !u.pathname.startsWith('/perfil'), { timeout: 10000 })
+    const destino = new URL(p.url()).pathname
+    await ctx.close()
+    return `aviso "Salir igual" visible en el menu · sesion borrada · de /perfil a ${destino}`
+  }
+)
+
+await caso(
+  11,
+  'Compu compartida: cambiar de jugador en la competencia',
+  'Con un alias elegido aparece "Cambiar de jugador"; al usarlo se cierra esa sesion de invitado, vuelve el formulario vacio y el siguiente juega con otro alias y otro usuario; el primero sigue en el ranking',
+  async () => {
+    const ctx = await contexto()
+    const p = await pagina(ctx)
+    p.on('dialog', (d) => d.accept())
+    await p.goto(`${URL_APP}/expo/${EVENTO}`, { waitUntil: 'networkidle' })
+    const vistos = []
+    for (const alias of ['Primero_A', 'Segundo_B']) {
+      await p.getByLabel('Tu alias').fill(alias)
+      await p.getByRole('button', { name: 'Jugar con este alias' }).click()
+      await p.locator('[data-prueba="alias-actual"]').waitFor({ timeout: 10000 })
+      const texto = normalizar(await p.locator('[data-prueba="alias-actual"]').innerText())
+      const id = await p.evaluate(() => JSON.parse(localStorage.getItem('sintaxia:sesion')).user.id)
+      if (alias === 'Primero_A') await jugarPorApi(api, bd, await p.evaluate(() => JSON.parse(localStorage.getItem('sintaxia:sesion')).access_token), SPRINT, { aciertos: 1 })
+      vistos.push({ alias, texto, id })
+      await p.locator('[data-prueba="cambiar-jugador"]').click()
+      await p.locator('[data-prueba="alias-expo"]').waitFor({ timeout: 10000 })
+    }
+    const vacio = (await p.getByLabel('Tu alias').inputValue()) === ''
+    const sinSesion = await p.evaluate(() => !localStorage.getItem('sintaxia:sesion'))
+    const [primero] = await consulta(
+      `select r.puntaje from resultados_publicos r join perfiles pf on pf.id_publico = r.participante where pf.id = $1`, [vistos[0].id])
+    await ctx.close()
+    verificar(vistos.every((v) => v.texto.includes(v.alias)) && vistos[0].id !== vistos[1].id, `jugadores: ${JSON.stringify(vistos)}`)
+    verificar(vacio && sinSesion, `despues de cambiar: vacio ${vacio}, sin sesion ${sinSesion}`)
+    verificar(primero, 'el primero no quedo en el ranking')
+    return `${vistos.map((v) => `${v.alias} (usuario ${v.id.slice(0, 8)})`).join(' -> ')} · despues: formulario vacio y sin sesion · Primero_A sigue en el ranking (${primero.puntaje} pts)`
+  }
+)
+
+// ===========================================================================
+//  H. LOS DEMAS CURSOS
+// ===========================================================================
+
+await caso(
+  12,
+  'Python, HTML y CSS, SQL, Java y C++ tienen contenido y se juegan',
+  'Los 6 cursos aparecen disponibles; cada curso nuevo tiene 2 unidades publicadas con 2 lecciones de 4 actividades; la correcta esta repartida entre las posiciones; una leccion de Python se juega entera y queda guardada',
+  async () => {
+    const [conteo] = await consulta(`
+      select count(*) filter (where c.estado = 'disponible')::int as disponibles,
+             (select json_object_agg(curso_id, n) from (
+                select u.curso_id, count(q.*)::int as n from unidades u join lecciones l on l.unidad_id = u.id
+                  join preguntas q on q.leccion_id = l.id
+                 where u.estado = 'publicada' and q.estado = 'publicada' group by u.curso_id) x) as preguntas,
+             (select json_object_agg(orden, n) from (
+                select o.orden, count(*)::int as n from opciones o join preguntas q on q.id = o.pregunta_id
+                  join lecciones l on l.id = q.leccion_id join unidades u on u.id = l.unidad_id
+                 where o.es_correcta and u.curso_id <> 'javascript' group by o.orden) y) as posiciones
+        from cursos c`)
+    verificar(conteo.disponibles === 6, `cursos disponibles: ${conteo.disponibles}`)
+    for (const curso of ['python', 'html-css', 'sql', 'java', 'cpp']) {
+      verificar(conteo.preguntas[curso] === 16, `${curso}: ${conteo.preguntas[curso]} preguntas`)
+    }
+    verificar(Object.values(conteo.posiciones).every((n) => n >= 15), `posiciones de la correcta: ${JSON.stringify(conteo.posiciones)}`)
+
+    const solucion = new Map((await consulta(
+      `select q.enunciado, o.texto from preguntas q join opciones o on o.pregunta_id = q.id and o.es_correcta
+        where q.leccion_id = 'py-u1-l1'`)).map((f) => [normalizar(f.enunciado), f.texto]))
+    const ctx = await contexto()
+    const p = await pagina(ctx)
+    await p.goto(`${URL_APP}/cursos`, { waitUntil: 'networkidle' })
+    const tarjetas = normalizar(await p.locator('main').innerText())
+    await p.goto(`${URL_APP}/ingresar`, { waitUntil: 'networkidle' })
+    await p.getByRole('button', { name: /Continuar como invitado|Seguir como invitado/ }).click()
+    await p.waitForFunction(() => Boolean(localStorage.getItem('sintaxia:sesion')), null, { timeout: 10000 })
+    await p.goto(`${URL_APP}/lecciones/py-u1-l1`, { waitUntil: 'networkidle' })
+    await p.getByRole('button', { name: /Comenzar actividades/i }).or(p.getByRole('link', { name: /Comenzar actividades/i })).first().click()
+    for (let i = 0; i < 4; i++) {
+      await p.waitForSelector('.opcion')
+      const texto = normalizar(await p.locator('main').innerText())
+      const [, correcta] = [...solucion.entries()].find(([e]) => texto.includes(e)) ?? []
+      verificar(correcta, `no reconozco la pregunta: ${texto.slice(0, 120)}`)
+      await p.getByRole('button', { name: correcta, exact: true }).first().click()
+      await p.getByRole('button', { name: /Comprobar/ }).click()
+      await p.waitForSelector('.feedback')
+      await p.locator('.feedback button').click()
+      await dormir(200)
+    }
+    await p.waitForURL(/\/resultados/, { timeout: 10000 })
+    const id = await p.evaluate(() => JSON.parse(localStorage.getItem('sintaxia:sesion')).user.id)
+    const [intento] = await consulta(`select estado, aciertos as correctas from intentos where usuario_id = $1 and leccion_id = 'py-u1-l1'`, [id])
+    await ctx.close()
+    verificar(['Python', 'HTML y CSS', 'SQL', 'Java', 'C++'].every((c) => tarjetas.includes(c)), `cursos en pantalla: ${tarjetas.slice(0, 200)}`)
+    verificar(intento && intento.correctas === 4, `intento: ${JSON.stringify(intento)}`)
+    return `6 cursos disponibles · 16 preguntas publicadas en cada curso nuevo · correcta en a/b/c/d: ${Object.values(conteo.posiciones).join('/')} · leccion py-u1-l1 jugada: ${intento.estado}, ${intento.correctas}/4`
+  }
+)
+
+// ===========================================================================
 //  Resumen
 // ===========================================================================
 await navegador.close()

@@ -37,13 +37,13 @@ export const cursos = [
     slug: 'python',
     descripcion:
       'Sintaxis simple y legible. Ideal para dar tus primeros pasos, automatizar tareas y entrar al mundo de los datos.',
-    estado: ESTADO_CURSO.PROXIMAMENTE,
+    estado: ESTADO_CURSO.DISPONIBLE,
     nivel: 'Principiante',
     icono: 'Py',
     color: '#3776ab',
     colorTexto: '#ffffff',
-    totalUnidades: 6,
-    totalLecciones: 15,
+    totalUnidades: 4,
+    totalLecciones: 8,
     horasEstimadas: 13,
     etiquetas: ['Datos', 'Automatizacion']
   },
@@ -53,13 +53,13 @@ export const cursos = [
     slug: 'html-css',
     descripcion:
       'La estructura y el diseño de cualquier sitio web. Etiquetas, selectores, cajas, flexbox y diseño responsivo.',
-    estado: ESTADO_CURSO.PROXIMAMENTE,
+    estado: ESTADO_CURSO.DISPONIBLE,
     nivel: 'Principiante',
     icono: '</>',
     color: '#e34f26',
     colorTexto: '#ffffff',
-    totalUnidades: 5,
-    totalLecciones: 12,
+    totalUnidades: 4,
+    totalLecciones: 8,
     horasEstimadas: 9,
     etiquetas: ['Web', 'Diseño']
   },
@@ -69,13 +69,13 @@ export const cursos = [
     slug: 'sql',
     descripcion:
       'Consulta y modifica bases de datos relacionales. SELECT, filtros, ordenamientos, joins y agrupaciones.',
-    estado: ESTADO_CURSO.PROXIMAMENTE,
+    estado: ESTADO_CURSO.DISPONIBLE,
     nivel: 'Intermedio',
     icono: 'DB',
     color: '#00758f',
     colorTexto: '#ffffff',
-    totalUnidades: 5,
-    totalLecciones: 11,
+    totalUnidades: 3,
+    totalLecciones: 6,
     horasEstimadas: 8,
     etiquetas: ['Datos', 'Back-end']
   },
@@ -85,16 +85,15 @@ export const cursos = [
     slug: 'java',
     descripcion:
       'Programacion orientada a objetos con tipado estatico. Clases, objetos, herencia y colecciones.',
-    estado: ESTADO_CURSO.BLOQUEADO,
+    estado: ESTADO_CURSO.DISPONIBLE,
     nivel: 'Intermedio',
     icono: 'Ja',
     color: '#f89820',
     colorTexto: '#1f2933',
-    totalUnidades: 7,
-    totalLecciones: 18,
+    totalUnidades: 4,
+    totalLecciones: 8,
     horasEstimadas: 16,
-    etiquetas: ['POO', 'Back-end'],
-    requisito: 'Completa el curso de JavaScript para desbloquearlo'
+    etiquetas: ['POO', 'Back-end']
   },
   {
     id: 'cpp',
@@ -102,16 +101,15 @@ export const cursos = [
     slug: 'cpp',
     descripcion:
       'Rendimiento y control de la memoria. Punteros, referencias, structs y el manejo manual de recursos.',
-    estado: ESTADO_CURSO.BLOQUEADO,
+    estado: ESTADO_CURSO.DISPONIBLE,
     nivel: 'Avanzado',
     icono: 'C++',
     color: '#00599c',
     colorTexto: '#ffffff',
-    totalUnidades: 7,
-    totalLecciones: 19,
+    totalUnidades: 4,
+    totalLecciones: 8,
     horasEstimadas: 20,
-    etiquetas: ['Sistemas', 'Videojuegos'],
-    requisito: 'Necesitas un curso intermedio completado'
+    etiquetas: ['Sistemas', 'Videojuegos']
   }
 ]
 

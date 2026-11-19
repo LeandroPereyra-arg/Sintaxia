@@ -23,7 +23,7 @@ const props = defineProps({
   eventoId: { type: String, required: true }
 })
 
-const { conSesion, esInvitado, entrarComoInvitado } = useAuth()
+const { conSesion, esInvitado, entrarComoInvitado, cerrarSesion } = useAuth()
 
 // --- Jugar solo con un alias (sin iniciar sesion) ---------------------------------
 // Por detras se abre una sesion de invitado y se le pone el alias elegido: con el
@@ -49,6 +49,29 @@ async function jugarConAlias() {
     aliasError.value = e?.message ?? 'No pudimos guardar tu alias.'
   } finally {
     aliasGuardando.value = false
+  }
+}
+
+/**
+ * Compu compartida de la expo: el que termino deja lugar al siguiente. Se cierra
+ * la sesion de invitado (sus puntos ya quedaron en el ranking) y vuelve a
+ * aparecer el formulario del alias.
+ */
+const cambiando = ref(false)
+async function cambiarDeJugador() {
+  const actual = aliasExpo.value ? `${aliasExpo.value.alias}#${String(aliasExpo.value.codigo).padStart(4, '0')}` : 'este jugador'
+  if (!window.confirm(`¿Cambiar de jugador? Los puntos de ${actual} quedan en el ranking, pero ya no se va a poder seguir jugando con ese alias.`)) return
+  cambiando.value = true
+  try {
+    await cerrarSesion()
+    aliasExpo.value = null
+    aliasNuevo.value = ''
+    aliasIntento.value = false
+    aliasError.value = ''
+  } catch (e) {
+    aliasError.value = e?.message ?? 'No pudimos cambiar de jugador.'
+  } finally {
+    cambiando.value = false
   }
 }
 
@@ -145,6 +168,9 @@ function resumenDe(desafio) {
         </form>
         <p v-else-if="esInvitado && aliasExpo" class="alias-expo__actual" data-prueba="alias-actual">
           <Icono nombre="usuario" :tamano="16" /> Jugás como <strong>{{ aliasExpo.alias }}#{{ String(aliasExpo.codigo).padStart(4, '0') }}</strong>
+          <BaseBoton variante="texto" tamano="chico" :deshabilitado="cambiando" data-prueba="cambiar-jugador" @click="cambiarDeJugador">
+            <Icono nombre="salir" :tamano="15" /> {{ cambiando ? 'Cambiando...' : 'Cambiar de jugador' }}
+          </BaseBoton>
         </p>
 
         <ul class="desafios">
@@ -347,6 +373,7 @@ function resumenDe(desafio) {
 
 .alias-expo__actual {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
   margin-bottom: var(--e-3);
