@@ -2,7 +2,7 @@
 
 Escaneá el QR (`qr-sintaxia.png`) o abrí este enlace desde el celular:
 
-https://github.com/LeandroPereyra-arg/Sintaxia/raw/main/descargas/Sintaxia.apk
+https://raw.githubusercontent.com/LeandroPereyra-arg/Sintaxia/main/descargas/Sintaxia.apk
 
 1. Se descarga `Sintaxia.apk`. Abrilo.
 2. Si Android pregunta, permití **"Instalar apps de origen desconocido"** para el navegador.
