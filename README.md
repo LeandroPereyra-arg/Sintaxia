@@ -416,7 +416,7 @@ Detalle en [docs/16-competencia.md](docs/16-competencia.md).
 
 Ademas hay un **minijuego, "Sintax atrapa el código"**: caen fichas con codigo y Sintax tiene
 que atrapar las que cumplen la consigna (por ejemplo, palabras reservadas de JavaScript), con
-3 vidas y 1 minuto. El servidor arma las fichas y es el unico que sabe cuales valen. El ranking
+3 vidas y hasta 3 minutos (cada vez más rápido). El servidor arma las fichas y es el unico que sabe cuales valen. El ranking
 muestra un **puntaje total** que suma la mejor partida de cada desafio, minijuego incluido.
 Detalle en [docs/27-minijuego-y-puntaje-total.md](docs/27-minijuego-y-puntaje-total.md).
 

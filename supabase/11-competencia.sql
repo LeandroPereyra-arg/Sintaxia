@@ -297,7 +297,8 @@ create table if not exists public.partidas (
     references public.desafios (id, evento_id) on update cascade on delete restrict,
   constraint ck_partidas_estado   check (estado in ('en_curso', 'finalizada', 'vencida')),
   constraint ck_partidas_numero   check (numero >= 1),
-  constraint ck_partidas_total    check (total_preguntas between 1 and 100),
+  -- En el minijuego, total_preguntas es la cantidad de fichas (225 en el de 3 minutos).
+  constraint ck_partidas_total    check (total_preguntas between 1 and 500),
   constraint ck_partidas_conteo   check (aciertos >= 0 and errores >= 0 and aciertos + errores <= total_preguntas),
   -- El puntaje no se guarda suelto: siempre es aciertos x puntos por acierto.
   constraint ck_partidas_puntaje  check (puntaje = aciertos * puntos_por_acierto),
@@ -315,6 +316,10 @@ comment on column public.partidas.id is 'Lo genera el cliente (uuid): repetir la
 comment on column public.partidas.estado is 'en_curso, finalizada (respondio todo o la cerro a tiempo: entra al ranking) o vencida (paso el tiempo sin cerrarla: no entra).';
 comment on column public.partidas.vence_en is 'iniciada_en + duracion, con el reloj del servidor.';
 comment on column public.partidas.duracion_ms is 'Tiempo usado, medido por el servidor (finalizada_en - iniciada_en). Desempata el ranking.';
+
+-- Bases creadas antes del minijuego largo: el tope era 100.
+alter table public.partidas drop constraint if exists ck_partidas_total;
+alter table public.partidas add  constraint ck_partidas_total check (total_preguntas between 1 and 500);
 
 -- Una sola partida en curso por persona y desafio.
 create unique index if not exists uq_partidas_en_curso

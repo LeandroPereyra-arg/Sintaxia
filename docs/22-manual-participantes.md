@@ -52,8 +52,8 @@ reservadas de JavaScript*):
 
 - Mové a Sintax arrastrando el dedo o con los botones ◀ ▶.
 - Ficha correcta: **+20 puntos**. Ficha equivocada: **perdés una vida** (tenés 3).
-- Arranca con una cuenta regresiva (3, 2, 1, ¡Ya!). Dura 1 minuto y la consigna cambia cada
-  20 segundos.
+- Arranca con una cuenta regresiva (3, 2, 1, ¡Ya!). Dura hasta 3 minutos, la consigna cambia
+  cada 20 segundos y las fichas caen cada vez más rápido: cuanto más aguantes, más puntos.
 - Al terminar el tiempo o las vidas, la partida cuenta. Tenés 3 intentos.
 
 Si se corta internet a mitad de partida, la respuesta queda **pendiente** y se manda

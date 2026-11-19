@@ -22,6 +22,10 @@ import { nuevoIdDeIntento } from '@/servicios/progreso.js'
  * suma los puntos (supabase/12-funciones-competencia.sql). Esta pantalla solo
  * manda que pregunta y que opcion, y muestra lo que el servidor confirmo.
  *
+ * Tocar una opcion ya la manda: no hay boton Responder. Cuando el servidor la
+ * registra, la pantalla pasa sola a la siguiente pregunta (AVANCE_MS despues,
+ * para que se llegue a leer "Respuesta registrada").
+ *
  * Mientras se juega NO se muestra si cada respuesta estuvo bien ni el puntaje
  * (el servidor tampoco lo manda: 17-juego-de-la-expo.sql). Se ve solo el
  * puntaje final, en la pantalla de resultado.
@@ -57,6 +61,10 @@ const resultado = ref(null)
 const envio = ref('')
 const mensajeEnvio = ref('')
 const terminando = ref(false)
+
+/** Pausa entre "Respuesta registrada" y la pregunta siguiente. */
+const AVANCE_MS = 700
+let avance = null
 
 // --- Tiempo -----------------------------------------------------------------
 const limite = ref(null) // performance.now() en el que vence, segun el servidor
@@ -152,6 +160,13 @@ watch(() => props.desafioId, () => {
 }, { immediate: true })
 
 // --- Responder ------------------------------------------------------------------
+/** Tocar una opcion la elige y la manda en el mismo toque. */
+function elegir(opcionId) {
+  if (comprobado.value || envio.value === 'enviando') return
+  respuesta.value = opcionId
+  enviar()
+}
+
 async function enviar() {
   if (!puedeEnviar.value) return
   const pedido = { preguntaId: pregunta.value.id, opcionId: respuesta.value }
@@ -166,6 +181,8 @@ async function enviar() {
     const actual = preguntas.value.map((q) => (q.id === r.preguntaId ? { ...q, respuesta: { opcionId: r.opcionId } } : q))
     partida.value = { ...r.partida, preguntas: actual }
     sincronizarTiempo(r.partida)
+    clearTimeout(avance)
+    avance = setTimeout(continuar, AVANCE_MS)
   } catch (e) {
     if (e?.sinConexion) {
       envio.value = 'pendiente'
@@ -181,6 +198,9 @@ async function enviar() {
 }
 
 function continuar() {
+  clearTimeout(avance)
+  avance = null
+  if (!partida.value || !comprobado.value) return
   if (partida.value.estado !== ESTADO_PARTIDA.EN_CURSO) {
     irAlResultado()
     return
@@ -238,6 +258,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('online', alVolverLaConexion)
   clearInterval(reloj)
+  clearTimeout(avance)
 })
 
 const tituloError = computed(
@@ -270,7 +291,8 @@ const tituloError = computed(
       <pre v-if="pregunta.codigo" class="bloque-codigo">{{ pregunta.codigo }}</pre>
 
       <EjercicioOpcionMultiple
-        v-model="respuesta"
+        :model-value="respuesta"
+        @update:model-value="elegir"
         :ejercicio="pregunta"
         :bloqueado="comprobado || envio === 'enviando'"
       />
@@ -307,9 +329,12 @@ const tituloError = computed(
         <BaseBoton variante="texto" :deshabilitado="terminando" @click="terminar">
           {{ terminando ? 'Terminando...' : 'Terminar' }}
         </BaseBoton>
-        <BaseBoton tamano="grande" :deshabilitado="!puedeEnviar" @click="enviar">
-          {{ envio === 'enviando' ? 'Enviando...' : envio === 'pendiente' || envio === 'fallo' ? 'Reintentar' : 'Responder' }}
+        <BaseBoton v-if="envio === 'pendiente' || envio === 'fallo'" tamano="grande" :deshabilitado="!puedeEnviar" @click="enviar">
+          Reintentar
         </BaseBoton>
+        <p v-else class="partida__ayuda" data-prueba="ayuda-responder">
+          {{ envio === 'enviando' ? 'Enviando...' : 'Tocá una opción para responder' }}
+        </p>
       </div>
     </footer>
   </div>
@@ -440,6 +465,13 @@ const tituloError = computed(
 .partida__pie--registrada {
   background: var(--c-violeta-suave);
   border-top-color: var(--c-violeta);
+}
+
+.partida__ayuda {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: var(--c-gris);
+  text-align: right;
 }
 
 .registrada__texto {

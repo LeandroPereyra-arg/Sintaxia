@@ -39,8 +39,8 @@ es el juego.
 
 ### Cómo se juega
 
-- Caen fichas con código. Arriba hay una **consigna** que cambia cada 20 segundos (tres
-  rondas): *Atrapá palabras reservadas de JavaScript*, *Atrapá resultados posibles de
+- Caen fichas con código. Arriba hay una **consigna** que cambia cada 20 segundos (nueve
+  rondas, nunca la misma dos veces seguidas): *Atrapá palabras reservadas de JavaScript*, *Atrapá resultados posibles de
   typeof*, *Atrapá operadores de comparación* o *Atrapá métodos de los arrays*.
 - Sintax se mueve arrastrando el dedo, con las flechas del teclado o con los botones
   ◀ ▶.
@@ -49,7 +49,9 @@ es el juego.
 - Empieza con una **cuenta regresiva** (3, 2, 1, ¡Ya!). La marca el servidor: la partida
   arranca 3 segundos después de pedirla, así la cuenta no le resta tiempo de juego a nadie
   y el celular la muestra sincronizada con ese reloj.
-- Dura **60 segundos**. Las fichas caen cada vez más rápido.
+- Dura **hasta 3 minutos** (180 segundos): termina antes si se pierden las 3 vidas. Las
+  fichas caen cada vez más rápido (de 4,2 s a 1,6 s de caída) y cada vez más seguido, así
+  que aguantar hasta el final queda para los que más practican.
 - Termina al acabarse el tiempo o las vidas, y **la partida cuenta** (no queda "vencida").
 - **3 intentos** por persona. En el ranking cuenta la mejor partida, como en los demás
   desafíos.
@@ -60,7 +62,7 @@ El celular no decide nada:
 
 | Qué | Cómo |
 |---|---|
-| Las fichas | Las arma el **servidor** al empezar (56 fichas: texto, cuándo aparece, cuánto tarda en caer, por qué columna). El celular las recibe **sin saber cuáles son válidas** |
+| Las fichas | Las arma el **servidor** al empezar (225 fichas, unas 5 cada 4 segundos: texto, cuándo aparece, cuánto tarda en caer, por qué columna). El celular las recibe **sin saber cuáles son válidas** |
 | Atrapar | Por cada ficha el celular llama a `atrapar_ficha(partida, n)`. El servidor responde si era válida y devuelve puntaje y vidas |
 | Momento | El servidor solo acepta la ficha **mientras está cayendo**, medido con **su** reloj (con un margen de red). Una que todavía no apareció o que ya pasó: `ficha_fuera_de_tiempo` |
 | Repetir | Una ficha se cuenta una sola vez; repetir el pedido devuelve lo mismo |

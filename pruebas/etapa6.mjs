@@ -139,12 +139,12 @@ async function responderEnPantalla(p, soluciones, { bien = true, continuar = tru
     : ''
   const s = soluciones.get(enunciado + '|' + codigo)
   if (!s) throw new Error(`No reconozco la pregunta: ${enunciado} ${codigo}`)
+  // Tocar la opcion ya la manda; despues de "Respuesta registrada" pasa sola a la siguiente.
   await p.getByRole('button', { name: bien ? s.bien : s.mal, exact: true }).first().click()
-  await p.getByRole('button', { name: /^(Responder|Reintentar)$/ }).click()
   await p.waitForSelector('[data-prueba="registrada"]', { timeout: 10000 })
   if (continuar) {
-    await p.locator('[data-prueba="registrada"] button').click()
-    await dormir(150)
+    await p.locator('[data-prueba="registrada"]').waitFor({ state: 'detached', timeout: 10000 })
+    await dormir(100)
   }
 }
 
@@ -462,7 +462,6 @@ await caso(
     const enunciado = normalizar(await p2.locator('.partida__consigna').innerText())
     const codigo = (await p2.locator('.partida .bloque-codigo').count()) ? normalizar(await p2.locator('.partida .bloque-codigo').innerText()) : ''
     await p2.getByRole('button', { name: soluciones.get(enunciado + '|' + codigo).bien, exact: true }).first().click()
-    await p2.getByRole('button', { name: 'Responder' }).click()
     await p2.locator('[data-prueba="estado-envio"][data-estado="pendiente"]').waitFor({ timeout: 10000 })
     const [{ n: sinRed }] = await consulta(
       'select count(*)::int as n from partida_respuestas r join partidas p on p.id = r.partida_id where p.usuario_id = $1', [id])

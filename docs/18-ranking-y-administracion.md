@@ -137,8 +137,11 @@ select public.otorgar_administrador('docente@escuela.edu.ar');
 select public.quitar_administrador('docente@escuela.edu.ar');
 ```
 
-Esas dos funciones solo las puede ejecutar `service_role` (o `postgres`). La
-cuenta tiene que existir y no puede ser de invitado.
+Esas dos funciones solo las puede ejecutar `service_role` (o `postgres`). Un
+invitado nunca es administrador. Si todavia no hay una cuenta con ese correo, el rol
+queda **reservado** en `administradores_pendientes` (sin permisos para el cliente) y el
+disparador `tg_auth_zz_administrador_pendiente` lo otorga al crear la cuenta con ese
+correo; `quitar_administrador` tambien borra la reserva.
 
 **El permiso real esta en la base.** Todas las funciones `admin_*` empiezan
 llamando a `exigir_admin()`, que corta con el motivo `sin_permiso_admin` si quien
