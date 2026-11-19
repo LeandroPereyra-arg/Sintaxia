@@ -37,7 +37,8 @@ if not exist ".env" (
   >> ".env" echo VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_Ty32Dfcm0vpaT3jav3F7wg_tS6z5Jt4
 )
 
-if not exist "node_modules" (
+node scripts\faltan-dependencias.cjs
+if errorlevel 1 (
   echo  Instalando dependencias. La primera vez tarda unos minutos...
   call npm install --no-audit --no-fund
   if errorlevel 1 (
