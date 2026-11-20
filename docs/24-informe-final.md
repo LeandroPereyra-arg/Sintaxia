@@ -43,7 +43,7 @@ la misma base.
 
 | Incluido | Fuera de alcance (por ahora) |
 |---|---|
-| Seis cursos: JavaScript (1 unidad publicada, 3 lecciones, 12 actividades) y Python, HTML y CSS, SQL, Java y C++ (2 unidades publicadas, 4 lecciones y 16 actividades cada uno); el resto de las unidades "proximamente" | Las unidades que faltan de cada curso |
+| Seis cursos completos: 25 unidades, 52 lecciones y 208 actividades (JavaScript, Python, HTML y CSS, SQL, Java y C++) | Mas tipos de actividad (completar, ordenar) en la base |
 | Actividades de opcion multiple corregidas por el servidor | Editor de codigo con ejecucion real |
 | Invitados, cuentas con correo y contraseña, confirmacion y recuperacion | Inicio de sesion con Google o GitHub (fue de la etapa 1, con Express; no se paso a Supabase) |
 | Intentos, historial, progreso, desbloqueo, XP, racha, medallas | Repaso espaciado de los errores |

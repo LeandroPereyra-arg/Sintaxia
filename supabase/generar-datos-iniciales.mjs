@@ -18,11 +18,13 @@ import { unidadesJavaScript } from '../src/data/unidades.js'
 import { lecciones } from '../src/data/lecciones/index.js'
 import { TIPO_EJERCICIO } from '../src/data/tiposEjercicio.js'
 import { unidadesCursosNuevos, leccionesCursosNuevos } from '../src/data/cursosNuevos.js'
+import { leccionesUnidadesFinales } from '../src/data/cursosUnidadesFinales.js'
+import { leccionesJavaScriptCompletas } from '../src/data/javascriptCompleto.js'
 
 const raiz = dirname(fileURLToPath(import.meta.url))
 
-/** Unidades cuyo contenido esta completo y se publica en esta etapa. */
-const UNIDADES_PUBLICADAS = new Set(['js-u1', ...unidadesCursosNuevos.filter((u) => u.publicada).map((u) => u.id)])
+/** Unidades cuyo contenido esta completo y se publica: todas las de JavaScript y las marcadas en cursosNuevos.js. */
+const UNIDADES_PUBLICADAS = new Set([...unidadesJavaScript.map((u) => u.id), ...unidadesCursosNuevos.filter((u) => u.publicada).map((u) => u.id)])
 
 /** Los colores de las unidades estan como variables CSS; la base guarda el hexadecimal. */
 const COLORES = {
@@ -123,9 +125,8 @@ w()
 const unidades = [...unidadesJavaScript, ...unidadesCursosNuevos]
 w('-- ---------------------------------------------------------------------------')
 w(`-- Unidades (${unidades.length})`)
-w('-- JavaScript: solo la unidad 1 tiene el contenido completo. Los demas cursos')
-w('-- (src/data/cursosNuevos.js): las unidades 1 y 2. El resto queda como')
-w('-- "proximamente", es decir, visible pero no disponible.')
+w('-- Todas publicadas: JavaScript (src/data/unidades.js) y los demas cursos')
+w('-- (src/data/cursosNuevos.js).')
 w('-- ---------------------------------------------------------------------------')
 w('insert into public.unidades')
 w('  (id, curso_id, orden, titulo, descripcion, icono, color, estado, temas)')
@@ -151,7 +152,15 @@ w(
 w()
 
 // --- lecciones -------------------------------------------------------------
-const leccionesPublicadas = [...lecciones, ...leccionesCursosNuevos].filter((leccion) => UNIDADES_PUBLICADAS.has(leccion.unidadId))
+// JavaScript: la unidad 1 sale de src/data/lecciones/; la 2 a la 6, de javascriptCompleto.js
+// (las originales mezclaban tipos de actividad que la base no guarda).
+const todasLasLecciones = [
+  ...lecciones.filter((l) => l.unidadId === 'js-u1'),
+  ...leccionesJavaScriptCompletas,
+  ...leccionesCursosNuevos,
+  ...leccionesUnidadesFinales
+]
+const leccionesPublicadas = todasLasLecciones.filter((leccion) => UNIDADES_PUBLICADAS.has(leccion.unidadId))
 
 w('-- ---------------------------------------------------------------------------')
 w(`-- Lecciones publicadas (${leccionesPublicadas.length})`)

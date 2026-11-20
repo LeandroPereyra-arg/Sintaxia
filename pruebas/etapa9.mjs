@@ -567,8 +567,8 @@ await caso(
 
 await caso(
   12,
-  'Python, HTML y CSS, SQL, Java y C++ tienen contenido y se juegan',
-  'Los 6 cursos aparecen disponibles; cada curso nuevo tiene 2 unidades publicadas con 2 lecciones de 4 actividades; la correcta esta repartida entre las posiciones; una leccion de Python se juega entera y queda guardada',
+  'Los seis cursos estan completos y se juegan',
+  'Los 6 cursos aparecen disponibles; todas sus unidades estan publicadas y cada leccion tiene 4 actividades (JavaScript 56, Python 32, HTML y CSS 32, SQL 24, Java 32, C++ 32); la correcta esta repartida entre las posiciones; una leccion de Python se juega entera y queda guardada',
   async () => {
     const [conteo] = await consulta(`
       select count(*) filter (where c.estado = 'disponible')::int as disponibles,
@@ -576,16 +576,21 @@ await caso(
                 select u.curso_id, count(q.*)::int as n from unidades u join lecciones l on l.unidad_id = u.id
                   join preguntas q on q.leccion_id = l.id
                  where u.estado = 'publicada' and q.estado = 'publicada' group by u.curso_id) x) as preguntas,
+             (select count(*)::int from unidades where estado <> 'publicada') as sin_publicar,
+             (select count(*)::int from (select l.id from lecciones l left join preguntas q on q.leccion_id = l.id
+                group by l.id having count(q.*) <> 4) z) as lecciones_raras,
              (select json_object_agg(orden, n) from (
                 select o.orden, count(*)::int as n from opciones o join preguntas q on q.id = o.pregunta_id
                   join lecciones l on l.id = q.leccion_id join unidades u on u.id = l.unidad_id
-                 where o.es_correcta and u.curso_id <> 'javascript' group by o.orden) y) as posiciones
+                 where o.es_correcta and l.id not like 'js-u1-%' group by o.orden) y) as posiciones
         from cursos c`)
     verificar(conteo.disponibles === 6, `cursos disponibles: ${conteo.disponibles}`)
-    for (const curso of ['python', 'html-css', 'sql', 'java', 'cpp']) {
-      verificar(conteo.preguntas[curso] === 16, `${curso}: ${conteo.preguntas[curso]} preguntas`)
+    const esperado = { javascript: 56, python: 32, 'html-css': 32, sql: 24, java: 32, cpp: 32 }
+    for (const [curso, n] of Object.entries(esperado)) {
+      verificar(conteo.preguntas[curso] === n, `${curso}: ${conteo.preguntas[curso]} preguntas (esperaba ${n})`)
     }
-    verificar(Object.values(conteo.posiciones).every((n) => n >= 15), `posiciones de la correcta: ${JSON.stringify(conteo.posiciones)}`)
+    verificar(conteo.sin_publicar === 0 && conteo.lecciones_raras === 0, `unidades sin publicar ${conteo.sin_publicar}, lecciones sin 4 actividades ${conteo.lecciones_raras}`)
+    verificar(Object.values(conteo.posiciones).every((n) => n >= 40), `posiciones de la correcta: ${JSON.stringify(conteo.posiciones)}`)
 
     const solucion = new Map((await consulta(
       `select q.enunciado, o.texto from preguntas q join opciones o on o.pregunta_id = q.id and o.es_correcta
@@ -616,7 +621,7 @@ await caso(
     await ctx.close()
     verificar(['Python', 'HTML y CSS', 'SQL', 'Java', 'C++'].every((c) => tarjetas.includes(c)), `cursos en pantalla: ${tarjetas.slice(0, 200)}`)
     verificar(intento && intento.correctas === 4, `intento: ${JSON.stringify(intento)}`)
-    return `6 cursos disponibles · 16 preguntas publicadas en cada curso nuevo · correcta en a/b/c/d: ${Object.values(conteo.posiciones).join('/')} · leccion py-u1-l1 jugada: ${intento.estado}, ${intento.correctas}/4`
+    return `6 cursos disponibles, todas las unidades publicadas · preguntas: ${Object.entries(conteo.preguntas).map(([c, n]) => `${c} ${n}`).join(', ')} · correcta en a/b/c/d: ${Object.values(conteo.posiciones).join('/')} · leccion py-u1-l1 jugada: ${intento.estado}, ${intento.correctas}/4`
   }
 )
 

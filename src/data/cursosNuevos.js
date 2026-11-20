@@ -1,4 +1,3 @@
-import { TIPO_EJERCICIO } from './tiposEjercicio.js'
 
 /**
  * Contenido de los cursos que no son JavaScript: Python, HTML y CSS, SQL, Java y C++.
@@ -6,59 +5,12 @@ import { TIPO_EJERCICIO } from './tiposEjercicio.js'
  * Igual que el resto de src/data/, la app NO lee este archivo: es la fuente con la que
  * se genera supabase/02-datos-iniciales.sql (npm run supabase:datos).
  *
- * Cada curso trae dos unidades completas (dos lecciones de cuatro actividades cada
- * una) y las unidades siguientes como "proximamente".
+ * Aca estan todas las unidades de cada curso y las lecciones de las dos primeras;
+ * las de las ultimas unidades estan en src/data/cursosUnidadesFinales.js. Cada
+ * leccion tiene cuatro actividades.
  */
 
-const LETRAS = ['a', 'b', 'c', 'd']
-
-/** Numero estable a partir de un texto (para repartir las respuestas correctas). */
-function hash(texto) {
-  let h = 0
-  for (const c of texto) h = (h * 31 + c.codePointAt(0)) >>> 0
-  return h
-}
-
-/**
- * Una actividad de opcion multiple. `correcta` es el indice (0 a 3) de la opcion buena.
- * La opcion correcta se cambia de lugar con la de una posicion que sale del id: asi
- * queda repartida entre a, b, c y d y no se puede adivinar por la posicion.
- */
-function actividad(leccionId, n, { consigna, codigo = null, opciones, correcta, explicacion }) {
-  const id = `${leccionId}-a${n}`
-  const lugar = hash(id) % opciones.length
-  const orden = [...opciones]
-  ;[orden[correcta], orden[lugar]] = [orden[lugar], orden[correcta]]
-  return {
-    id,
-    leccionId,
-    tipo: TIPO_EJERCICIO.OPCION_MULTIPLE,
-    consigna,
-    codigo,
-    opciones: orden.map((texto, i) => ({ id: LETRAS[i], texto })),
-    respuesta: LETRAS[lugar],
-    explicacion
-  }
-}
-
-function leccion(unidadId, numero, { titulo, descripcion, icono, explicacion, ejemplo, actividades }) {
-  const id = `${unidadId}-l${numero}`
-  return {
-    id,
-    unidadId,
-    numero,
-    titulo,
-    descripcion,
-    icono,
-    xp: 10,
-    teoria: { explicacion, ejemplo },
-    ejercicios: actividades.map((a, i) => actividad(id, i + 1, a))
-  }
-}
-
-function unidad(cursoId, prefijo, numero, { titulo, descripcion, icono, color, temas, publicada = false }) {
-  return { id: `${prefijo}-u${numero}`, cursoId, numero, titulo, descripcion, icono, color, temas, publicada }
-}
+import { leccion, unidad } from './armarContenido.js'
 
 // ===========================================================================
 //  PYTHON
@@ -77,12 +29,12 @@ const unidadesPython = [
   unidad('python', 'py', 3, {
     titulo: 'Listas y diccionarios',
     descripcion: 'Guardar muchos datos juntos y recorrerlos.',
-    icono: 'caja', color: '#1cb0f6', temas: ['Listas', 'Índices', 'Diccionarios', 'Recorrer colecciones']
+    icono: 'caja', color: '#1cb0f6', temas: ['Listas', 'Índices', 'Diccionarios', 'Recorrer colecciones'], publicada: true
   }),
   unidad('python', 'py', 4, {
     titulo: 'Funciones',
     descripcion: 'Agrupar código con def, recibir parámetros y devolver resultados.',
-    icono: 'pieza', color: '#7434db', temas: ['def', 'Parámetros', 'return', 'Alcance']
+    icono: 'pieza', color: '#7434db', temas: ['def', 'Parámetros', 'return', 'Alcance'], publicada: true
   })
 ]
 
@@ -274,12 +226,12 @@ const unidadesHtml = [
   unidad('html-css', 'web', 3, {
     titulo: 'Flexbox',
     descripcion: 'Acomodar elementos en filas y columnas.',
-    icono: 'caja', color: '#2fbf56', temas: ['display: flex', 'justify-content', 'align-items', 'gap']
+    icono: 'caja', color: '#2fbf56', temas: ['display: flex', 'justify-content', 'align-items', 'gap'], publicada: true
   }),
   unidad('html-css', 'web', 4, {
     titulo: 'Diseño responsivo',
     descripcion: 'Páginas que se ven bien en el celular y en la compu.',
-    icono: 'puntero', color: '#7434db', temas: ['Media queries', 'Unidades relativas', 'Imágenes flexibles']
+    icono: 'puntero', color: '#7434db', temas: ['Media queries', 'Unidades relativas', 'Imágenes flexibles'], publicada: true
   })
 ]
 
@@ -468,7 +420,7 @@ const unidadesSql = [
   unidad('sql', 'sql', 3, {
     titulo: 'Modificar datos',
     descripcion: 'Agregar, cambiar y borrar filas con cuidado.',
-    icono: 'variable', color: '#7434db', temas: ['INSERT', 'UPDATE', 'DELETE', 'Transacciones']
+    icono: 'variable', color: '#7434db', temas: ['INSERT', 'UPDATE', 'DELETE', 'Transacciones'], publicada: true
   })
 ]
 
@@ -659,12 +611,12 @@ const unidadesJava = [
   unidad('java', 'java', 3, {
     titulo: 'Herencia',
     descripcion: 'Reutilizar y especializar clases.',
-    icono: 'carpetas', color: '#2fbf56', temas: ['extends', 'super', '@Override', 'Polimorfismo']
+    icono: 'carpetas', color: '#2fbf56', temas: ['extends', 'super', '@Override', 'Polimorfismo'], publicada: true
   }),
   unidad('java', 'java', 4, {
     titulo: 'Colecciones',
     descripcion: 'Listas y mapas que crecen solos.',
-    icono: 'caja', color: '#7434db', temas: ['ArrayList', 'HashMap', 'for-each']
+    icono: 'caja', color: '#7434db', temas: ['ArrayList', 'HashMap', 'for-each'], publicada: true
   })
 ]
 
@@ -855,12 +807,12 @@ const unidadesCpp = [
   unidad('cpp', 'cpp', 3, {
     titulo: 'Structs y clases',
     descripcion: 'Agrupar datos y comportamiento.',
-    icono: 'pieza', color: '#2fbf56', temas: ['struct', 'class', 'Constructores', 'Destructores']
+    icono: 'pieza', color: '#2fbf56', temas: ['struct', 'class', 'Constructores', 'Destructores'], publicada: true
   }),
   unidad('cpp', 'cpp', 4, {
     titulo: 'Memoria dinámica',
     descripcion: 'Pedir y liberar memoria sin perder nada.',
-    icono: 'caja', color: '#1cb0f6', temas: ['new y delete', 'Fugas de memoria', 'Punteros inteligentes']
+    icono: 'caja', color: '#1cb0f6', temas: ['new y delete', 'Fugas de memoria', 'Punteros inteligentes'], publicada: true
   })
 ]
 
