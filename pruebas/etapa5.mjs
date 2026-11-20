@@ -364,28 +364,11 @@ await caso(
     pasos.push(['L2 con L1 en 75 %', (await intentar(L2)).datos.hint ?? 'ok'])
     pasos.push(['L3 sin L2', (await intentar(L3)).datos.hint ?? 'ok'])
 
-    // Unidad 2: se publica una leccion de prueba y se quita al final.
-    await consulta("update unidades set estado = 'publicada' where id = 'js-u2'")
-    await consulta(`insert into lecciones (id, unidad_id, orden, titulo, descripcion, icono, explicacion, estado)
-      values ('prueba-u2-l1', 'js-u2', 1, 'Leccion de prueba', 'Solo para la prueba automatica.', 'pieza',
-              'Texto de teoria para la prueba automatica.', 'borrador')`)
-    await consulta(`insert into preguntas (id, leccion_id, orden, enunciado, explicacion, estado)
-      values ('prueba-u2-l1-a1', 'prueba-u2-l1', 1, 'Pregunta de prueba', 'Explicacion de prueba.', 'borrador')`)
-    await consulta(`insert into opciones (id, pregunta_id, orden, texto, es_correcta) values
-      ('prueba-u2-l1-a1-a', 'prueba-u2-l1-a1', 1, 'Si', true), ('prueba-u2-l1-a1-b', 'prueba-u2-l1-a1', 2, 'No', false)`)
-    await consulta("update preguntas set estado = 'publicada' where id = 'prueba-u2-l1-a1'")
-    // Desde la etapa 7 una leccion se publica despues de tener una actividad publicada.
-    await consulta("update lecciones set estado = 'publicada' where id = 'prueba-u2-l1'")
-    try {
-      pasos.push(['U2 con U1 incompleta', (await intentar('prueba-u2-l1')).datos.hint ?? 'ok'])
-      await resolverPorApi(api, bd, yo.token, L2, { aciertos: 4 })
-      await resolverPorApi(api, bd, yo.token, L3, { aciertos: 4 })
-      pasos.push(['U2 con U1 aprobada', (await intentar('prueba-u2-l1')).datos.hint ?? 'ok'])
-    } finally {
-      await consulta("delete from intentos where leccion_id = 'prueba-u2-l1'")
-      await consulta("delete from lecciones where id = 'prueba-u2-l1'")
-      await consulta("update unidades set estado = 'proximamente' where id = 'js-u2'")
-    }
+    // Unidad 2 (publicada desde que el curso esta completo): espera a que se apruebe la 1.
+    pasos.push(['U2 con U1 incompleta', (await intentar('js-u2-l1')).datos.hint ?? 'ok'])
+    await resolverPorApi(api, bd, yo.token, L2, { aciertos: 4 })
+    await resolverPorApi(api, bd, yo.token, L3, { aciertos: 4 })
+    pasos.push(['U2 con U1 aprobada', (await intentar('js-u2-l1')).datos.hint ?? 'ok'])
     const esperado = ['leccion_bloqueada', 'leccion_bloqueada', 'ok', 'leccion_bloqueada', 'leccion_bloqueada', 'ok']
     const obtenido = pasos.map(([, r]) => r)
     verificar(JSON.stringify(obtenido) === JSON.stringify(esperado), pasos.map((p) => p.join(': ')).join(' · '))
@@ -804,7 +787,8 @@ await caso(
     const historial = await p.locator('[data-prueba="historial"] [data-intento]').evaluateAll((els) => els.map((e) => e.dataset.estado))
     verificar(situaciones.join() === 'aprobada,pendiente,bloqueada', `situaciones: ${situaciones}`)
     verificar(/Mejor: 100 %/.test(datosL1) && /Ultimo: 1\/4 \(completado\)/.test(datosL1) && /2 intentos/.test(datosL1), `L1: ${datosL1}`)
-    verificar(/1 completadas · 2 pendientes/.test(cabecera), `cabecera: ${cabecera}`)
+    // El curso de JavaScript tiene 14 lecciones publicadas.
+    verificar(/1 completadas · 13 pendientes/.test(cabecera), `cabecera: ${cabecera}`)
     verificar(historial.join() === 'sin_vidas,completado,completado', `historial: ${historial}`)
 
     const desbordes = []
