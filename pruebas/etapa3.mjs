@@ -434,11 +434,19 @@ try {
   // 11. Una unidad sin lecciones publicadas se muestra como no disponible
   // -------------------------------------------------------------------
   {
+    // Desde que todos los cursos estan completos no queda ninguna unidad vacia:
+    // se crea una de prueba (proximamente, sin lecciones) y se borra al final.
+    await conexion.query(
+      `insert into unidades (id, curso_id, orden, titulo, descripcion, icono, color, estado, temas)
+       values ('js-u99', 'javascript', 99, 'Unidad de prueba', 'Sin contenido todavia.', 'cohete', '#2fbf56', 'proximamente', '{}')
+       on conflict (id) do nothing`
+    )
     const pagina = await nuevaPagina(ctx)
-    await pagina.goto(`${BASE}/unidades/js-u2`, { waitUntil: 'networkidle' })
+    await pagina.goto(`${BASE}/unidades/js-u99`, { waitUntil: 'networkidle' })
     await pagina.waitForTimeout(400)
     const t = await texto(pagina)
     const ok = t.includes('todavia no tiene lecciones publicadas')
+    await conexion.query("delete from unidades where id = 'js-u99'")
 
     registrar(
       11,
