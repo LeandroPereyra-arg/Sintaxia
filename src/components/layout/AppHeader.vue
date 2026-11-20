@@ -41,6 +41,24 @@ watch(
   { immediate: true }
 )
 
+/**
+ * Flecha para volver (en el celular no siempre hay un boton Atras a mano, y en la
+ * compu de la expo tampoco). Vuelve a la pantalla anterior; si se entro directo
+ * (no hay anterior), va a la pantalla "padre" de la actual.
+ */
+const PADRE = {
+  curso: () => ({ name: 'cursos' }),
+  unidad: (r) => (r.params.cursoId ? { name: 'curso', params: { cursoId: r.params.cursoId } } : { name: 'cursos' }),
+  evento: () => ({ name: 'expo' }),
+  'resultado-partida': (r) => ({ name: 'evento', params: { eventoId: r.params.eventoId } })
+}
+const puedeVolver = computed(() => route.name && route.name !== 'inicio')
+function volver() {
+  cerrarTodo()
+  if (window.history.state?.back) router.back()
+  else router.push(PADRE[route.name]?.(route) ?? { name: 'inicio' })
+}
+
 function cerrarTodo() {
   menuAbierto.value = false
   menuUsuario.value = false
@@ -83,8 +101,11 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
 <template>
   <header class="cabecera">
     <div class="cabecera__interior contenedor">
+      <button v-if="puedeVolver" type="button" class="volver" aria-label="Volver atrás" data-prueba="volver" @click="volver">
+        <Icono nombre="flechaIzquierda" :tamano="22" />
+      </button>
       <router-link :to="{ name: 'inicio' }" class="marca" @click="cerrarTodo">
-        <LogoSintaxia variante="icono" :alto="36" alt="" class="marca__logo" />
+        <LogoSintaxia variante="icono" :alto="32" alt="" class="marca__logo" />
         <span class="marca__nombre">Sintaxia</span>
       </router-link>
 
@@ -197,6 +218,22 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
   font-weight: 900;
   font-size: var(--t-md);
   margin-right: auto;
+}
+
+/* La flecha de volver solo se ve en pantallas chicas (celular). */
+.volver {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: -0.4rem;
+  border-radius: 50%;
+  color: var(--c-tinta);
+}
+.volver:hover,
+.volver:focus-visible {
+  background: var(--c-fondo);
 }
 
 .marca__logo {
@@ -387,6 +424,9 @@ onBeforeUnmount(() => document.removeEventListener('click', clicAfuera))
 }
 
 @media (max-width: 860px) {
+  .volver {
+    display: inline-flex;
+  }
   .cabecera__hamburguesa {
     display: flex;
     order: 4;

@@ -12,10 +12,11 @@ invitado que crea su cuenta **conserva su historial**.
 
 Hay seis cursos disponibles: **JavaScript, Python, HTML y CSS, SQL, Java y C++**. Desde
 la etapa 3 los cursos, las unidades, las lecciones y las actividades se leen de Supabase.
-JavaScript tiene una unidad publicada (3 lecciones y 12 actividades de opcion multiple);
-cada uno de los otros cinco tiene dos unidades publicadas (4 lecciones y 16 actividades,
-en `src/data/cursosNuevos.js`). El resto de las unidades queda como "proximamente" hasta
-que se cargue su contenido (`npm run supabase:datos` regenera `02-datos-iniciales.sql`).
+Todos estan completos: 25 unidades, 52 lecciones y 208 actividades de opcion multiple
+(JavaScript 6 unidades y 14 lecciones; Python, HTML y CSS, Java y C++ 4 unidades y 8
+lecciones; SQL 3 unidades y 6 lecciones; 4 actividades por leccion). El contenido esta en
+`src/data/` (`lecciones/unidad1.js`, `javascriptCompleto.js`, `cursosNuevos.js` y
+`cursosUnidadesFinales.js`) y `npm run supabase:datos` regenera `02-datos-iniciales.sql`.
 
 ![Pagina de inicio](docs/capturas/01-inicio.png)
 
@@ -363,20 +364,20 @@ de codigo que conserva el formato y se lee en el celular, y desde ahi se pasa a
 las actividades. Las reglas de avance estan en
 [docs/06](docs/06-reglas-de-avance.md).
 
-Las otras cinco unidades tienen su teoria escrita y quedan **bloqueadas** hasta
-completar la anterior.
+Las otras cinco unidades tambien estan publicadas (4 actividades por leccion) y cada
+una se desbloquea al completar la anterior.
 
 ## Contenido del curso de JavaScript
 
 | Unidad | Titulo | Lecciones | Ejercicios |
 |---|---|---|---|
-| 1 | Primeros pasos | 3 | 11 |
-| 2 | Operadores y decisiones | 3 | 9 |
-| 3 | Bucles y repeticion | 2 | 6 |
-| 4 | Funciones | 2 | 6 |
-| 5 | Arrays y objetos | 2 | 6 |
-| 6 | JavaScript en la pagina | 2 | 6 |
-| | **Total** | **14** | **44** |
+| 1 | Primeros pasos | 3 | 12 |
+| 2 | Operadores y decisiones | 3 | 12 |
+| 3 | Bucles y repeticion | 2 | 8 |
+| 4 | Funciones | 2 | 8 |
+| 5 | Arrays y objetos | 2 | 8 |
+| 6 | JavaScript en la pagina | 2 | 8 |
+| | **Total** | **14** | **56** |
 
 ### Tipos de ejercicio
 
